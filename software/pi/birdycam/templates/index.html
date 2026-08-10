@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BirdyCam</title>
+<style>
+:root{
+  --bg:#14181d; --fg:#e8eef4; --karte:#1d242c; --rand:#2c3540;
+  --gruen:#5cc8a8; --gelb:#f0a94c; --rot:#e0674f; --grau:#8a97a5;
+}
+@media (prefers-color-scheme:light){
+  :root{--bg:#f2f5f7; --fg:#18202a; --karte:#fff; --rand:#dde4ea; --grau:#5d6b7a}
+}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.55 system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--fg)}
+header{padding:14px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:20px;margin:0;flex:1;white-space:nowrap}
+.pille{background:var(--karte);border:1px solid var(--rand);padding:3px 10px;
+  border-radius:99px;font-size:13px;color:var(--grau)}
+.pille.an{color:var(--gruen);border-color:var(--gruen)}
+.pille.warn{color:var(--gelb);border-color:var(--gelb)}
+main{padding:0 16px 40px;max-width:860px;margin:auto}
+.karte{background:var(--karte);border:1px solid var(--rand);border-radius:14px;
+  padding:14px;margin-bottom:14px}
+.karte h2{font-size:13px;margin:0 0 12px;color:var(--grau);font-weight:600;
+  text-transform:uppercase;letter-spacing:.06em}
+
+img#live,video#spieler{width:100%;border-radius:10px;background:#000;display:block;
+  aspect-ratio:16/9;object-fit:contain}
+
+.zahlen{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:10px}
+.z{background:var(--bg);border-radius:10px;padding:10px;text-align:center}
+.z b{display:block;font-size:23px;color:var(--gruen);line-height:1.2}
+.z span{font-size:11px;color:var(--grau)}
+
+.balken{display:flex;align-items:flex-end;gap:2px;height:100px}
+.balken div{flex:1;background:var(--gruen);border-radius:2px 2px 0 0;min-height:2px}
+.balken div.leer{background:var(--rand)}
+.achse{display:flex;gap:2px;font-size:9px;color:var(--grau);margin-top:4px}
+.achse span{flex:1;text-align:center}
+
+.leiste{height:22px;background:var(--bg);border-radius:99px;overflow:hidden;
+  position:relative;border:1px solid var(--rand)}
+.leiste i{display:block;height:100%;background:var(--gruen);transition:width .5s}
+.leiste u{position:absolute;inset:0;text-align:center;font-size:12px;
+  line-height:20px;text-decoration:none}
+.info{margin:10px 0 0;color:var(--grau);font-size:13px}
+
+nav{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+button{background:var(--bg);color:var(--fg);border:1px solid var(--rand);
+  padding:7px 14px;border-radius:99px;font-size:14px;cursor:pointer}
+button.aktiv{background:var(--gruen);color:#0a1014;border-color:var(--gruen)}
+
+ul{list-style:none;padding:0;margin:0;max-height:330px;overflow-y:auto}
+li a{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;
+  color:var(--fg);text-decoration:none;border-radius:8px;align-items:center}
+li a:hover{background:var(--bg)}
+li small{color:var(--grau);white-space:nowrap;font-size:12px}
+.galerie{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
+.galerie img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;
+  cursor:pointer;display:block}
+footer{text-align:center;color:var(--grau);font-size:12px;padding:12px}
+.leer-hinweis{color:var(--grau);padding:10px;font-size:14px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&#128038; BirdyCam</h1>
+  <span class="pille" id="p-modus">…</span>
+  <span class="pille" id="p-akku">…</span>
+  <span class="pille" id="p-vogel">…</span>
+</header>
+
+<main>
+
+<div class="karte">
+  <h2>Livebild</h2>
+  <img id="live" alt="Livebild lädt…">
+  <p class="info" id="stream-info">
+    Der Livestream startet erst, wenn du diese Seite öffnest — und hört auf,
+    wenn du sie schließt. Das spart Akku.
+  </p>
+</div>
+
+<div class="karte">
+  <h2>Heute</h2>
+  <div class="zahlen">
+    <div class="z"><b id="z-heute">0</b><span>Besuche heute</span></div>
+    <div class="z"><b id="z-gesamt">0</b><span>Besuche gesamt</span></div>
+    <div class="z"><b id="z-erster">--:--</b><span>erster Anflug</span></div>
+    <div class="z"><b id="z-letzter">--:--</b><span>letzter Anflug</span></div>
+    <div class="z"><b id="z-dauer">0 s</b><span>&#8709; Aufenthalt</span></div>
+  </div>
+</div>
+
+<div class="karte">
+  <h2>Wann ist Rushhour?</h2>
+  <div class="balken" id="balken"></div>
+  <div class="achse" id="achse"></div>
+  <p class="info">Anflüge je Stunde, heute. Kurz nach Sonnenaufgang ist Hochbetrieb.</p>
+</div>
+
+<div class="karte">
+  <h2>Die letzten 14 Tage</h2>
+  <div class="balken" id="verlauf"></div>
+  <div class="achse" id="verlauf-achse"></div>
+  <p class="info">
+    Wenn diese Balken plötzlich stark steigen, sind die Küken geschlüpft —
+    dann muss viel mehr Futter gebracht werden.
+  </p>
+</div>
+
+<div class="karte">
+  <h2>Akku &amp; Speicher</h2>
+  <div class="leiste"><i id="akku-balken"></i><u id="akku-text"></u></div>
+  <p class="info" id="strom-info">…</p>
+  <p class="info" id="speicher-info">…</p>
+</div>
+
+<div class="karte">
+  <h2>Aufnahmen</h2>
+  <nav>
+    <button class="aktiv" data-typ="clips">Videoclips</button>
+    <button data-typ="fotos">Fotos</button>
+  </nav>
+  <video id="spieler" controls preload="metadata" style="display:none"></video>
+  <div id="inhalt"></div>
+</div>
+
+</main>
+
+<footer>BirdyCam &middot; läuft seit <span id="laufzeit">?</span></footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const zwei = n => String(n).padStart(2, '0');
+
+function uhrzeit(ts){
+  if(!ts) return '--:--';
+  const d = new Date(ts * 1000);
+  return zwei(d.getHours()) + ':' + zwei(d.getMinutes());
+}
+function groesse(b){
+  return b > 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.round(b/1024)+' KB';
+}
+function datumKurz(ts){
+  return new Date(ts*1000).toLocaleString('de-DE',
+    {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+}
+function balkenBauen(el, achseEl, werte, beschriftung){
+  const max = Math.max(1, ...werte);
+  el.innerHTML = werte.map((v,i) =>
+    `<div class="${v ? '' : 'leer'}" style="height:${Math.max(2, v/max*100)}%"
+      title="${beschriftung(i)}: ${v}"></div>`).join('');
+  achseEl.innerHTML = werte.map((v,i) =>
+    `<span>${beschriftung(i, true)}</span>`).join('');
+}
+
+// ---- Livestream ----
+$('live').src = '/stream.mjpg';
+$('live').onerror = () => {
+  $('stream-info').textContent =
+    'Livebild nicht verfügbar. Nachts ist die Kamera aus — sie fährt hoch, ' +
+    'sobald du die Seite neu lädst.';
+};
+
+// ---- Status ----
+async function status(){
+  try{
+    const s = await (await fetch('/api/status')).json();
+
+    $('z-heute').textContent   = s.besuche_heute;
+    $('z-gesamt').textContent  = s.besuche_gesamt;
+    $('z-erster').textContent  = uhrzeit(s.erster_heute);
+    $('z-letzter').textContent = uhrzeit(s.letzter_heute);
+    $('z-dauer').textContent   = s.dauer_schnitt_s + ' s';
+
+    $('p-modus').textContent = s.kamera.nacht ? '\u{1F319} Nacht' : '☀️ Tag';
+    $('p-modus').className = 'pille' + (s.kamera.aufnahme_laeuft ? ' warn' : '');
+    if(s.kamera.aufnahme_laeuft) $('p-modus').textContent += ' · nimmt auf';
+
+    $('p-vogel').textContent = s.lichtschranke.vogel_drin
+      ? '\u{1F423} Vogel ist drin' : 'Kasten leer';
+    $('p-vogel').className = 'pille' + (s.lichtschranke.vogel_drin ? ' an' : '');
+
+    // Akku
+    const a = s.akku;
+    if(a.vorhanden){
+      $('p-akku').textContent = a.prozent + ' %' + (a.laedt ? ' ⚡' : '');
+      $('p-akku').className = 'pille' + (a.prozent < 25 ? ' warn' : '');
+      $('akku-balken').style.width = a.prozent + '%';
+      $('akku-balken').style.background = a.prozent < 25
+        ? 'var(--rot)' : (a.prozent < 50 ? 'var(--gelb)' : 'var(--gruen)');
+      $('akku-text').textContent = a.volt.toFixed(2) + ' V';
+      $('strom-info').innerHTML = a.laedt
+        ? `⚡ Die Sonne lädt gerade mit <b>${a.ampere.toFixed(2)} A</b>.`
+        : `Kein Ladestrom. Verbrauch <b>${Math.abs(a.ampere).toFixed(2)} A</b>.`;
+    }else{
+      $('p-akku').textContent = 'kein Sensor';
+      $('akku-text').textContent = 'kein Sensor';
+      $('strom-info').textContent = 'Akkumessung nicht angeschlossen.';
+    }
+
+    const sp = s.speicher;
+    $('speicher-info').innerHTML =
+      `Ringspeicher: <b>${sp.clips}/${sp.clips_max}</b> Clips, ` +
+      `<b>${sp.fotos}/${sp.fotos_max}</b> Fotos &middot; ` +
+      `SSD ${sp.frei_prozent} % frei &middot; ` +
+      `${s.kamera.aufloesung} @ ${s.kamera.bildrate} fps`;
+
+    balkenBauen($('balken'), $('achse'), s.stunden,
+      (i, kurz) => kurz ? (i % 6 ? '' : i) : i + ':00 Uhr');
+
+    const tage = s.verlauf.map(v => v.anzahl);
+    const namen = s.verlauf.map(v => v.tag.slice(8) + '.' + v.tag.slice(5,7));
+    balkenBauen($('verlauf'), $('verlauf-achse'), tage,
+      (i, kurz) => kurz ? (i % 3 ? '' : namen[i]) : namen[i]);
+
+    const h = Math.floor(s.laufzeit_s/3600), m = Math.floor(s.laufzeit_s%3600/60);
+    $('laufzeit').textContent = h + ' h ' + m + ' min';
+  }catch(e){ /* Netz weg — beim nächsten Mal wieder */ }
+}
+
+// ---- Aufnahmen ----
+let aktuellerTyp = 'clips';
+
+async function liste(typ){
+  aktuellerTyp = typ;
+  document.querySelectorAll('nav button').forEach(b =>
+    b.classList.toggle('aktiv', b.dataset.typ === typ));
+  $('inhalt').innerHTML = '<p class="leer-hinweis">lädt…</p>';
+  $('spieler').style.display = 'none';
+
+  try{
+    const d = await (await fetch('/api/liste?typ=' + typ)).json();
+    if(!d.length){
+      $('inhalt').innerHTML = '<p class="leer-hinweis">Noch nichts aufgenommen.</p>';
+      return;
+    }
+    if(typ === 'fotos'){
+      $('inhalt').innerHTML = '<div class="galerie">' + d.map(f =>
+        `<img loading="lazy" src="/medien/fotos/${f.name}"
+          title="${datumKurz(f.zeit)}"
+          onclick="window.open('/medien/fotos/${f.name}')">`).join('') + '</div>';
+    }else{
+      $('inhalt').innerHTML = '<ul>' + d.map(f =>
+        `<li><a href="#" onclick="abspielen('${f.name}');return false">
+          <span>&#9654; ${f.name}</span>
+          <small>${groesse(f.groesse)} &middot; ${datumKurz(f.zeit)}</small>
+        </a></li>`).join('') + '</ul>';
+    }
+  }catch(e){
+    $('inhalt').innerHTML = '<p class="leer-hinweis">Fehler beim Laden.</p>';
+  }
+}
+
+function abspielen(name){
+  const v = $('spieler');
+  v.src = '/medien/clips/' + name;
+  v.style.display = 'block';
+  v.play();
+  v.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+document.querySelectorAll('nav button').forEach(b =>
+  b.onclick = () => liste(b.dataset.typ));
+
+status();
+setInterval(status, 5000);
+liste('clips');
+setInterval(() => liste(aktuellerTyp), 60000);
+</script>
+</body>
+</html>

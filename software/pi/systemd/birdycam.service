@@ -1,0 +1,54 @@
+# ============================================================================
+#  birdycam.service — damit das Programm automatisch startet
+# ============================================================================
+#  Installieren:
+#     sudo cp birdycam.service /etc/systemd/system/
+#     sudo systemctl daemon-reload
+#     sudo systemctl enable --now birdycam
+#
+#  Anschauen:
+#     systemctl status birdycam
+#     sudo journalctl -u birdycam -f          <- Protokoll live mitlesen
+#     sudo journalctl -u birdycam -b          <- seit dem letzten Start
+#
+#  Neu starten (z. B. nach Änderungen in einstellungen.py):
+#     sudo systemctl restart birdycam
+# ============================================================================
+
+[Unit]
+Description=BirdyCam Nistkasten-Kamera
+Documentation=https://github.com/
+# Erst starten, wenn das Netzwerk wirklich steht — sonst findet die
+# Website beim Booten keine IP-Adresse.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Läuft als root, weil das Programm drei Dinge braucht, die Rechte
+# verlangen: GPIO-Pins, I2C und `shutdown` bei leerem Akku.
+# Für ein abgeschlossenes Gerät im eigenen Garten ist das in Ordnung.
+User=root
+WorkingDirectory=/opt/birdycam
+
+# System-Python benutzen, KEIN venv: picamera2 kommt von apt und ist
+# nur im System-Python vorhanden.
+ExecStart=/usr/bin/python3 -m birdycam.main
+
+# Wenn das Programm abstürzt, nach 10 s neu versuchen. Bei einer Kamera,
+# die im Garten hängt, ist Selbstheilung wichtiger als Fehlersuche.
+Restart=always
+RestartSec=10
+
+# Zum Beenden ein SIGTERM schicken — das Programm räumt dann selbst auf
+# (Kamera schließen, IR-LEDs aus, Datenbank schließen).
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=birdycam
+
+[Install]
+WantedBy=multi-user.target
