@@ -1,4 +1,4 @@
-# 🐦 BirdyCam — Nistkasten-Kamera für Vater & Kind
+# 🐦 BirdyCam — Nistkasten-Kamera
 
 Ein Bauprojekt für eine
 solarbetriebene Kamera im Nistkasten mit Nachtsicht, Full-HD-Aufnahmen, Livestream und
