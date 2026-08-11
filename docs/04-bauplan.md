@@ -258,6 +258,45 @@ anstecken — der Pi läuft weiter, ohne dass die Box geöffnet werden muss.
 > Akku. Das ist eine Überbrückung, kein Ladegerät. Für echtes Nachladen den Akku
 > ausbauen — deshalb das Klettband.
 
+### 4.5b Das Mikrofon hören lassen (nur Variante B)
+
+Bei Variante B nimmt die Kamera Ton auf ([8.2d](08-variante-esp32.md#82d-ton--bild-und-ton-zusammen)).
+Das Mikrofon sitzt aber **fest auf dem XIAO-Board** — und das liegt in der
+geschlossenen IP65-Box an der Außenwand. Ohne einen Weg für den Schall hört man
+gedämpften Garten und kaum den Kasten.
+
+**Die Lösung nutzt aus, dass die Box direkt an der Kastenwand sitzt:**
+
+```
+   Nistkasten              Elektronikbox
+   ┌────────────┐         ┌──────────────┐
+   │            │  6 mm   │              │
+   │   innen    │ ──○───→ │  🎤 XIAO      │
+   │            │  Loch   │              │
+   └────────────┘   ↑     └──────────────┘
+                Schaumstoff-Dichtung
+                dazwischen (2-3 mm)
+```
+
+1. Ein **6-mm-Loch durch die Kastenwand** bohren, dort wo die Box sitzt — am
+   besten in der oberen Hälfte, hinter dem Nest, nicht darüber.
+2. Ein **gleich großes Loch in die Boxwand**, die an der Kastenwand liegt.
+3. Zwischen Box und Kasten einen **Streifen Moosgummi** mit passendem Loch —
+   dichtet gegen Regen, ohne den Schall zu blockieren.
+4. Boxseitig ein Stückchen **atmungsaktive Membran** (Gore-Tex-Rest, Vlies aus
+   einem Belüftungsstopfen) über das Loch kleben. Lässt Schall durch, hält
+   Spritzwasser und Insekten draußen.
+
+Weil beide Löcher **einander zugewandt** und vom Wetter abgeschirmt sind, bleibt
+die IP65-Wirkung nach außen erhalten. Das Loch geht nicht ins Freie, sondern von
+Box zu Kasten.
+
+> **Kein Loch gebohrt?** Der Ton funktioniert trotzdem — er ist dann leiser und
+> dumpfer, weil er über die Kabelverschraubungen kommt. Man kann das später
+> nachrüsten, allerdings nur zwischen September und Februar
+> ([1.8](01-machbarkeit.md#18-rechtliches-und-tierschutz)). Wer Ton will, bohrt
+> also **beim Bauen**.
+
 ---
 
 ## 4.6 Solarpanel montieren
@@ -274,11 +313,27 @@ Garagenwand, Balkongeländer.
 | Neigung | **30–40°** | Kompromiss Frühling/Sommer; Regen wäscht es sauber |
 | Verschattung | **keine**, ganztägig | Ein Ast, der um 11 Uhr die Ecke abschattet, kostet mehr Ertrag als man denkt |
 | Höhe | ≥ 1,5 m | weniger Laub, weniger Schnee, weniger Neugier |
-| Kabelquerschnitt | **≥ 0,75 mm²** | bei 12 V und 2,5 A sind Verluste sonst spürbar |
+| Kabelquerschnitt | **≥ 0,75 mm²** (A) · **≥ 1,5 mm² und kurz** (B) | bei 12 V und 2,5 A sind Verluste spürbar — bei **6 V** sind sie kritisch, siehe unten |
 
 **Ein 30-W-Panel ist etwa 35 × 45 cm groß und wiegt ~2 kg** — es braucht eine richtige
 Befestigung, keine Kabelbinder. Bei Variante B (10 W) ist es deutlich kleiner und
 unkritisch.
+
+> ⚠️ **Bei Variante B zählt jedes Zehntelvolt auf dem Panelkabel.** Der
+> Laderegler arbeitet erst ab **4,5 V**, und das 5-V-Panel hat nur 0,5 V Luft
+> nach unten. Zum Glück fließt höchstens **1 A** (mehr nimmt der Regler nicht
+> an) — damit bleibt das Kabel unkritisch, solange man nicht übertreibt:
+>
+> | Verlängerung (Länge einfach) | 0,5 mm² | 0,75 mm² |
+> |---|---|---|
+> | 3 m | 0,14 V | 0,09 V |
+> | 5 m | 0,23 V | 0,15 V |
+> | 10 m | **0,46 V — zu viel** | 0,31 V |
+>
+> Die Kamerapanels aus [9.3b](09-bestellliste.md#93b-️-welches-solarpanel-passt-zum-laderegler)
+> bringen **3 m Kabel** mit. Das reicht meistens vom Kasten zur sonnigen Ecke.
+> Wird verlängert: **0,75 mm², höchstens 5 m dazu** — und danach am Dashboard
+> prüfen, ob der Akku-Pfeil bei Sonne auf „steigt" geht.
 
 > 🧒 **Kinderaufgabe mit echtem Ergebnis:** An einem sonnigen Wintertag stündlich notieren,
 > wo im Garten Sonne ist und wo Schatten. Daraus wird die Panelposition **begründet** statt

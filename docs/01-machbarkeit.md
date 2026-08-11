@@ -239,9 +239,10 @@ ausdrücklich außen vor.
 > nicht den Kasten — es muss also gar nicht am Nistkasten hängen. Das ist ein eigenes,
 > gutes zweites Projekt.
 
-*Die Audio-Funktion für Variante B ist übrigens fertig programmiert und liegt im Code —
-sie ist nur abgeschaltet. Wer will, stellt `AUDIO_AN` auf `true`. Sie erkennt und speichert
-Gesang, sagt aber nicht, welcher Vogel singt.*
+*Nicht verwechseln: **Ton aufnehmen** kann Variante B, und zwar ab Werk — Clips und
+Livestream haben Bild und Ton ([8.2d](08-variante-esp32.md#82d-ton--bild-und-ton-zusammen)).
+Was hier gestrichen ist, ist die **Bestimmung**, also der Artname zum Gesang. Man hört die
+Jungen betteln; wer wissen will, wer da singt, muss selbst hinhören.*
 
 ### Artenerkennung im Bild
 

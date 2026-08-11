@@ -40,15 +40,17 @@ dokumentiert, falls das Projekt später wächst.
 | 10-s-Clip | ~5 MB **bei 15 fps** | ~7 MB **bei 6 fps** |
 | Clip im Browser | **✅ ein Klick** | ❌ Download + [VLC](https://www.videolan.org/) |
 | Speicher | **USB-SSD, keine SD im Betrieb** | High-Endurance-microSD |
-| Datenbank | SQLite (Jahre an Verlauf) | Textdatei (Tagesstatistik) |
-| Verbrauch | 42 Wh/Tag | **15 Wh/Tag** |
-| Panel | 30 W (35 × 45 cm, 2 kg) | **10 W (klein und leicht)** |
+| Datenbank | SQLite (Jahre an Verlauf) | CSV-Datei, eine Zeile je Tag ([8.7c](#87c-verlauf-über-tage--tagecsv)) |
+| Verbrauch | 42 Wh/Tag | **16 Wh/Tag** |
+| Panel | 30 W / 12 V (35 × 45 cm, 2 kg) | **5 V / 10 W (handtellergroß, ~300 g)** |
 | Akku | LiFePO4 12 V/12 Ah, 3 Tage | LiPo 5000 mAh, ~1,2 Tage |
 | Nachtsicht | ✅ | ✅ |
 | Lichtschranke | ✅ | ✅ |
 | Livestream nur bei Zuschauern | ✅ | ✅ |
 | Vorlauf im Clip | ✅ 3 s | ✅ 3 s |
-| Vogelgesang aufnehmen | ❌ | 🟡 **Code liegt bereit, abgeschaltet** |
+| **Ton in den Clips** | ❌ | ✅ **Bild und Ton in einer Datei** |
+| **Ton im Livestream** | ❌ | ✅ **auf Knopfdruck** ([8.2d](#82d-ton--bild-und-ton-zusammen)) |
+| Vogelgesang als eigene WAV | ❌ | 🟡 Code liegt bereit, abgeschaltet |
 | Programmiersprache | Python | C++ (Arduino) |
 | Kann es kaputtgehen durch Stromausfall? | Dateisystem-Risiko, durch WAL abgesichert | **praktisch nein** — kein Betriebssystem |
 
@@ -67,9 +69,10 @@ Software-Bequemlichkeit, sondern Arithmetik:
 ```
    Ein Bild bei UXGA, JPEG-Qualität 18    ≈ 80 KB
    Bei 10 Bildern pro Sekunde             ≈ 0,80 MB/s
+   Ton (16 kHz, 16 Bit, Mono)             ≈ 0,03 MB/s   <- fällt kaum auf
 
    Die SD-Karte am XIAO hängt an SPI und schafft praktisch ~1,2 MB/s.
-   -> Aufnehmen allein:  0,80 von 1,2 MB/s   = 67 %  ✅ passt
+   -> Aufnehmen allein:  0,83 von 1,2 MB/s   = 69 %  ✅ passt
    -> Aufnehmen + streamen: die Kamera müsste jedes Bild zweimal
       ausliefern, und die SD-Karte konkurriert mit dem WLAN um Rechenzeit.
       -> Die Karte bremst das Programm, die Bildrate bricht ein.
@@ -84,8 +87,13 @@ Deshalb wechseln sich zwei Betriebsarten ab:
    Kamera → Vorlaufpuffer (3 s)    Kamera → WLAN in Full HD
    Auslöser → Clip auf SD-Karte    laufender Clip wird beendet
    Lichtschranke zählt             Lichtschranke zählt WEITER
+   Mikrofon → Tonspur im Clip      Mikrofon → Tonstrom ins WLAN
                                    kein Vorlaufpuffer
 ```
+
+**Der Ton macht diese Trennung nicht enger.** Er kostet 0,03 MB/s auf der
+Karte und läuft auf dem zweiten Prozessorkern — das Bild merkt davon nichts.
+Umgeschaltet wird also nur die Bildrichtung, nicht die Tonrichtung.
 
 **Zwei Details, die bewusst so sind:**
 
@@ -129,9 +137,14 @@ Das ist der Punkt, den man vorher wissen muss:
 | | Routerbetrieb | Eigenes WLAN |
 |---|---|---|
 | WLAN-Anteil am Verbrauch | ~0,25 W | **~0,50 W** |
-| Gesamtverbrauch | 15 Wh/Tag | **21 Wh/Tag** |
-| Empfohlenes Panel | 10 W | **15–20 W** |
-| Aufpreis Panel | — | **+8 €** |
+| Gesamtverbrauch (mit Ton) | 16 Wh/Tag | **22 Wh/Tag** |
+| Empfohlenes Panel | 5-V-Panel mit **10 W** | dasselbe, 10 W ist hier Pflicht |
+| Aufpreis Panel | — | keiner — 10 W ist schon der Standard |
+
+*(Der Ton kostet davon ~1 Wh/Tag, siehe [8.2d](#82d-ton--bild-und-ton-zusammen).
+⚠️ **Das Panel darf keine 6 V haben, sondern 5 V** — der Laderegler verträgt
+höchstens 6,5 V Leerlaufspannung. Welches konkret und warum:
+[9.3b](09-bestellliste.md#93b-️-welches-solarpanel-passt-zum-laderegler).)*
 
 **Warum:** Ein WLAN-Sender muss ständig „Funkbaken" aussenden, damit Handys ihn finden. Er
 darf deshalb nicht schlafen. Im Routerbetrieb hingegen darf der ESP32 zwischen zwei
@@ -199,6 +212,148 @@ den schnellsten, der funktioniert. Der gewählte Takt steht im Seriellen Monitor
 
 ---
 
+## 8.2d Ton — Bild und Ton zusammen
+
+Die XIAO Sense hat ein digitales Mikrofon an Bord. Es läuft dauerhaft mit, und
+zwar auf dem **zweiten Prozessorkern**: Einer macht Bild, einer macht Ton. Der
+Ton landet in einem Ringpuffer, aus dem sich **zwei Abnehmer unabhängig
+voneinander** bedienen:
+
+```
+                        ┌──> Videoclip: zweite Spur in der AVI-Datei
+   🎤 ──> [ Ring, 4 s ] ─┤
+                        └──> Livestream: Tonstrom auf Tür 82
+```
+
+Der Ring ist der Grund, warum der **Clip-Vorlauf auch beim Ton funktioniert**:
+Wenn der Vogel den Auslöser erreicht, liegen die letzten Sekunden noch im
+Speicher — Bild *und* Ton. Ohne diesen Umweg würde jeder Clip mit dem Moment
+anfangen, in dem schon alles passiert ist.
+
+### Ton in den Clips
+
+Ein AVI darf mehrere Spuren haben. Die Firmware schreibt zwei, abwechselnd:
+
+```
+   00dc Bild ─ 01wb Ton ─ 00dc Bild ─ 01wb Ton ─ ...
+```
+
+Genau dieses Abwechseln ist das I in AVI: **A**udio **V**ideo **I**nterleave.
+Der Ton steckt unkomprimiert drin (PCM, wie in einer WAV-Datei) — Tonkompression
+kann der ESP32 nicht, und er braucht sie auch nicht:
+
+| | Wert |
+|---|---|
+| Abtastrate | 16 000 Messungen/s (deckt Vogelstimmen bis 8 kHz ab) |
+| Platzbedarf | **32 KB/s**, also ~4 % zusätzlich zum Bild |
+| 10-Sekunden-Clip | ~7 MB Bild **+ 0,3 MB Ton** |
+| Abspielen | [VLC](https://www.videolan.org/) spielt Bild und Ton zusammen |
+
+Die Serielle Ausgabe nennt am Clipende **beide Längen**, und daran erkennt man
+sofort, ob etwas nicht stimmt:
+
+```
+[AVI] Clip fertig: 96 Bilder / 9.6 s Bild, 9.7 s Ton, 7810 KB (SD schreibt 0.86 MB/s)
+```
+
+Stehen dort zwei sehr verschiedene Zahlen, laufen Bild und Ton auseinander —
+dann ist die Karte zu langsam (siehe `BILD_QUALITAET`).
+
+### Ton im Livestream
+
+Das Bild kommt als MJPEG in einem `<img>`-Element an, und ein `<img>` kann
+keinen Ton. Deshalb gibt es den Ton als **zweiten Strom auf Tür 82**: technisch
+eine WAV-Datei, die einfach nie zu Ende geht. Ein `<audio>`-Element auf der
+Website spielt sie.
+
+Zwei Dinge muss man dabei wissen — beide sind keine Schwächen des Aufbaus,
+sondern Eigenschaften des Webs:
+
+1. **Ton startet nicht von selbst.** Browser verbieten das (sonst würde jede
+   Website losdudeln). Auf der Website gibt es deshalb den Knopf
+   **🔊 Ton an** — einmal antippen ist die Erlaubnis.
+2. **Der Ton läuft dem Bild etwa eine Sekunde nach**, weil der Browser ihn
+   puffert. Für „was ist da los?" reicht das. Lippensynchron bekommt man das
+   nur mit WebRTC, und das passt nicht in einen ESP32.
+
+> 📱 **Auf iPhone und iPad kann der Tonstrom streiken.** Safari verlangt bei
+> Audiodateien, dass der Server „Sprünge in der Datei" unterstützt (HTTP-Range)
+> — bei einem Strom, der nie endet, geht das nicht. Chrome, Firefox und Edge
+> (Android, Windows, Mac) spielen ihn. Klappt es auf dem iPhone nicht, steht
+> die Meldung unter dem Knopf, und man hat zwei Auswege: den **Clip
+> herunterladen** (der hat den Ton drin und läuft überall) oder
+> `http://birdycam.local:82/` in **VLC für iOS** öffnen.
+
+### Was der Ton kostet
+
+| Posten | Aufschlag |
+|---|---|
+| Strom (Mikrofon + zweiter Kern) | **+1 Wh/Tag** (~7 %) |
+| SD-Karte | +32 KB/s im Clip, ~+16 MB am Tag |
+| PSRAM | 128 KB Ring + 80 KB Vorlauf-Eimer |
+| WLAN beim Zuhören | +256 kbit/s |
+
+Der Verbrauch steigt damit von 15 auf **16 Wh/Tag** (Router) bzw. von 21 auf
+**22 Wh/Tag** (eigenes WLAN). An der Panelempfehlung ändert das nichts.
+
+### Die Einstellungen dazu
+
+Alles in [`config.h`](../software/firmware/birdycam/config.h), Abschnitt 6:
+
+| Einstellung | Standard | Wirkung |
+|---|---|---|
+| `AUDIO_AN` | `true` | Hauptschalter. `false` = kein Mikrofon, gar kein Ton |
+| `TON_IN_CLIPS` | `true` | Tonspur in der AVI-Datei |
+| `TON_IM_STREAM` | `true` | Tonstrom auf Tür 82 |
+| `TON_ABTASTRATE` | `16000` | `8000` halbiert den Platzbedarf, klingt dumpf |
+| `TON_VERSTAERKUNG` | `2` | Im Kasten ist es leise. Zu hoch = es knackt |
+| `TON_VORLAUF_MS` | `2500` | Ton vor dem Auslöser, passend zum Bild-Vorlauf |
+| `GESANG_AUFNEHMEN` | `false` | zusätzlich einzelne WAV-Dateien, siehe [8.10](#810-der-bonus-vogelgesang-als-eigene-datei) |
+
+> ⚠️ **Ein Mikrofon am Nistkasten hört den ganzen Garten**, nicht nur den
+> Kasten. Es kann „Vogel im Kasten" und „Vogel im Nachbarbaum" nicht trennen —
+> das ist keine Einschränkung des Aufbaus, sondern der Physik. Was man dagegen
+> sehr gut hört: bettelnde Junge, und die sind laut.
+
+### 🔨 Und ein Bauschritt, den man nicht vergessen darf
+
+Das Mikrofon sitzt **fest auf dem XIAO-Board**, und das liegt in der
+geschlossenen IP65-Box an der Außenwand des Kastens. Ohne einen Schallweg hört
+es gedämpften Garten und kaum das Nest.
+
+Die Lösung ist ein **6-mm-Loch von der Box in den Kasten** — beide Öffnungen
+zeigen aufeinander, dazwischen eine Moosgummi-Dichtung, boxseitig eine
+atmungsaktive Membran. Damit hört das Mikrofon ins Nest, und dicht bleibt es
+trotzdem, weil das Loch nicht ins Freie geht.
+
+👉 Anleitung mit Skizze: [Bauplan 4.5b](04-bauplan.md#45b-das-mikrofon-hören-lassen-nur-variante-b).
+**Beim Bauen im Winter machen** — ab März darf der Kasten nicht mehr geöffnet
+werden.
+
+### Wenn der Ton nicht kommt — Fehlertabelle
+
+| Symptom | Ursache | Abhilfe |
+|---|---|---|
+| Serieller Monitor sagt „Mikrofon startet nicht" | ESP32-Boardpaket älter als 3.x (`ESP_I2S.h` fehlt) | Boardverwalter → `esp32` aktualisieren |
+| „Zu wenig PSRAM fuer den Tonring" | PSRAM steht auf „Disabled" oder der Vorlauf ist zu groß | PSRAM = **OPI PSRAM**, ggf. `VORLAUF_MAX_BILDER` senken |
+| Clip hat keine Tonspur | `TON_IN_CLIPS false`, oder Mikrofon nicht gestartet | Startmeldung `[Audio] Mikrofon laeuft` prüfen |
+| Ton im Clip **kürzer** als das Bild | Karte zu langsam, Ton wurde verworfen | Website → Details → „Ton verworfen"; `BILD_QUALITAET` erhöhen |
+| Alles sehr leise | Kein Schallloch zur Box (siehe unten), oder `TON_VERSTAERKUNG 1` | Loch bohren, dann Verstärkung auf 3–4 |
+| Es knackt und verzerrt | `TON_VERSTAERKUNG` zu hoch | auf 1–2 zurück |
+| Knopf „Ton an" fehlt auf der Website | `TON_IM_STREAM false` oder Mikrofon aus | config.h prüfen |
+| Nachts liegt ein Pfeifen über der Aufnahme | PWM der IR-LEDs im Hörbereich | siehe direkt darunter — ab Werk erledigt |
+
+### Ein Nebeneffekt, der schon eingebaut ist
+
+Die IR-LEDs werden per PWM gedimmt. Stünde dieser Takt bei 1 kHz, würde der
+Stromstoß über die 3,3-V-Leitung ins Mikrofon koppeln — und nachts, wenn das
+IR-Licht an ist, läge ein Pfeifen genau im Vogelgesang-Bereich über der
+Aufnahme. Deshalb läuft die PWM in
+[`strom.cpp`](../software/firmware/birdycam/strom.cpp) mit **20 kHz**: oberhalb
+des Hörbaren und oberhalb dessen, was das Mikrofon überhaupt durchlässt.
+
+---
+
 ## 8.3 Stückliste
 
 👉 **Zum Bestellen: [9. Bestellliste](09-bestellliste.md)** — nach Shop gruppiert, mit
@@ -222,7 +377,10 @@ Die drei wichtigsten Punkte:
   **7 % weniger Pixel, doppelte Bildrate, sicher lieferbar** — deshalb ist die Firmware auf
   `FRAMESIZE_UXGA` mit dem OV2640 voreingestellt. Wer 16:9 will, nimmt den OV5640 und
   stellt `FRAMESIZE_FHD` ein.
-- **Solarpanel 6 V** (nicht 12 V!) — ein 12-V-Panel zerstört den Laderegler.
+- **Solarpanel mit 5 V** — entscheidend ist die **Leerlaufspannung unter 6,5 V**.
+  Ein Panel mit Aufdruck „6 V" hat 7,2 V und zerstört den Laderegler, ein 12-V-Panel
+  erst recht. Messanleitung und konkrete Modelle in
+  [9.3b](09-bestellliste.md#93b-️-welches-solarpanel-passt-zum-laderegler).
 
 > ⚠️ **Ein Kaufteil ist unbestätigt:** Ein fertiges NoIR-Modul speziell für die XIAO Sense
 > konnte ich nicht verifizieren. Die 24-Pin-**DVP**-Module aus der ESP32-CAM-Welt passen
@@ -241,7 +399,7 @@ kann man vorgelötet kaufen.
 
 ```mermaid
 flowchart TB
-  PV["☀️ Solarpanel<br/>6 V / 10 W"]
+  PV["☀️ Solarpanel 5 V / 10 W<br/>Leerlauf &lt; 6,5 V"]
   subgraph SPM["Solar Power Manager (E5)"]
     IN["Schraubklemme IN + / −"]
     JST["JST-Buchse BAT"]
@@ -291,7 +449,7 @@ flowchart TB
 | **D2** | GPIO3 | ← Lichtschranke `OUT` |
 | D3–D5 | GPIO4–6 | frei, z. B. DS18B20 |
 | **D8/D9/D10** | GPIO7/8/9 | **SD-Karte — nicht anfassen!** |
-| *(intern)* | GPIO41/42 | Mikrofon (nur wenn `AUDIO_AN = true`) |
+| *(intern)* | GPIO41/42 | Mikrofon auf dem Board (bei `AUDIO_AN = true`, Standard) |
 
 > ⚠️ **Der häufigste Anfängerfehler:** D8, D9 oder D10 benutzen. Dann funktioniert plötzlich
 > die SD-Karte nicht mehr, und man sucht den Fehler in der Software. **Merksatz: D8, D9, D10
@@ -317,7 +475,7 @@ Zwei Unterschiede:
 
 1. **Kleineres Gehäuse.** Kein 12-Ah-Akku, kein Laderegler in Zigarettenschachtelgröße.
    Eine Box von ~120 × 80 × 50 mm reicht.
-2. **Kleineres Panel.** 10 W entspricht etwa 25 × 20 cm und wiegt ~500 g — deutlich
+2. **Kleineres Panel.** Das 5-V-Kamerapanel misst etwa 17 × 16 cm und wiegt ~290 g — deutlich
    einfacher zu montieren als das 2-kg-Panel der Variante A.
 
 ---
@@ -363,7 +521,7 @@ loslassen. Nach dem Hochladen einmal **RESET** drücken.
 | **3** | [`step3_kamera`](../software/firmware/steps/step3_kamera/step3_kamera.ino) | 🎉 **das erste Livebild im Browser** | 30 min |
 | **4** | [`step4_irlicht`](../software/firmware/steps/step4_irlicht/step4_irlicht.ino) | unsichtbares Licht, Handy-Trick | 20 min |
 | **5** | [`step5_akku`](../software/firmware/steps/step5_akku/step5_akku.ino) | Akku messen und **kalibrieren** | 25 min |
-| **6** | [`step6_mikrofon`](../software/firmware/steps/step6_mikrofon/step6_mikrofon.ino) | Lautstärkebalken, Tonaufnahme *(optional)* | 25 min |
+| **6** | [`step6_mikrofon`](../software/firmware/steps/step6_mikrofon/step6_mikrofon.ino) | Lautstärkebalken, Tonaufnahme — **prüft das Mikrofon** | 25 min |
 | **7** | [`step7_lichtschranke`](../software/firmware/steps/step7_lichtschranke/step7_lichtschranke.ino) | Einflug/Ausflug mit Dauer | 30 min |
 | **8** | [`birdycam`](../software/firmware/birdycam/) | die fertige Vogelkamera | 40 min |
 
@@ -406,6 +564,18 @@ Die vier Einstellungen, die über Bildqualität und Speicher entscheiden:
 | `STREAM_HAT_VORRANG` | `true` | beim Zuschauen wird nicht aufgenommen |
 | `RING_CLIPS` | `200` | ~1 GB. Auf 1000 erhöhen ist problemlos |
 
+**Ton** (Erklärung in [8.2d](#82d-ton--bild-und-ton-zusammen)) und
+**Tagesarchiv** (in [8.7c](#87c-verlauf-über-tage--tagecsv)):
+
+| Einstellung | Standard | Wirkung |
+|---|---|---|
+| `AUDIO_AN` | `true` | Hauptschalter fürs Mikrofon |
+| `TON_IN_CLIPS` | `true` | Clips bekommen eine Tonspur (+4 % Platz) |
+| `TON_IM_STREAM` | `true` | Ton im Livestream, Knopf „🔊 Ton an" |
+| `TON_VERSTAERKUNG` | `2` | lauter machen; zu hoch = es knackt |
+| `TAGE_CSV_AN` | `true` | Tageszeile in `/tage.csv` schreiben |
+| `TAGE_ANZEIGEN` | `30` | so viele Tage zeigt die Website |
+
 Hochladen. Im Seriellen Monitor (115200 Baud):
 
 ```
@@ -419,8 +589,10 @@ Hochladen. Im Seriellen Monitor (115200 Baud):
 [Licht] Lichtschranke bereit an GPIO3 (Strahl ist frei)
 [WLAN] Verbunden. IP: 192.168.1.87 (-52 dBm)
 [WLAN] Erreichbar als http://birdycam.local/
+[Audio] Mikrofon laeuft: 16000 Hz, Verstaerkung 2x, Ton in Clips, Ton im Stream
 [Web] Website:    http://192.168.1.87/
 [Web] Livestream: http://192.168.1.87:81/
+[Web] Tonstream:  http://192.168.1.87:82/  (auf der Website "Ton an")
 =====  BirdyCam ist bereit  =====
 ```
 
@@ -437,13 +609,13 @@ Dann **`http://birdycam.local/`** öffnen.
 | [`camera_pins.h`](../software/firmware/birdycam/camera_pins.h) | Pinbelegung der Kamera (nicht ändern) |
 | [`bewegung.cpp`](../software/firmware/birdycam/bewegung.cpp) | Bildvergleich auf verkleinertem Bild |
 | [`lichtschranke.cpp`](../software/firmware/birdycam/lichtschranke.cpp) | Vögel zählen per Interrupt |
-| [`avi.cpp`](../software/firmware/birdycam/avi.cpp) | AVI-Datei aus Einzelbildern bauen + SD-Selbstdiagnose |
-| [`speicher.cpp`](../software/firmware/birdycam/speicher.cpp) | Ringspeicher + Statistik |
+| [`avi.cpp`](../software/firmware/birdycam/avi.cpp) | AVI-Datei aus Bild **und Ton** bauen + SD-Selbstdiagnose |
+| [`speicher.cpp`](../software/firmware/birdycam/speicher.cpp) | Ringspeicher, Statistik, **Tagesarchiv `/tage.csv`** |
 | [`strom.cpp`](../software/firmware/birdycam/strom.cpp) | Akku, Akku-Trend, IR-PWM, Tiefschlaf bei Notaus |
 | [`systeminfo.cpp`](../software/firmware/birdycam/systeminfo.cpp) | Systemzustand, Gesundheitsbewertung, WLAN-Aufsicht |
-| [`audio.cpp`](../software/firmware/birdycam/audio.cpp) | Gesang erkennen und als WAV speichern *(aus)* |
+| [`audio.cpp`](../software/firmware/birdycam/audio.cpp) | Mikrofon, **Tonring für Clip und Stream**, Gesangserkennung |
 | [`netzwerk.cpp`](../software/firmware/birdycam/netzwerk.cpp) | Router **oder** eigenes WLAN, Captive Portal, Uhrzeit |
-| [`web.cpp`](../software/firmware/birdycam/web.cpp) | Website und Livestream |
+| [`web.cpp`](../software/firmware/birdycam/web.cpp) | Website, Livestream (81) und **Tonstrom (82)** |
 
 ### Ein Blick in `avi.cpp` — für Neugierige
 
@@ -455,6 +627,13 @@ Ein paar Zahlen im Deckblatt (wie viele Bilder es geworden sind) kennt man erst 
 Deshalb schreibt das Programm zuerst Platzhalter, und springt zum Schluss zurück und trägt
 die richtigen Werte ein. Das ist ein Muster, das in Dateiformaten sehr oft vorkommt — und
 gut zum Verstehen, wie Dateien eigentlich aufgebaut sind.
+
+Mit Ton wird das Deckblatt von 224 auf **326 Bytes** größer, weil eine zweite
+Spur beschrieben werden muss. Danach wechseln sich die Häppchen ab: `00dc` für
+ein Bild, `01wb` für das Stück Ton dazu. Am Ende trägt das Programm bei der
+Bildspur die Bildrate ein und bei der Tonspur, aus wie vielen Messwerten sie
+besteht — daraus errechnet der Player beide Längen, und wenn sie
+zusammenpassen, ist der Clip synchron.
 
 ---
 
@@ -471,17 +650,26 @@ Die Website läuft **auf dem ESP32 selbst**. Kein Server, keine Cloud, kein Abo.
 │ ┌──────────────────────────────────────────────────────┐ │
 │ │             [ Livestream, Port 81 ]                  │ │
 │ └──────────────────────────────────────────────────────┘ │
+│ (🔊 Ton an)                                              │
 ├──────────────────────────────────────────────────────────┤
 │ HEUTE                                                    │
 │ ┌────┐┌────┐┌─────┐┌─────┐                               │
 │ │ 47 ││1382││ 5:41││20:12│                               │
 │ └────┘└────┘└─────┘└─────┘                               │
 ├──────────────────────────────────────────────────────────┤
-│ WANN IST RUSHHOUR?                                       │
+│ WANN IST RUSHHOUR?   (Heute)( Ø letzte Tage )            │
 │     █ █       █                                          │
 │   █ █ █ █   █ █ █     █                                  │
 │ ░ █ █ █ █ █ █ █ █ █ █ █ ░ ░                              │
 │ 0     6     12    18                                     │
+├──────────────────────────────────────────────────────────┤
+│ VERLAUF — LETZTE 30 TAGE                                 │
+│         █     █ █   █                                    │
+│   █ █ ░ █ █ ░ █ █ █ █ █ ░ █ █ █ ░ █ █ █ █ █ █ ░ █ █ █    │
+│ 18.03.    23.03.    28.03.    02.04.    07.04.           │
+│ Ø 41,3 Besuche am Tag · bester Tag 16.04. mit 78 ·        │
+│ tiefster Akkustand 3,58 V am 12.04. · 30 Tage im Archiv   │
+│ tage.csv herunterladen · eine Zeile je Tag, öffnet Excel  │
 ├──────────────────────────────────────────────────────────┤
 │ AKKU                                                     │
 │ [████████████████░░░░]  78 % (3.92 V)                    │
@@ -501,7 +689,7 @@ Die Website läuft **auf dem ESP32 selbst**. Kein Server, keine Cloud, kein Abo.
 │ ▸ Technische Details                                     │
 ├──────────────────────────────────────────────────────────┤
 │ AUFNAHMEN   (Videoclips)( Fotos )( Vogelgesang )         │
-│  ▶ clip_047.avi        4.8 MB · 16.04. 06:12             │
+│  ▶ clip_047.avi  (Bild+Ton)  5.1 MB · 16.04. 06:12       │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -572,10 +760,13 @@ tatsächlich hat: *Kommt der Akku über den Tag oder nicht?*
 | Adresse | Rückgabe |
 |---|---|
 | `http://birdycam.local/` **oder** `http://192.168.4.1/` | die Website |
-| `…:81/` | reiner Livestream (MJPEG) |
-| `/api/status` | alles als JSON — Statistik, Akku, System, Netzwerk |
+| `…:81/` | reiner Livestream (MJPEG, ohne Ton) |
+| `…:82/` | reiner Tonstrom (endlose WAV-Datei) |
+| `/api/status` | alles als JSON — Statistik, Akku, System, Netzwerk, Ton |
 | `/api/system` | nur die Systemdaten |
 | `/api/liste?typ=clips` | Liste der Aufnahmen (`clips`, `fotos`, `audio`) |
+| `/api/tage?n=30` | die letzten 30 Tage als JSON + Stunden-Durchschnitt |
+| `/tage.csv` | das ganze Tagesarchiv zum Herunterladen |
 | `/api/zeit?ts=…` | Uhrzeit stellen (macht die Website automatisch) |
 | `/datei?p=/clips/clip_047.avi` | die Datei |
 
@@ -604,6 +795,100 @@ neu verbunden wurde, steht in den technischen Details.
 
 ---
 
+## 8.7c Verlauf über Tage — `/tage.csv`
+
+„War letzte Woche mehr los als diese?", „Wie tief ist der Akku in der Regenwoche
+gefallen?", „Wann fing die Fütterung an, sich zu häufen?" — dafür reicht eine
+Tagesstatistik nicht. Deshalb schreibt die Kamera **jede Stunde eine Zeile über
+den laufenden Tag** in die Datei `/tage.csv` und um Mitternacht die endgültige.
+
+```
+datum;besuche;erster;letzter;drin_s;clips;fotos;audio;akku_min;akku_max;h00;…;h23
+2026-04-14;0039;05:47;20:03;001504;0026;0092;0000;3.71;4.11;000;000;…
+2026-04-15;0044;05:44;20:08;001702;0029;0104;0000;3.68;4.12;000;000;…
+2026-04-16;0047;05:41;20:12;001820;0031;0112;0000;3.61;4.09;000;000;…
+```
+
+| Spalte | Bedeutung |
+|---|---|
+| `datum` | Tag als `JJJJ-MM-TT` |
+| `besuche` | gezählte Einflüge (Lichtschranke) |
+| `erster` / `letzter` | erster und letzter Anflug als `HH:MM` |
+| `drin_s` | Aufenthaltsdauer aller Vögel zusammen, in Sekunden |
+| `clips` / `fotos` / `audio` | an diesem Tag entstandene Dateien |
+| `akku_min` / `akku_max` | tiefster und höchster Akkustand des Tages |
+| `h00`…`h23` | Anflüge je Stunde — daraus wird die Ø-Rushhour |
+
+### Warum CSV und nicht JSON — die Entscheidung im Klartext
+
+Das war die eigentliche Frage, und sie hat drei Antworten, alle drei zugunsten
+von CSV:
+
+1. **Anhängen ist ein einziger Schreibvorgang.** Eine Zeile, 156 Bytes, fertig.
+   Bei JSON müsste die Kamera die ganze Liste einlesen, im Arbeitsspeicher
+   ergänzen und komplett neu ausgeben. Mit 30 Tagen geht das noch, mit 300 nicht
+   mehr — und ein Stromausfall mitten im Neuschreiben würde **die ganze Datei**
+   zerstören, nicht nur die letzte Zeile.
+2. **Alle Zeilen sind gleich lang.** Genau 156 Bytes. Damit kann die Kamera
+   direkt an die Stelle springen, wo die letzten 30 Tage anfangen, statt die
+   Datei von vorne zu lesen. Bei einem Jahr Verlauf ist das der Unterschied
+   zwischen „sofort" und „56 KB durchkauen" — und der ESP32 hat nur ein paar
+   Kilobyte freien Arbeitsspeicher übrig.
+3. **Man kann sie in Excel öffnen.** Doppelklick auf die heruntergeladene Datei,
+   Diagramm markieren, fertig. Ein JSON-Array müsste man erst umwandeln.
+
+Und derselbe Trick mit der festen Zeilenlänge erlaubt noch etwas: Die Kamera
+liest die **letzte** Zeile, und wenn sie vom selben Tag ist, springt sie zurück
+und überschreibt sie. Deshalb kann sie stündlich mitschreiben, ohne dass 24
+Zeilen pro Tag entstehen. Ein Stromausfall kostet damit höchstens die letzte
+Stunde — nicht den ganzen Tag.
+
+> **Der JSON-Teil fehlt trotzdem nicht:** `/api/tage?n=30` liefert die Zeilen
+> als JSON, so wie die Website es braucht. JSON entsteht also beim Abruf und
+> nicht beim Speichern — genau dort, wo es billig ist.
+
+### Was die Website daraus macht
+
+- **Ein Balken je Tag** über die letzten `TAGE_ANZEIGEN` Tage (Standard 30).
+  Antippen zeigt Datum, Besuche, Clips, Akkufenster und Minuten im Kasten.
+- **Eine Zeile Zusammenfassung:** Durchschnitt, bester Tag, tiefster Akkustand
+  mit Datum.
+- **Die Rushhour umschaltbar** zwischen *heute* und *Ø der letzten Tage*. Der
+  Durchschnitt kommt fertig aus der Kamera — der Browser muss nicht 720
+  Einzelwerte verrechnen, und die Antwort bleibt klein.
+- **Einen Link auf `tage.csv`** zum Herunterladen.
+
+### Platzbedarf und Grenzen
+
+| | |
+|---|---|
+| Eine Zeile | 156 Bytes |
+| Ein Jahr | 56 KB |
+| Website zeigt | `TAGE_ANZEIGEN` Tage, höchstens 60 |
+| Datei behält | **alles**, unbegrenzt |
+
+Der Tageswechsel braucht eine **gestellte Uhr**. Im Routerbetrieb kommt sie vom
+Zeitserver; im eigenen WLAN schenkt sie der erste Website-Besuch
+([8.2c](#82c-router-oder-eigenes-wlan--beides-geht)). Solange die Uhr fehlt,
+zählt die Kamera weiter, schreibt aber keine Tageszeile — sonst stünde dort
+das Datum 1970.
+
+War die Kamera ein paar Tage aus (leerer Akku), entsteht **keine** Zeile für
+die fehlenden Tage. Im Diagramm ist dann eine Lücke zu sehen, und das ist
+richtig so: Es gab keine Messung, also gibt es auch keine Null.
+
+### Wenn der Verlauf leer bleibt
+
+| Symptom | Ursache | Abhilfe |
+|---|---|---|
+| „Noch keine Tageszeile" bleibt stehen | Uhr nicht gestellt | Details → „Uhrzeit gestellt: NEIN" → im eigenen WLAN einmal die Website aufrufen |
+| Verlaufskarte fehlt ganz | `TAGE_CSV_AN false` | in `config.h` einschalten |
+| Alle Akkuwerte 0.00 | Spannungssensor nicht angeschlossen | [Schaltplan 8.4](#84-schaltplan), oder `AKKU_MESSEN false` — dann bleibt die Spalte leer |
+| `/tage.csv` bringt 404 | Noch keine Karte oder noch keine Stunde vergangen | eine Stunde warten oder `/tage.csv` erneut aufrufen |
+| Besuche immer 0, obwohl Clips entstehen | Lichtschranke zählt nicht | `LICHTSCHRANKE_INVERTIERT` prüfen ([Sketch 7](../software/firmware/steps/step7_lichtschranke/step7_lichtschranke.ino)) |
+
+---
+
 ## 8.8 Speicher — warum die SD-Karte hier hält
 
 Variante B kann keine SSD betreiben; ein ESP32 hat kein USB-Host für Massenspeicher. Das
@@ -619,9 +904,11 @@ Die Karte sieht ausschließlich große, zusammenhängende Schreibvorgänge: ein 
 | Posten | Menge/Tag (UXGA, Qualität 18) |
 |---|---|
 | Bewegungsclips (~60 × 8 s × 0,80 MB/s) | ~384 MB |
+| Tonspur in den Clips (~480 s × 32 KB/s) | ~16 MB |
 | Vogelfotos (~200 × 80 KB) | ~16 MB |
 | Statistik-Textdatei (1× pro Minute) | < 1 MB |
-| **Summe** | **≈ 0,4 GB/Tag** |
+| Tagesarchiv `/tage.csv` (1 Zeile) | 156 Bytes |
+| **Summe** | **≈ 0,42 GB/Tag** |
 
 > **Überraschend, aber wichtig:** Die Tagesmenge hängt fast **nicht** von der Auflösung ab,
 > sondern nur davon, **wie viele Sekunden aufgenommen werden**. Der Grund: In beiden Fällen
@@ -659,28 +946,35 @@ das sind auch pessimistisch gerechnet **viele Jahre**. Und der Ausfallmechanismu
 
 | Was nicht geht | Warum |
 |---|---|
-| Clips im Browser abspielen | MJPEG-AVI kann kein Browser. Herunterladen und [VLC](https://www.videolan.org/) |
-| Verlauf über Wochen | Nur Tagesstatistik in einer Textdatei, keine Datenbank |
-| Mehrere Zuschauer | Ein Livestream gleichzeitig, der zweite muss warten |
+| Clips im Browser abspielen | MJPEG-AVI kann kein Browser, auch mit Ton nicht. Herunterladen und [VLC](https://www.videolan.org/) |
+| Ton lippensynchron im Stream | Der Browser puffert ~1 s. Im **Clip** ist er synchron |
+| Ton im Stream auf iPhone/iPad | Safari verlangt HTTP-Range, ein endloser Strom kann das nicht → VLC oder Clip herunterladen |
+| Mehrere Zuschauer | Ein Livestream und ein Tonstrom gleichzeitig, der zweite muss warten |
 | Full HD flüssig | ~6 Bilder/s. SVGA ist die angenehmere Wahl |
+| Verlauf mit Uhr-Ausfall | Ohne gestellte Uhr keine Tageszeile — [8.7c](#87c-verlauf-über-tage--tagecsv) |
 | Gesang mit Artnamen | Braucht BirdNET auf einem Pi 4/5 — [1.7](01-machbarkeit.md#17-was-bewusst-fehlt-und-warum) |
 | Artenerkennung | Bewusst weggelassen |
 | Von unterwegs zuschauen | Nur im Heim-WLAN. Kein Passwortschutz → **nicht** ins Internet stellen |
 
+*Der „Verlauf über Wochen" stand hier früher als Grenze — er ist jetzt drin,
+siehe [8.7c](#87c-verlauf-über-tage--tagecsv).*
+
 ---
 
-## 8.10 Der eine Bonus, den nur Variante B hat
+## 8.10 Der Bonus: Vogelgesang als eigene Datei
 
-**Vogelgesang aufnehmen.** Die XIAO Sense hat ein digitales Mikrofon an Bord, und der Code
-dafür ist fertig — er ist nur abgeschaltet. In `config.h`:
+Ton in Clip und Stream ist ab Werk an ([8.2d](#82d-ton--bild-und-ton-zusammen)).
+Darüber hinaus kann die Kamera **einzelne Gesangsstücke** als WAV-Datei
+mitschneiden — unabhängig davon, ob gerade ein Clip läuft. In `config.h`:
 
 ```cpp
-#define AUDIO_AN  true
+#define GESANG_AUFNEHMEN  true
 ```
 
-Dann läuft auf dem **zweiten Prozessorkern** eine Daueraufgabe, die zuhört. Wird es im
-Vogelgesang-Frequenzbereich laut, speichert sie eine WAV-Datei — inklusive der 2 Sekunden
-*davor*, weil sonst der Anfang jedes Rufs fehlt. Round-Robin über 100 Dateien.
+Dann horcht die Daueraufgabe auf Kern 0 zusätzlich mit: Wird es im
+Vogelgesang-Frequenzbereich laut, speichert sie eine WAV-Datei — inklusive der
+2 Sekunden *davor*, weil sonst der Anfang jedes Rufs fehlt. Round-Robin über
+100 Dateien.
 
 **Was es kann:** „Heute war um 5:40 Uhr das erste Vogelkonzert, 40 Sekunden lang."
 **Was es nicht kann:** sagen, *welcher* Vogel singt.
@@ -692,11 +986,11 @@ das Programm Vögel besser als Autos, ohne irgendeine Signalverarbeitungs-Biblio
 
 Die Schwelle stellt man mit [Schritt 6](../software/firmware/steps/step6_mikrofon/step6_mikrofon.ino)
 ein: Wert bei Stille notieren, Wert beim Pfeifen notieren, `GESANG_SCHWELLE` in die Mitte
-legen.
+legen. Wichtig: Die Erkennung rechnet mit den **unverstärkten** Werten — an
+`TON_VERSTAERKUNG` zu drehen verändert die Schwelle also nicht.
 
-> ⚠️ **Erwartungsmanagement:** Ein Mikrofon am Nistkasten hört **den ganzen Garten**, nicht
-> den Kasten. Es kann „Vogel im Kasten" und „Vogel im Nachbarbaum" nicht trennen — das ist
-> keine Einschränkung des Aufbaus, sondern der Physik.
+**Kosten:** 480 KB PSRAM für den Aufnahmepuffer (nur wenn eingeschaltet) und
+~1,4 MB je Minute Gesang auf der Karte.
 
 ---
 

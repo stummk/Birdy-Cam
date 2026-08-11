@@ -107,7 +107,7 @@ bool lichtschrankePruefen() {
   } else {
     uint32_t aufenthalt = (millis() - vogelDrinSeit) / 1000;
     vogelDrinSeit = 0;
-    stats.letzteAufenthaltS = aufenthalt;
+    aufenthaltZaehlen(aufenthalt);      // zählt auch die Tagessumme mit
     Serial.printf("[Licht] AUSFLUG — war %u s drin\n", aufenthalt);
   }
 

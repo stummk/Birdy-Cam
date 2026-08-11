@@ -117,8 +117,8 @@ bereit.
 | E2 | **Kameramodul 24-pol DVP, ohne IR-Filter** | ⭐ **OV2640 „Night Vision"** (1600×1200 = 1,92 MP, 8–12 fps, sicher lieferbar) **oder** OV5640 (1920×1080 = 2,07 MP, ~6 fps, schwer zu finden). Nur 7 % Pixelunterschied — Entscheidungshilfe in [9.0](09-bestellliste.md#90-️-die-eine-entscheidung-die-du-vorher-treffen-musst) | 10–13 € | [OV2640 Night Vision](https://esp32s.com/product/24pin-ov2640-camera-module-for-esp32-cam-camera-module-2mp-180-66-120-160-222-200-degree-650nm-850nm-night-vision-dvp/) · [eBay OV5640](https://www.ebay.de/sch/i.html?_nkw=OV5640+24pin+no+IR+filter+DVP) |
 | E3 | microSD 32 GB **High Endurance** | Dashcam-Klasse. **Max. 32 GB** — mehr kann das Board nicht. | 12 € | [Amazon Suche](https://www.amazon.de/s?k=microSD+32GB+High+Endurance) |
 | E4 | FPC-Verlängerung 24-pol, 0,5 mm, ~10 cm | Kamera in den Kasten, Board nach außen. **Max. 15 cm.** | 3 € | [AliExpress Suche](https://de.aliexpress.com/w/wholesale-24pin-0.5mm-FPC-extension-cable.html) |
-| E5 | **Solar Power Manager 5 V** (DFRobot DFR0559 o. ä.) | MPPT + Laderegler + 5-V-Ausgang in einem. Schraubklemme, JST, USB — komplett lötfrei. | 10 € | [DFRobot](https://www.dfrobot.com/product-1712.html) · [Wiki](https://wiki.dfrobot.com/dfr0559/) |
-| E6 | **Solarpanel 6 V / 10 W** | ⚠️ **6 V**, nicht 12 V — sonst stirbt E5. | 20 € | [Amazon Suche](https://www.amazon.de/s?k=Solarpanel+6V+10W+wetterfest) |
+| E5 | **Solar Power Manager 5 V** (DFRobot DFR0559 o. ä.) | MPPT + Laderegler + 5-V-Ausgang in einem. Schraubklemme, JST, USB — komplett lötfrei. Grenzen: Eingang **4,5–6 V**, Ladestrom **900 mA**, Panel **≤ 10 W** | 10 € | [DFRobot](https://www.dfrobot.com/product-1712.html) · [Wiki](https://wiki.dfrobot.com/dfr0559/) |
+| E6 | **5-V-Solarpanel für Akku-Kameras, 10 W, IP65** | ⚠️ Entscheidend ist die **Leerlaufspannung: unter 6,5 V**, sonst stirbt E5. Ein Panel mit Aufdruck „6 V" hat 7,2 V und ist **nicht** geeignet. Das USB-Kabel wird gekürzt und in die Schraubklemme geschraubt. Messanleitung in [9.3b](09-bestellliste.md#93b-️-welches-solarpanel-passt-zum-laderegler) | ~22 € | [Beispiel](https://www.amazon.de/Tragbares-Solarpanel-Ladeger%C3%A4t-Wasserdicht-%C3%9Cberwachungskamera/dp/B0BB79WH7K) · [5-W-Sparvariante](https://www.pearl.de/a-ZX5350-1322.shtml) |
 | E7 | **LiPo 1S 5000 mAh** mit Schutzschaltung + JST-PH 2.0 | 18,5 Wh ≈ 1,2 Tage. Für 3 Tage: 10000 mAh (+12 €). | 14 € | [Pollin](https://www.pollin.de/stromversorgung/akkus/lipo-akkus/) |
 | E8 | Spannungssensor-Modul 25 V | Akkustand. Der ESP32 hat — anders als der Pi — einen Analogeingang. | 2 € | [Amazon Suche](https://www.amazon.de/s?k=Spannungssensor+Modul+25V+Arduino) |
 | E9 | IR-LEDs, MOSFET-Modul, Lichtschranke, Dupont | wie C1–C4 bei Variante A | 21 € | s. oben |
@@ -151,7 +151,7 @@ bereit.
 
 - [ ] XIAO ist die **„Sense"**-Version, möglichst mit vorgelöteten Pins
 - [ ] Kamera ist **OV5640** (nicht OV2640) — nur der schafft 1080p
-- [ ] Panel ist **6 V** (nicht 12 V)
+- [ ] Panel-**Leerlaufspannung** in der Sonne gemessen: **unter 6,5 V** (kein „6 V"-Panel!)
 - [ ] Akku hat **Schutzschaltung** und **JST-PH-2.0-Stecker**
 - [ ] microSD ist **max. 32 GB** und **High Endurance**
 

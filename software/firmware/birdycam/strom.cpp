@@ -3,7 +3,19 @@
 #include "speicher.h"
 #include <esp_sleep.h>
 
-#define PWM_FREQUENZ   1000    // 1000 mal pro Sekunde ein/aus
+// 20 000 mal pro Sekunde ein/aus — und zwar mit Absicht so hoch:
+//
+// Die IR-LEDs werden per PWM gedimmt, also im Takt ein- und ausgeschaltet.
+// Bei 1000 Hz liegt dieser Takt mitten im Hörbereich, und der Stromstoß
+// koppelt über die 3,3-V-Leitung ins Mikrofon — nachts, wenn das IR-Licht
+// an ist, hört man dann ein Pfeifen genau im Vogelgesang-Bereich.
+// 20 kHz ist oberhalb des Hörbaren UND oberhalb dessen, was das Mikrofon
+// überhaupt durchlässt (es filtert bei ~8 kHz). Damit ist der Ton nachts
+// still, und die LEDs merken vom höheren Takt nichts.
+//
+// Sollten die LEDs dunkler werden oder das MOSFET-Modul warm: zurück auf
+// 1000 — dann kann nachts wieder ein Pfeifen im Ton sein.
+#define PWM_FREQUENZ   20000
 #define PWM_BITS       8       // Auflösung: 0-255
 
 static uint8_t irStand = 0;

@@ -52,10 +52,13 @@
 #define AP_KANAL        6
 
 // ⚡ STROM: Ein eigenes WLAN muss ständig Funkbaken senden und darf nicht
-//    schlafen. Das kostet etwa 0,25 W mehr — bei 15 Wh/Tag Grundverbrauch
-//    sind das +6 Wh/Tag, also rund +40 %.
+//    schlafen. Das kostet etwa 0,25 W mehr — bei 16 Wh/Tag Grundverbrauch
+//    (mit Ton) sind das +6 Wh/Tag, also rund +40 %.
 //
-//    -> Für Dauerbetrieb mit eigenem WLAN: 15-20-W-Panel statt 10 W.
+//    -> Der Laderegler lädt aber nur mit 900 mA, egal wie groß das Panel ist.
+//       Ein größeres Panel bringt deshalb weniger als der Routerbetrieb.
+//       Welches Panel passt (5 V, Leerlauf unter 6,5 V!), steht in
+//       Bestellliste 9.3b.
 //    -> Oder hier auf true stellen: nachts schaltet das eigene WLAN ab,
 //       wenn niemand verbunden ist. Spart etwa die Hälfte davon.
 //       Nachteil: Nachts kommt man nicht dran, ohne zu warten.
@@ -249,14 +252,91 @@
 #define LICHTSCHRANKE_INVERTIERT  false
 
 // ----------------------------------------------------------------------------
-//  6. Ton / Vogelgesang  —  AUS (auf Wunsch gestrichen)
+//  5c. Tagesstatistik über Wochen  ->  /tage.csv
 // ----------------------------------------------------------------------------
-// Der Code funktioniert und liegt bereit. Er erkennt Gesang und speichert
-// ihn als WAV-Datei, sagt aber NICHT, welcher Vogel singt — dafür bräuchte
-// es BirdNET auf einem Raspberry Pi 4/5. Siehe Machbarkeit 1.7.
+// Um Mitternacht schreibt die Kamera EINE Zeile über den vergangenen Tag in
+// die Datei /tage.csv: Besuche, erster und letzter Anflug, Aufenthaltsdauer,
+// Clips, Fotos, Tonaufnahmen, Akku-Minimum und -Maximum und die 24
+// Stundenwerte. Damit gibt es einen Verlauf über Wochen und Monate — nicht
+// nur "heute".
 //
-// Zum Ausprobieren einfach auf true stellen.
-#define AUDIO_AN              false
+// ⚙️ Warum CSV und nicht JSON (die Frage lohnt sich):
+//
+//    Eine Zeile anhängen ist EIN Schreibvorgang. Kein Einlesen, kein Parser,
+//    kein Neuschreiben der Datei. Bei JSON müsste die Kamera die ganze Liste
+//    laden, ergänzen und wieder ausgeben — mit 30 oder 300 Tagen wird das
+//    zum Problem, weil der Arbeitsspeicher knapp ist. Und ein Stromausfall
+//    mitten im Neuschreiben würde die ganze Datei zerstören, nicht nur die
+//    letzte Zeile.
+//
+//    Zweiter Grund: Alle Zeilen sind GLEICH LANG (156 Bytes). Die Kamera
+//    kann deshalb direkt an die letzten 30 Zeilen springen, statt die Datei
+//    von vorne zu lesen. Bei einem Jahr Verlauf ist das der Unterschied
+//    zwischen "sofort" und "56 KB durchkauen".
+//
+//    Und drittens: Man kann die Datei in Excel oder LibreOffice öffnen.
+//    Die Website liefert daraus JSON — aber das entsteht erst beim Abruf.
+//
+// Platzbedarf: 156 Bytes am Tag. Ein Jahr = 56 KB. Auf einer 32-GB-Karte
+// also nichts.
+#define TAGE_CSV_AN           true
+
+// So viele Tage zeigt die Website. Die Datei behält alle Tage, unabhängig
+// von diesem Wert. Mehr als 60 nimmt die Kamera nicht an (Arbeitsspeicher).
+#define TAGE_ANZEIGEN         30
+
+// ----------------------------------------------------------------------------
+//  6. Ton — Mikrofon, Clips mit Ton, Ton im Livestream
+// ----------------------------------------------------------------------------
+// Das Mikrofon sitzt fest auf der XIAO Sense. Es läuft auf dem zweiten
+// Prozessorkern mit, damit das Bild davon nichts merkt.
+//
+// AUDIO_AN ist der Hauptschalter. Steht er auf false, ist Ton komplett aus —
+// egal, was in den drei Zeilen darunter steht.
+#define AUDIO_AN              true
+
+// Ton in die Videoclips schreiben. Die AVI-Datei bekommt dann zwei Spuren,
+// Bild und Ton, und der VLC Player spielt sie zusammen ab.
+//
+// Was das kostet: 32 KB pro Sekunde, also ~4 % mehr Platz auf der Karte.
+// Was es bringt: Man hört die Jungen betteln. Das ist der halbe Nistkasten.
+#define TON_IN_CLIPS          true
+
+// Ton im Livestream. Die Website holt ihn von Tür 82 als endlose WAV-Datei.
+//
+// ⚠️ Zwei Dinge, die man vorher wissen muss:
+//    1. Browser dürfen Ton nicht von selbst anfangen. Auf der Website muss
+//       man einmal auf "🔊 Ton an" tippen — danach bleibt er an.
+//    2. Der Ton läuft dem Bild etwa eine Sekunde nachher, weil der Browser
+//       ihn puffert. Für "was ist da los?" reicht das; lippensynchron ist
+//       es nicht und wird es auf diesem Weg auch nicht.
+#define TON_IM_STREAM         true
+
+// Abtastrate in Messungen pro Sekunde. 16000 erfasst Töne bis 8 kHz und
+// deckt damit Vogelstimmen ab. 8000 halbiert den Platzbedarf, klingt aber
+// dumpf (dann fehlt das Feine an Meisengesang).
+#define TON_ABTASTRATE        16000
+
+// Lautstärke-Verstärkung 1-8 für Clip und Stream. Im Kasten ist es leise,
+// deshalb ist 2 ein guter Anfang. Zu hoch = die Spitzen werden abgeschnitten
+// und es knackt. Die Gesangserkennung unten arbeitet weiter mit den
+// unverstärkten Werten — an GESANG_SCHWELLE ändert sich also nichts.
+#define TON_VERSTAERKUNG      2
+
+// So viele Millisekunden Ton VOR dem Auslöser landen mit im Clip.
+// Sinnvoll ist etwa so viel, wie der Bild-Vorlauf lang ist (~2,4 s bei UXGA).
+// Sind noch nicht so viele da (kurz nach dem Start), wird vorne mit Stille
+// aufgefüllt — dann bleiben Bild und Ton gleich lang.
+#define TON_VORLAUF_MS        2500
+
+// --- Vogelgesang zusätzlich als eigene WAV-Datei ---------------------------
+// Das ist unabhängig vom Ton in Clip und Stream: Wird es im
+// Vogelgesang-Frequenzbereich laut, legt die Kamera eine WAV-Datei an —
+// mit den 2 Sekunden davor, sonst fehlt der Anfang jedes Rufs.
+//
+// Sie sagt NICHT, welcher Vogel singt. Dafür bräuchte es BirdNET auf einem
+// Raspberry Pi 4/5, siehe Machbarkeit 1.7.
+#define GESANG_AUFNEHMEN      false
 
 // Ab welcher Lautstärke gilt es als Gesang? Größer = unempfindlicher.
 // Nach dem Einbau draußen einmal nachjustieren (Wind!).

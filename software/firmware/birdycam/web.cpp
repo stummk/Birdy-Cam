@@ -19,6 +19,24 @@ static WiFiServer streamServer(81);
 static WiFiClient streamClient;
 
 // ---------------------------------------------------------------------------
+//  Der Ton für den Livestream läuft über eine eigene Tür (82).
+//
+//  Warum getrennt vom Bild: Ein Browser zeigt MJPEG in einem <img>-Element
+//  an, und ein <img> kann keinen Ton. Also liefern wir den Ton als zweiten
+//  Strom, den ein <audio>-Element abspielt — technisch eine WAV-Datei, die
+//  einfach nie zu Ende geht. Im Kopf steht eine riesige Länge; der Browser
+//  spielt, was ankommt, und wartet auf den Rest.
+//
+//  Der Preis dieser Einfachheit: Bild und Ton laufen etwa eine Sekunde
+//  auseinander, weil der Browser den Ton puffert. Lippensynchron bekommt
+//  man das nur mit WebRTC — und das passt nicht in einen ESP32.
+// ---------------------------------------------------------------------------
+static WiFiServer tonServer(82);
+static WiFiClient tonClient;
+static int16_t    tonAus[1024];       // 2 KB Zwischeneimer für den Tonstrom
+static void       tonBedienen();      // steht weiter unten
+
+// ---------------------------------------------------------------------------
 //  Die Website. Steht als Text direkt im Programm (PROGMEM = im Flash,
 //  nicht im knappen Arbeitsspeicher).
 // ---------------------------------------------------------------------------
@@ -90,6 +108,11 @@ footer{text-align:center;color:var(--m);font-size:12px;padding:10px}
 <div class="karte">
   <h2>Livebild</h2>
   <img id="live" alt="Livebild">
+  <nav style="margin:10px 0 0">
+    <button id="tonbtn" onclick="tonUm()">&#128266; Ton an</button>
+  </nav>
+  <p class="info" id="toninfo"></p>
+  <audio id="ton" hidden></audio>
 </div>
 
 <div class="karte">
@@ -104,8 +127,21 @@ footer{text-align:center;color:var(--m);font-size:12px;padding:10px}
 
 <div class="karte">
   <h2>Wann ist Rushhour?</h2>
+  <nav>
+    <button class="aktiv" id="rh0" onclick="rushhour(0)">Heute</button>
+    <button id="rh1" onclick="rushhour(1)">&Oslash; letzte Tage</button>
+  </nav>
   <div class="balken" id="balken"></div>
   <div class="stdachse" id="achse"></div>
+</div>
+
+<div class="karte" id="verlaufkarte">
+  <h2>Verlauf &mdash; letzte <span id="tageN">30</span> Tage</h2>
+  <div class="balken" id="tbalken"></div>
+  <div class="stdachse" id="tachse"></div>
+  <p class="info" id="tinfo">&hellip;</p>
+  <p class="info"><a href="/tage.csv" style="color:var(--a)">tage.csv
+    herunterladen</a> &middot; eine Zeile je Tag, &ouml;ffnet sich in Excel</p>
 </div>
 
 <div class="karte">
@@ -149,6 +185,7 @@ footer{text-align:center;color:var(--m);font-size:12px;padding:10px}
 <footer>BirdyCam &middot; l&auml;uft seit <span id="up">?</span></footer>
 <script>
 const $=i=>document.getElementById(i);
+let stdHeute=[], verlauf=null, rhModus=0, tageN=0, tonAn=false;
 // Der Livestream läuft auf Tür 81 — location.hostname klappt sowohl im
 // Heimnetz (birdycam.local) als auch im eigenen WLAN (192.168.4.1).
 $('live').src='http://'+location.hostname+':81/';
@@ -247,17 +284,111 @@ async function status(){
       ['ESP-IDF', sy.sdkVersion],
       ['Lichtschranke', s.strahlFrei?'Strahl frei':'Strahl unterbrochen'],
       ['Durchfl&uuml;ge gez&auml;hlt', s.durchfluege],
-      ['IR-Licht', s.nacht?'Nachtbetrieb':'aus (Tag)']
+      ['IR-Licht', s.nacht?'Nachtbetrieb':'aus (Tag)'],
+      ['Mikrofon', s.tonLaeuft
+        ?('l&auml;uft, '+s.tonRate+' Hz'+(s.tonImClip?', Clips mit Ton':'')) : 'aus'],
+      ['Lautst&auml;rke jetzt', s.laut],
+      ['Ton verworfen (Clip/Stream)', s.tonVerlorenClip+' / '+s.tonVerlorenStream],
+      ['Im Kasten heute', Math.round(s.drinHeuteS/60)+' min'],
+      ['Akku heute min / max', s.akkuMinHeute.toFixed(2)+' / '
+        +s.akkuMaxHeute.toFixed(2)+' V'],
+      ['Clips heute', s.clipsHeute]
     ].map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('');
 
-    const max=Math.max(1,...s.stunden);
-    $('balken').innerHTML=s.stunden.map((v,i)=>
-      `<div class="${v?'':'n'}" style="height:${Math.max(2,v/max*100)}%" title="${i}:00 Uhr: ${v}"></div>`).join('');
-    $('achse').innerHTML=s.stunden.map((v,i)=>`<span>${i%6?'':i}</span>`).join('');
+    stdHeute=s.stunden;
+    rushhour(rhModus);
+
+    // Beim ersten Durchlauf wissen wir erst jetzt, wie viele Tage die
+    // Kamera zeigen soll (TAGE_ANZEIGEN aus config.h) — dann Verlauf holen.
+    if(!s.tageAnzeigen){
+      $('verlaufkarte').hidden=true; $('rh1').hidden=true;   // Archiv ist aus
+    }else if(tageN!==s.tageAnzeigen){
+      tageN=s.tageAnzeigen; $('tageN').textContent=tageN; tage();
+    }
+    $('tonbtn').hidden=!s.tonImStream;
   }catch(e){
     // Nicht still schlucken: wer die Seite debuggen will, soll den Fehler
     // in der Browser-Konsole (F12) sehen.
     console.error('Status konnte nicht aktualisiert werden:',e);
+  }
+}
+
+// ---- Rushhour: heute oder Durchschnitt der letzten Tage -------------------
+function rushhour(m){
+  rhModus=m;
+  $('rh0').classList.toggle('aktiv',m===0);
+  $('rh1').classList.toggle('aktiv',m===1);
+  const w=(m===0?stdHeute:(verlauf?verlauf.stundenSchnitt:null))||[];
+  if(!w.length){$('balken').innerHTML='';return;}
+  const max=Math.max(1,...w);
+  const einheit=m===0?'':' im Schnitt';
+  $('balken').innerHTML=w.map((v,i)=>
+    `<div class="${v>0?'':'n'}" style="height:${Math.max(2,v/max*100)}%" title="${i}:00 Uhr: ${v}${einheit}"></div>`).join('');
+  $('achse').innerHTML=w.map((v,i)=>`<span>${i%6?'':i}</span>`).join('');
+}
+
+// ---- Verlauf über Tage: kommt aus /tage.csv -------------------------------
+async function tage(){
+  try{
+    const d=await(await fetch('/api/tage?n='+tageN)).json();
+    verlauf=d;
+    const t=d.tage;
+    if(!t.length){
+      $('tinfo').textContent='Noch keine Tageszeile in tage.csv — '
+        +'die erste entsteht in der naechsten Stunde.';
+      return;
+    }
+    const max=Math.max(1,...t.map(x=>x.besuche));
+    $('tbalken').innerHTML=t.map(x=>{
+      const tag=x.datum.slice(8)+'.'+x.datum.slice(5,7)+'.';
+      return `<div class="${x.besuche?'':'n'}" style="height:${Math.max(2,x.besuche/max*100)}%"`
+        +` title="${tag} ${x.besuche} Besuche, ${x.clips} Clips, `
+        +`Akku ${x.akkuMin}-${x.akkuMax} V, ${Math.round(x.drinS/60)} min im Kasten"></div>`;
+    }).join('');
+    const jede=Math.ceil(t.length/6);
+    $('tachse').innerHTML=t.map((x,i)=>
+      `<span>${i%jede?'':x.datum.slice(8)+'.'+x.datum.slice(5,7)+'.'}</span>`).join('');
+
+    const summe=t.reduce((a,x)=>a+x.besuche,0);
+    const best=t.reduce((a,x)=>x.besuche>a.besuche?x:a,t[0]);
+    const mitAkku=t.filter(x=>x.akkuMin>0.5);
+    const tief=mitAkku.length
+      ? mitAkku.reduce((a,x)=>x.akkuMin<a.akkuMin?x:a,mitAkku[0]) : null;
+    $('tinfo').innerHTML='&Oslash; <b>'+(summe/t.length).toFixed(1)
+      +'</b> Besuche am Tag &middot; bester Tag '
+      +best.datum.slice(8)+'.'+best.datum.slice(5,7)+'. mit <b>'+best.besuche+'</b>'
+      +(tief?' &middot; tiefster Akkustand <b>'+tief.akkuMin.toFixed(2)+' V</b> am '
+        +tief.datum.slice(8)+'.'+tief.datum.slice(5,7)+'.':'')
+      +' &middot; '+t.length+(t.length===1?' Tag':' Tage')+' im Archiv';
+    if(rhModus===1) rushhour(1);
+  }catch(e){
+    console.error('Verlauf konnte nicht geladen werden:',e);
+    $('tinfo').textContent='Verlauf konnte nicht geladen werden.';
+  }
+}
+
+// ---- Ton an/aus ----------------------------------------------------------
+// Browser dürfen Ton nicht von selbst starten (sonst würde jede Website
+// losdudeln). Deshalb dieser Knopf: Ein Antippen ist die Erlaubnis.
+function tonUm(){
+  const a=$('ton');
+  if(!tonAn){
+    a.src='http://'+location.hostname+':82/';
+    a.play().then(()=>{
+      tonAn=true;
+      $('tonbtn').textContent='\u{1F507} Ton aus';
+      $('tonbtn').classList.add('aktiv');
+      $('toninfo').textContent='Der Ton läuft dem Bild etwa eine Sekunde nach.';
+    }).catch(e=>{
+      $('toninfo').textContent='Der Browser will keinen Ton abspielen ('
+        +e.message+'). Seite neu laden und nochmal tippen.';
+    });
+  }else{
+    a.pause(); a.removeAttribute('src'); a.load();
+    tonAn=false;
+    $('tonbtn').textContent='\u{1F50A} Ton an';
+    $('tonbtn').classList.remove('aktiv');
+    $('toninfo').textContent='';
   }
 }
 
@@ -278,6 +409,8 @@ async function lade(typ,btn){
 }
 
 status(); setInterval(status,5000); lade('clips');
+// Der Verlauf ändert sich nur einmal pro Stunde — alle 10 Minuten reicht.
+setInterval(tage,600000);
 </script></body></html>)HTML";
 
 // ---------------------------------------------------------------------------
@@ -298,6 +431,13 @@ static void statusAusliefern() {
   j += ",\"fps\":"         + String(aktuelleFps, 1);
   j += ",\"laufzeit\":"    + String(millis() / 1000);
   j += ",\"laut\":"        + String(audioLautstaerke());
+  j += ",\"tonLaeuft\":"   + String(audioLaeuft() ? "true" : "false");
+  j += ",\"tonRate\":"     + String(audioAbtastrate());
+  j += ",\"tonImClip\":"   + String((TON_IN_CLIPS && audioLaeuft()) ? "true" : "false");
+  j += ",\"tonImStream\":" + String((TON_IM_STREAM && audioLaeuft()) ? "true" : "false");
+  j += ",\"tonVerlorenClip\":"   + String(tonVerloren(TON_ABNEHMER_CLIP));
+  j += ",\"tonVerlorenStream\":" + String(tonVerloren(TON_ABNEHMER_STREAM));
+  j += ",\"tageAnzeigen\":" + String(TAGE_CSV_AN ? TAGE_ANZEIGEN : 0);
   j += ",\"vogelDrin\":"   + String(vogelIstDrin() ? "true" : "false");
   j += ",\"drinSeit\":"    + String(vogelDrinSeitSekunden());
   j += ",\"durchfluege\":" + String(lichtschrankeDurchfluege());
@@ -393,17 +533,45 @@ void webStart() {
     server.send(ok ? 200 : 400, "text/plain", ok ? "gestellt" : "unplausibel");
   });
   server.on("/datei",       dateiAusliefern);
+
+  // Die letzten Tage als JSON — daraus macht die Website den Verlauf.
+  server.on("/api/tage", []() {
+    uint16_t n = server.hasArg("n")
+               ? (uint16_t)server.arg("n").toInt() : (uint16_t)TAGE_ANZEIGEN;
+    server.sendHeader("Cache-Control", "no-store");
+    server.send(200, "application/json", tageAlsJson(n));
+  });
+
+  // Die Rohdatei zum Herunterladen. Öffnet sich in Excel oder LibreOffice.
+  server.on("/tage.csv", []() {
+    // Vorher den laufenden Tag noch mitschreiben, sonst fehlt heute.
+    tagJetztSichern();
+    File f = SD.open(TAGE_DATEI, FILE_READ);
+    if (!f) { server.send(404, "text/plain", "Noch keine Tagesstatistik."); return; }
+    server.sendHeader("Content-Disposition", "attachment; filename=tage.csv");
+    server.streamFile(f, "text/csv");
+    f.close();
+  });
+
   server.onNotFound([]() { server.send(404, "text/plain", "Gibt es nicht."); });
 
   server.begin();
   streamServer.begin();
   streamServer.setNoDelay(true);
 
+  if (TON_IM_STREAM && audioLaeuft()) {
+    tonServer.begin();
+    tonServer.setNoDelay(true);
+  }
+
   // netzwerkAdresse() liefert die richtige Adresse in BEIDEN Betriebsarten:
   // die Router-IP oder 192.168.4.1 im eigenen WLAN.
   String adr = netzwerkAdresse();
   Serial.printf("[Web] Website:    http://%s/\n", adr.c_str());
   Serial.printf("[Web] Livestream: http://%s:81/\n", adr.c_str());
+  if (TON_IM_STREAM && audioLaeuft())
+    Serial.printf("[Web] Tonstream:  http://%s:82/  (auf der Website \"Ton an\")\n",
+                  adr.c_str());
   if (netzwerkIstEigenes())
     Serial.printf("[Web] (Handy zuerst mit dem WLAN \"%s\" verbinden!)\n", AP_NAME);
 }
@@ -432,9 +600,74 @@ void webBedienen() {
     streamClient.stop();
     Serial.println("[Web] Zuschauer weg.");
   }
+
+  tonBedienen();
 }
 
 bool webHatZuschauer() { return streamClient && streamClient.connected(); }
+
+// ---------------------------------------------------------------------------
+//  Der Tonstrom (Tür 82)
+// ---------------------------------------------------------------------------
+//  Wir schicken einen WAV-Kopf mit einer absurd großen Längenangabe und
+//  danach einfach immer weiter Messwerte. Der Browser hört nicht auf zu
+//  spielen, weil die Datei aus seiner Sicht nie zu Ende ist.
+// ---------------------------------------------------------------------------
+static void wavKopfSenden(WiFiClient& c, uint32_t rate) {
+  uint8_t k[44];
+  uint32_t riesig = 0x7FFFF000;          // "so lang wird die Datei" (~2 GB)
+  memcpy(k + 0,  "RIFF", 4);
+  *(uint32_t*)(k + 4)  = riesig + 36;
+  memcpy(k + 8,  "WAVE", 4);
+  memcpy(k + 12, "fmt ", 4);
+  *(uint32_t*)(k + 16) = 16;
+  *(uint16_t*)(k + 20) = 1;              // PCM
+  *(uint16_t*)(k + 22) = 1;              // Mono
+  *(uint32_t*)(k + 24) = rate;
+  *(uint32_t*)(k + 28) = rate * 2;
+  *(uint16_t*)(k + 32) = 2;
+  *(uint16_t*)(k + 34) = 16;
+  memcpy(k + 36, "data", 4);
+  *(uint32_t*)(k + 40) = riesig;
+  c.write(k, 44);
+}
+
+static void tonBedienen() {
+  if (!TON_IM_STREAM || !audioLaeuft()) return;
+
+  if (tonServer.hasClient()) {
+    if (tonClient && tonClient.connected()) {
+      tonServer.available().stop();          // einer reicht, wie beim Bild
+    } else {
+      tonClient = tonServer.available();
+      tonClient.print(
+        "HTTP/1.1 200 OK\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Cache-Control: no-store\r\n"
+        "Content-Type: audio/wav\r\n"
+        "Connection: close\r\n"
+        "\r\n");
+      wavKopfSenden(tonClient, audioAbtastrate());
+      tonAufsetzen(TON_ABNEHMER_STREAM);    // ab jetzt, nicht die alte Konserve
+      Serial.println("[Web] Zuhoerer verbunden.");
+    }
+  }
+
+  if (tonClient && !tonClient.connected()) {
+    tonClient.stop();
+    Serial.println("[Web] Zuhoerer weg.");
+    return;
+  }
+  if (!tonClient) return;
+
+  // Nur so viel schicken, wie in den Sendepuffer passt. Sonst würde write()
+  // warten, bis das WLAN wieder Luft hat — und die Kamera würde stehen.
+  int platz = tonClient.availableForWrite();
+  if (platz < 256) return;
+  size_t maxProben = min((size_t)(platz / 2), (size_t)(sizeof(tonAus) / 2));
+  size_t n = tonAbholen(TON_ABNEHMER_STREAM, tonAus, maxProben);
+  if (n) tonClient.write((const uint8_t*)tonAus, n * sizeof(int16_t));
+}
 
 // ---------------------------------------------------------------------------
 //  Ein Bild in den Livestream schieben.

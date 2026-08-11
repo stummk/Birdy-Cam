@@ -1,4 +1,4 @@
-# 🐦 BirdyCam — Nistkasten-Kamera für Vater & Kind
+# 🐦 BirdyCam — Nistkasten-Kamera
 
 Ein Bauprojekt für eine
 solarbetriebene Kamera im Nistkasten mit Nachtsicht, Full-HD-Aufnahmen, Livestream und
@@ -30,11 +30,13 @@ Beide sind vollständig ausgeplant. Sie unterscheiden sich in Preis und Videoqua
 |---|---|---|
 | **Preis** | **≈ 269 €** | **≈ 155 €** |
 | Video | **H.264, 1080p, 15–30 fps** | MJPEG, 1080p bei ~6 fps |
+| **Ton** | ❌ kein Mikrofon | ✅ **Clips und Livestream mit Ton** |
 | Clips im Browser abspielbar | ✅ **MP4, direkt klickbar** | ❌ Download + VLC Player |
 | 10-Sekunden-Clip | ~5 MB **bei 15 fps** | ~7 MB **bei nur 6 fps** |
 | Speicher | **USB-SSD, SD-Karte wird entfernt** | High-Endurance-SD-Karte |
-| Verbrauch | 42 Wh/Tag | 15 Wh/Tag |
-| Solarpanel | 30 W | 10 W |
+| Statistik-Verlauf | SQLite, Jahre | CSV, eine Zeile je Tag — Wochen und Monate |
+| Verbrauch | 42 Wh/Tag | 16 Wh/Tag |
+| Solarpanel | 30 W / 12 V | 10 W / **5 V** (Leerlauf < 6,5 V!) |
 | Akku | LiFePO4 12 V / 12 Ah | LiPo 1S 5000 mAh |
 | Sprache | Python (gut lesbar) | C++ (näher an der Hardware) |
 
@@ -82,12 +84,13 @@ Varianten.
 ```mermaid
 flowchart LR
   subgraph SUN["☀️ sonnigste Stelle im Garten"]
-    PV["Solarpanel 6 V / 10 W"]
+    PV["Solarpanel 5 V / 10 W<br/>Leerlaufspannung &lt; 6,5 V"]
   end
   subgraph BOX["📦 Elektronikbox — außen am Kasten, Nordseite"]
     SPM["Solar Power Manager<br/>MPPT + Laderegler + 5 V"]
     BAT["LiPo 1S 5000 mAh"]
     ESP["XIAO ESP32-S3 Sense"]
+    MIC["🎤 Mikrofon<br/>auf dem Board"]
     SD[("microSD 32 GB<br/>High Endurance")]
   end
   subgraph NEST["🏠 im Nistkasten"]
@@ -101,6 +104,7 @@ flowchart LR
   SPM <--> BAT
   SPM -->|"5 V über USB"| ESP
   ESP --- SD
+  MIC -->|"hört durch ein 6-mm-Loch<br/>in den Kasten"| ESP
   ESP -->|"24-pol Flachband"| CAM
   ESP -->|"PWM D0"| IR
   LS -->|"D2"| ESP
@@ -116,7 +120,12 @@ flowchart LR
    Kamera → Vorlaufpuffer     Kamera → WLAN, Full HD
    Auslöser → Clip auf SD     Aufnahme pausiert
    Lichtschranke zählt        Lichtschranke zählt weiter
+   Mikrofon → Tonspur         Mikrofon → Ton ins WLAN
 ```
+
+Der **Ton läuft in beiden Betriebsarten mit** — er kostet nur 0,03 MB/s auf der
+Karte und arbeitet auf dem zweiten Prozessorkern. Details in
+[8.2d](docs/08-variante-esp32.md#82d-ton--bild-und-ton-zusammen).
 
 *(Diagramm für Variante A steht in [1. Machbarkeit](docs/01-machbarkeit.md).)*
 
@@ -138,13 +147,14 @@ Kostet 6 € und braucht Mikrowatt.
 | # | Anforderung | **Variante B (gewählt)** | Variante A |
 |---|---|---|---|
 | 1 | Tag- und Nachtsicht | ✅ | ✅ |
-| 2 | Livestream beim Verbinden | ✅ 1600×1200 (1,92 MP) | ✅ |
-| 3 | Clips bei Bewegung, Round-Robin | ✅ 1600×1200, ~2,4 s Vorlauf | ✅ |
+| 2 | Livestream beim Verbinden | ✅ 1600×1200 (1,92 MP) **mit Ton** | ✅ ohne Ton |
+| 3 | Clips bei Bewegung, Round-Robin | ✅ 1600×1200, ~2,4 s Vorlauf, **Bild + Ton** | ✅ ohne Ton |
 | 4 | Clips nur, wenn nicht gestreamt wird | ✅ eingebaut | (nicht nötig) |
 | 5 | Statistik + Dashboard | ✅ inkl. Akku & Systemzustand | ✅ |
+| 5b | **Verlauf über 30 Tage** | ✅ `tage.csv`, eine Zeile je Tag | ✅ SQLite |
 | 6 | **Router *oder* eigenes WLAN** | ✅ beides, automatisch umschaltend | nur Router |
 | 6 | Stabiler Speicher (kein SD-Tod) | ✅ High-Endurance-SD, kein OS auf der Karte | ✅ SSD, keine SD im Betrieb |
-| — | Vogelgesang | ⬜ Code liegt bereit, abgeschaltet | ⬜ nicht vorgesehen |
+| — | Vogelgesang als eigene WAV-Datei | ⬜ Code liegt bereit, abgeschaltet | ⬜ nicht vorgesehen |
 | — | Artenerkennung | ⬜ gestrichen | ⬜ gestrichen |
 
 Gesang und Artenerkennung sind **gestrichen** — beides würde ohnehin eine Basisstation im
@@ -214,19 +224,25 @@ Das erste Livebild kommt in **Sketch 3** — nicht am Ende. Das ist absichtlich 
 
 1. Der Kasten bekommt eine **Kamera ohne Infrarot-Filter** (Full HD), vier unsichtbare
    IR-LEDs und eine **Lichtschranke im Einflugloch**, die Vögel exakt zählt.
-2. Ein **XIAO ESP32-S3 Sense** macht alles: Stream, Aufnahme, Statistik, Website. Kein
-   Rechner im Haus nötig.
+2. Ein **XIAO ESP32-S3 Sense** macht alles: Stream, Aufnahme, Ton, Statistik, Website.
+   Kein Rechner im Haus nötig.
 3. **Stream und Aufnahme wechseln sich ab.** Schaut jemand zu → Full-HD-Stream. Schaut
-   niemand zu → Clips auf die SD-Karte, mit 3 Sekunden Vorlauf.
+   niemand zu → Clips auf die SD-Karte, mit 3 Sekunden Vorlauf. **Ton läuft immer mit** —
+   im Clip als zweite Spur, im Stream auf Knopfdruck.
 4. **Zwei Netzwerk-Betriebsarten, beide eingebaut:** Sie hängt sich an deinen **Router**
    (sparsam, vom Sofa erreichbar) **oder** macht ihr **eigenes WLAN** auf (autark, überall
    im Garten, ohne Router). `NETZ_AUTO` probiert erst den Router und schaltet sonst selbst
-   um. ⚡ Eigenes WLAN kostet ~40 % mehr Strom → dann **15-W-Panel statt 10 W**.
+   um. ⚡ Eigenes WLAN kostet ~40 % mehr Strom — und weil der Laderegler bei 900 mA
+   dichtmacht, ist Routerbetrieb sparen sinnvoller als ein größeres Panel
+   ([warum, mit konkretem Panel](docs/09-bestellliste.md#93b-️-welches-solarpanel-passt-zum-laderegler)).
 5. **Solar + LiPo 5000 mAh.** Der ESP32 braucht nur 0,7 W — deshalb reicht ein kleines
    Panel. Für Regenwochen gibt es eine USB-Notlade-Buchse.
 5. **Full HD ruckelt** (~6 Bilder/s). Eine Zeile in `config.h` macht daraus SVGA mit
    ~15 Bildern/s — falls Flüssigkeit doch wichtiger ist.
-6. Gebaut wird im **Winter**, geschaut wird im **Frühling**. Ab März bleibt der Kasten zu.
+6. **Der Verlauf bleibt erhalten:** Jede Stunde schreibt die Kamera eine Zeile in
+   `tage.csv` — Besuche, erster und letzter Anflug, Aufenthaltsdauer, Akku-Minimum.
+   Die Website zeigt daraus die **letzten 30 Tage**, und die Datei öffnet sich in Excel.
+7. Gebaut wird im **Winter**, geschaut wird im **Frühling**. Ab März bleibt der Kasten zu.
 
 → Los geht's mit **[8. Variante ESP32](docs/08-variante-esp32.md)**
 (Hintergrund und Rechnungen: [1. Machbarkeit](docs/01-machbarkeit.md))

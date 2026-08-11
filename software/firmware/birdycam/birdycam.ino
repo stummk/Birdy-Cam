@@ -46,6 +46,18 @@ static VorlaufBild vorlaufRing[VORLAUF_MAX_BILDER];
 static uint8_t     vorlaufSchreib = 0;
 static uint8_t     vorlaufAnzahl  = 0;
 
+// ---- Ton für die Clips ----------------------------------------------------
+//  Ein Zwischeneimer, groß genug für den ganzen Ton-Vorlauf. Damit wird
+//  der Ton aus dem Ring in audio.cpp abgeholt und in die AVI-Datei gelegt.
+#define TON_VORLAUF_PROBEN  ((uint32_t)TON_ABTASTRATE * TON_VORLAUF_MS / 1000)
+#define TON_BLOCK_PROBEN    4096u           // ~256 ms bei 16 kHz
+// Der Eimer muss für beides reichen: den ganzen Vorlauf und einen Block.
+#define TON_PUFFER_PROBEN   (TON_VORLAUF_PROBEN > TON_BLOCK_PROBEN \
+                             ? TON_VORLAUF_PROBEN : TON_BLOCK_PROBEN)
+static int16_t* tonPuffer = nullptr;
+static bool     clipHatTon = false;
+static uint32_t clipVorlaufMs = 0;   // Dauer des Vorlaufs im laufenden Clip
+
 // ---- Zustand der Aufnahme -------------------------------------------------
 static bool     nehmeAuf         = false;
 static uint32_t aufnahmeStart    = 0;
@@ -147,6 +159,51 @@ static void vorlaufAusschuetten() {
 }
 
 // ============================================================================
+//  TON IN DEN CLIP SCHREIBEN
+// ============================================================================
+//  Zweimal gebraucht: einmal für den Vorlauf beim Start, und danach in jeder
+//  Runde für den Ton, der seit dem letzten Bild angefallen ist. Deshalb hier
+//  als eigene kleine Funktion.
+// ============================================================================
+// Wie lange hat das Aufnehmen des Vorlaufs gedauert? Das sind die Bilder, die
+// VOR dem Auslöser entstanden sind — ihre Zeit zählt zur Spielzeit des Clips.
+static uint32_t vorlaufDauerMs() {
+  float fps = (aktuelleFps > 1.0f) ? aktuelleFps : 8.0f;
+  return (uint32_t)(vorlaufAnzahl * 1000.0f / fps);
+}
+
+static void tonVorlaufInClip(uint32_t vorlaufMs) {
+  if (!clipHatTon || !tonPuffer) return;
+
+  // Genau so lang wie der Bild-Vorlauf — sonst wäre die Tonspur länger als
+  // die Bildspur, und beide liefen auseinander. Mehr als TON_VORLAUF_MS passt
+  // nicht in den Eimer.
+  if (vorlaufMs > TON_VORLAUF_MS) vorlaufMs = TON_VORLAUF_MS;
+
+  uint32_t proben = (uint32_t)TON_ABTASTRATE * vorlaufMs / 1000;
+  if (proben == 0) { tonAufsetzen(TON_ABNEHMER_CLIP); return; }
+  if (proben > TON_VORLAUF_PROBEN) proben = TON_VORLAUF_PROBEN;
+
+  tonVorlaufAbholen(tonPuffer, proben);
+
+  // In Häppchen schreiben statt in einem Klotz — so bleibt die Datei auch
+  // am Anfang schön abwechselnd aus Bild und Ton aufgebaut.
+  for (uint32_t ab = 0; ab < proben; ab += TON_BLOCK_PROBEN) {
+    uint32_t n = min<uint32_t>(TON_BLOCK_PROBEN, proben - ab);
+    aviTon(tonPuffer + ab, n);
+  }
+}
+
+static void tonNachschieben() {
+  if (!clipHatTon || !tonPuffer) return;
+  size_t n;
+  while ((n = tonAbholen(TON_ABNEHMER_CLIP, tonPuffer, TON_BLOCK_PROBEN)) > 0) {
+    aviTon(tonPuffer, n);
+    if (n < TON_BLOCK_PROBEN) break;      // mehr ist gerade nicht da
+  }
+}
+
+// ============================================================================
 //  EIN FOTO SPEICHERN
 // ============================================================================
 static void fotoSpeichern(camera_fb_t* bild) {
@@ -157,6 +214,7 @@ static void fotoSpeichern(camera_fb_t* bild) {
   f.write(bild->buf, bild->len);
   f.close();
   stats.fotosGesamt++;
+  stats.fotosHeute++;
 }
 
 // ============================================================================
@@ -167,13 +225,23 @@ static void aufnahmeStarten(camera_fb_t* bild) {
   if (millis() - letzterClipEnde < CLIP_PAUSE_SEKUNDEN * 1000UL) return;
 
   String pfad = naechsterClipName();
-  if (!aviStart(pfad, bild->width, bild->height)) return;
+
+  // Ton nur, wenn er eingeschaltet ist UND das Mikrofon wirklich läuft.
+  clipHatTon = TON_IN_CLIPS && audioLaeuft() && tonPuffer;
+  uint32_t tonRate = clipHatTon ? audioAbtastrate() : 0;
+
+  if (!aviStart(pfad, bild->width, bild->height, tonRate)) {
+    clipHatTon = false;
+    return;
+  }
 
   clipBilder    = 0;
   nehmeAuf      = true;
   aufnahmeStart = millis();
 
+  clipVorlaufMs = vorlaufDauerMs();   // vor dem Ausschütten merken
   vorlaufAusschuetten();       // die Sekunden VOR dem Anflug mitnehmen
+  tonVorlaufInClip(clipVorlaufMs);   // und den Ton dazu
 
   // Gezählt wird nur von der Lichtschranke — die ist genauer.
   // Ohne Lichtschranke müssen wir hier zählen, sonst gäbe es keine Statistik.
@@ -181,17 +249,26 @@ static void aufnahmeStarten(camera_fb_t* bild) {
 
   fotoSpeichern(bild);         // ein Standbild für die Galerie
   stats.clipsGesamt++;
+  stats.clipsHeute++;
 
-  Serial.printf("[Clip] Start: %s (Besuch Nr. %u heute)\n",
-                pfad.c_str(), stats.besucheHeute);
+  Serial.printf("[Clip] Start: %s%s (Besuch Nr. %u heute)\n",
+                pfad.c_str(), clipHatTon ? " (mit Ton)" : "",
+                stats.besucheHeute);
 }
 
 static void aufnahmeBeenden() {
   if (!nehmeAuf) return;
-  float sek = (millis() - aufnahmeStart) / 1000.0f;
+  tonNachschieben();           // den letzten Rest Ton noch mitnehmen
+
+  // Die Vorlaufzeit gehört zur Spielzeit dazu: Diese Bilder sind VOR
+  // aufnahmeStart entstanden. Ohne sie käme eine zu hohe Bildrate heraus,
+  // der Clip würde zu schnell abgespielt — und die Tonspur wäre länger als
+  // die Bildspur.
+  float sek = (millis() - aufnahmeStart + clipVorlaufMs) / 1000.0f;
   float fps = (sek > 0.2f) ? (clipBilder / sek) : 8.0f;
   aviEnde(fps);
   nehmeAuf        = false;
+  clipHatTon      = false;
   letzterClipEnde = millis();
 }
 
@@ -227,8 +304,18 @@ void setup() {
   lichtschrankeStart();
   netzwerkStart();                // Router oder eigenes WLAN, siehe config.h
   systemStart();
+
+  // Der Ton muss VOR dem Webserver starten: der macht die Ton-Tür (82) nur
+  // auf, wenn das Mikrofon wirklich läuft.
+  if (audioStart() && TON_IN_CLIPS) {
+    // Der Eimer für den Ton-Vorlauf: 2,5 s bei 16 kHz sind 80 KB. Der liegt
+    // im PSRAM, weil der normale Arbeitsspeicher dafür zu knapp ist.
+    tonPuffer = (int16_t*)ps_malloc(TON_PUFFER_PROBEN * sizeof(int16_t));
+    if (!tonPuffer)
+      Serial.println("[Ton] Kein PSRAM fuer den Clip-Ton — Clips bleiben stumm.");
+  }
+
   webStart();
-  audioStart();
 
   fpsFenster = millis();
   Serial.println("=====  BirdyCam ist bereit  =====\n");
@@ -247,12 +334,16 @@ void loop() {
   if (millis() - letzterAkkuCheck > 30000) {
     letzterAkkuCheck = millis();
     akkuTrendPflegen();           // steigt der Akku oder fällt er?
+    akkuHeuteMerken(akkuVolt());  // Minimum/Maximum für die Tagesstatistik
     akkuSchutzPruefen();          // legt sich ggf. schlafen und kommt nicht zurück
   }
 
-  // --- Fertige Tonaufnahme wegschreiben -----------------------------------
+  // --- Fertige Gesangsaufnahme wegschreiben -------------------------------
   if (audioFertig() && speicherBereit()) {
-    if (audioSpeichern(naechsterAudioName())) stats.audioGesamt++;
+    if (audioSpeichern(naechsterAudioName())) {
+      stats.audioGesamt++;
+      stats.audioHeute++;
+    }
   }
 
   statistikPflegen();
@@ -332,6 +423,7 @@ void loop() {
     if (nehmeAuf) {
       aviFrame(bild->buf, bild->len);
       clipBilder++;
+      tonNachschieben();          // der Ton seit dem letzten Bild kommt dahinter
 
       bool ruheVorbei = (millis() - letzteBewegung > NACHLAUF_SEKUNDEN * 1000UL);
       bool zuLang     = (millis() - aufnahmeStart  > CLIP_MAX_SEKUNDEN * 1000UL);

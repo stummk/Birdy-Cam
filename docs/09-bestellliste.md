@@ -54,19 +54,25 @@ Die Kamera kann auf zwei Wegen erreichbar sein — und das bestimmt die Panelgr�
 |---|---|---|
 | Wie du zugreifst | Vom Sofa über dein Heimnetz | Handy verbindet sich direkt mit der Kamera |
 | Braucht WLAN am Kasten | ✅ ja | ❌ nein |
-| Verbrauch | 15 Wh/Tag | **21 Wh/Tag (+40 %)** |
-| **Panel** | **10 W** (20 €) | **15–20 W** (28 €) |
+| Verbrauch (mit Ton) | 16 Wh/Tag | **22 Wh/Tag (+40 %)** |
+| **Panel** | 5-V-Kamerapanel **10 W** (~22 €) | dasselbe, **10 W** ist hier Pflicht |
 | Uhrzeit | automatisch aus dem Internet | erster Website-Besuch stellt sie |
 
 **Warum das eigene WLAN mehr Strom braucht:** Ein WLAN-Sender muss ständig Funkbaken
 aussenden, damit Handys ihn finden — er darf nicht schlafen. Im Routerbetrieb darf der
 ESP32 zwischen zwei Funkkontakten dösen.
 
-> **Mein Rat: `NETZ_MODUS = NETZ_AUTO` und ein 15-W-Panel.** Dann läuft sie normalerweise
-> sparsam am Router, macht aber automatisch ihr eigenes WLAN auf, wenn der Router nicht
-> erreichbar ist — und das Panel trägt beide Fälle. Die 8 € Aufpreis sind gut angelegt.
+> **Mein Rat: `NETZ_MODUS = NETZ_ROUTER` und ein 5-V-Panel mit 10 W.** Der Laderegler
+> lädt mit höchstens 900 mA — mehr Panel kauft nur Stunden am Rand des Tages, keine
+> Spitzenleistung. Und der Router-Betrieb spart 6 Wh/Tag, also mehr, als jedes
+> größere Panel im Budget wieder hereinholen könnte. Warum das so ist und welches
+> Panel konkret: [9.3b](#93b-️-welches-solarpanel-passt-zum-laderegler).
 >
-> Wenn am Nistkasten sicher kein WLAN-Empfang ist: `NETZ_EIGENES` und **20 W**.
+> `NETZ_AUTO` (die Werkseinstellung) verbraucht **genauso wenig**, solange der
+> Router da ist — die 22 Wh gelten nur, wenn sie auf eigenes WLAN umgeschaltet
+> hat. Genau das ist der unangenehme Fall: Der Router fällt aus, niemand merkt
+> es, und die Kamera funkt tagelang im teuren Modus. Wer knapp kalkuliert, nimmt
+> `NETZ_ROUTER` **oder** setzt zusätzlich `AP_NACHTS_AUS = true`.
 
 Details in [8.2c](08-variante-esp32.md#82c-router-oder-eigenes-wlan--beides-geht).
 
@@ -108,7 +114,7 @@ Diese Teile kommen oft aus Asien und brauchen **2–4 Wochen**. Deshalb als Erst
 | ✓ | Anz. | Teil | Achtung! | Preis | Link |
 |---|---|---|---|---|---|
 |  ✓ | 1 | **microSD 32 GB High Endurance** | **Max. 32 GB** (Board-Grenze) und **„High Endurance"** / „Dashcam" | 12 € | [Suche](https://www.amazon.de/s?k=microSD+32GB+High+Endurance) |
-| ☐ | 1 | **Solarpanel 6 V**, wetterfest — **10 W** *oder* **15–20 W** | ⚠️ **6 Volt!** Ein 12-V-Panel zerstört den Laderegler. **Größe hängt von der Betriebsart ab — siehe [9.0b](#90b-️-noch-eine-entscheidung-vor-dem-panel-kauf)** | 20–28 € | [Suche](https://www.amazon.de/s?k=Solarpanel+6V+10W+wetterfest) · [eBay](https://www.ebay.de/sch/i.html?_nkw=solarpanel+6v+10w) |
+| ☐ | 1 | **5-V-Solarpanel für Akku-Kameras, 10 W**, IP65, starr | ⚠️ **Leerlaufspannung muss unter 6,5 V bleiben** — ein „6 V"-Gartenpanel hat 7,2 V und zerstört den Laderegler. Messen! Der USB-Stecker wird abgeschnitten, das Kabel kommt in die Schraubklemme — **[9.3b](#93b-️-welches-solarpanel-passt-zum-laderegler)** | ~22 € | [Beispiel](https://www.amazon.de/Tragbares-Solarpanel-Ladeger%C3%A4t-Wasserdicht-%C3%9Cberwachungskamera/dp/B0BB79WH7K) · [Suche](https://www.amazon.de/s?k=Solarpanel+10W+5V+Micro-USB+IP65+%C3%9Cberwachungskamera) · [5-W-Sparvariante, 12,99 €](https://www.pearl.de/a-ZX5350-1322.shtml) |
 | ☐ | 1 | Spannungssensor-Modul 0–25 V | Kommt meist im 5er-Pack | 6 € | [Suche](https://www.amazon.de/s?k=Spannungssensor+Modul+25V+Arduino) |
 | ☐ | 4 | **IR-LED-Module 940 nm** | ⚠️ **940 nm**, nicht 850 nm (das glimmt rot) | 7 € | [Suche](https://www.amazon.de/s?k=IR+LED+Modul+940nm+Arduino) |
 | ☐ | 1 | **MOSFET-Modul, Logic-Level** (D4184/AOD4184) | ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch. Meist 3er-Pack | 8 € | [Suche](https://www.amazon.de/s?k=MOSFET+Modul+D4184+PWM) |
@@ -117,7 +123,163 @@ Diese Teile kommen oft aus Asien und brauchen **2–4 Wochen**. Deshalb als Erst
 | ☐ | 1 | Silikagel-Beutel | Gegen beschlagene Linse | 5 € | [Suche](https://www.amazon.de/s?k=Silikagel+Beutel+Trockenmittel) |
 | ☐ | 1 | USB-A → USB-C Kabel, 30 cm | Verbindet Laderegler und Board | 5 € | oft im Haus |
 | ☐ | 1 | Klettband (Rolle) | Für den Akku — **nicht** Kabelbinder | 4 € | [Suche](https://www.amazon.de/s?k=Klettband+Rolle) |
-| | | | | **~79 €** | *versandfrei ab 39 €* |
+| | | | | **~81 €** | *versandfrei ab 39 €* |
+
+---
+
+## 9.3b ⚠️ Welches Solarpanel passt zum Laderegler?
+
+**In einem Satz: Nicht die Wattzahl entscheidet, sondern die Leerlaufspannung — und
+die muss unter 6,5 V bleiben.**
+
+### Der Satz, der den Laderegler rettet
+
+DFRobot schreibt im [Wiki zum DFR0559](https://wiki.dfrobot.com/Solar_Power_Manager_5V_SKU__DFR0559),
+dass jedes Panel geht, **solange die Leerlaufspannung unter 6,5 V liegt** — und
+dazu: *„The input voltage of SOLAR IN should not exceed 6.5V, or the module may be
+permanently damaged."* Das Datenblatt des verbauten Chips CN3165 nennt als
+absolute Obergrenze für **alle** Anschlüsse −0,3 V bis 6,5 V.
+
+Und jetzt der Haken: Auf einem Panel steht „6 V" — das ist die **Arbeitsspannung
+unter Last**. Die **Leerlaufspannung** solcher Panels liegt bei **7,2–7,9 V**. Das
+ist kein Ausreißer, das ist die Regel: Selbst das Waveshare-Panel mit dem Aufdruck
+„5,5 V / 6 W" hat laut Datenblatt **7,2 V Leerlaufspannung**.
+
+Leerlauf heißt: Es fließt kein Strom. Genau das passiert jeden Tag — sobald der
+Akku voll ist, hört der Regler auf zu laden, und am Eingang steht die volle
+Leerlaufspannung an. Kalte, klare Tage machen es schlimmer, denn kalte Zellen
+liefern **mehr** Spannung.
+
+> ⚠️ **Deshalb ist meine frühere Panelempfehlung hinfällig.** Die dort genannten
+> 6-V-Panels (Villageboom 10 W, zwei davon parallel) liegen mit ~7,2 V darüber,
+> und selbst der Voltaic P120 mit **6,61 V** liegt über der Grenze.
+> **Nicht kaufen, nicht anschließen.**
+
+| | Leerlaufspannung | Am DFR0559 |
+|---|---|---|
+| Panel mit Aufdruck „6 V" | 7,2–7,9 V | ❌ zerstört das Modul |
+| Panel mit Aufdruck „5,5 V" (z. B. Waveshare 6 W) | 7,2 V | ❌ zerstört das Modul |
+| Voltaic P120 „6 V / 20 W" | 6,61 V | ❌ knapp darüber |
+| **5-V-Panel für Akku-Kameras (USB)** | meist **~5,0–5,5 V** | ✅ passt — trotzdem messen |
+| 12-V-Panel | 20–24 V | ❌❌ sofortiger Totalschaden |
+
+### Was stattdessen passt: ein 5-V-Kamerapanel
+
+Es gibt eine Panelklasse, die genau diese Bedingung von Haus aus erfüllt:
+**wetterfeste 5-V-Panels für Akku-Überwachungskameras.** Sie sind gebaut, um über
+USB in eine Kamera zu laden — und ein USB-Anschluss würde 7 V nicht überleben.
+Ihre Ausgangsspannung bleibt deshalb bei ~5 V. Nebenbei sind sie IP65, haben ein
+3-m-Kabel und eine verstellbare Halterung, sind also für draußen gedacht statt
+nur dafür geeignet.
+
+| | **Standard: 5-V-Kamerapanel mit 10 W** |
+|---|---|
+| Beschreibung | Starres Panel für Akku-Überwachungskameras, **10 W / 5 V**, Micro-USB-Kabel (~3 m), **IP65**, 360°-Halterung dabei |
+| Preis | **~20–25 €** |
+| Wo | [Beispiel bei Amazon.de](https://www.amazon.de/Tragbares-Solarpanel-Ladeger%C3%A4t-Wasserdicht-%C3%9Cberwachungskamera/dp/B0BB79WH7K) · [Suche nach gleichwertigen](https://www.amazon.de/s?k=Solarpanel+10W+5V+Micro-USB+IP65+%C3%9Cberwachungskamera) |
+
+⚠️ Den Preis bitte selbst nachsehen: Amazon lässt sich nicht automatisch abfragen,
+die 20–25 € sind der Marktpreis dieser Klasse und keine geprüfte Angabe.
+
+**Sparvariante, wenn 10 € zählen:** dasselbe mit **5 W** — der
+[revolt ZX5350](https://www.pearl.de/a-ZX5350-1322.shtml) für **12,99 €**
+(monokristallin, Micro-USB, IP65, 3 m Kabel, 17 × 16 cm, 288 g, Halterung dabei;
+Preis geprüft). Reicht ab April; im März und bei Bewölkung fehlt Reserve.
+
+> **Nicht nehmen: faltbare Panels.** Pearl hat ein 10-W-Panel für 20,99 €
+> ([ZX7384](https://www.pearl.de/a-ZX7384-3034.shtml)), das aber aus vier Modulen
+> in einer Stofftasche besteht — gedacht für den Rucksack, nicht für ein Jahr am
+> Pfosten. Für draußen ein starres Panel nehmen.
+
+**Mehr als 10 W ist rausgeworfenes Geld** — warum, steht gleich darunter.
+
+### Das Panel hat ein USB-Kabel — passt das an den Regler?
+
+**Ja. Der Weg führt aber nicht über den Stecker, sondern über die Schraubklemme.**
+
+Der DFR0559 hat zwei Eingänge, und beide laden mit denselben 900 mA:
+
+| Eingang | Wofür | Für unser Panel |
+|---|---|---|
+| **SOLAR IN** (Schraubklemme + / −) | Solarpanel | ✅ **der Weg** |
+| **USB IN** (Buchse) | Netzteil oder Powerbank | nur, wenn der Steckertyp zufällig passt |
+
+Drei Gründe für die Klemme:
+
+1. **Der Stecker passt nicht durch die Kabelverschraubung.** Eine M12-Verschraubung
+   klemmt Kabel von 3–6,5 mm; ein Micro-USB-Stecker ist mit Umspritzung rund
+   10 × 6 mm. Das Kabel muss also ohnehin ohne Stecker durch die Box-Wand.
+2. **Der Steckertyp des USB-Eingangs ist nirgends dokumentiert.** Ich habe Wiki,
+   Produktseite und drei Distributoren-Datenblätter durchgesehen — überall steht
+   nur „USB IN 5 V". Beim Auspacken sieht man es, verlassen würde ich mich nicht
+   darauf.
+3. **5 V sind für SOLAR IN genau richtig.** Das erlaubte Fenster ist 4,5–6 V, und
+   die MPPT-Regelung des Reglers zieht Strom, bis die Spannung einbricht — bei
+   einem geregelten Panel passiert das erst an dessen Strombegrenzung. Genau das
+   soll es tun.
+
+**So wird es gemacht:**
+
+```
+   Panel  ──── 3 m Kabel ────  ✂  ──── M12-Verschraubung ────  SOLAR IN
+                            Stecker ab                         + / −
+```
+
+1. **Vorher messen** (volle Sonne, nichts angeschlossen): am Stecker müssen
+   ~5,0–5,5 V stehen. Über 6,5 V → Finger weg.
+2. Stecker abschneiden, die zwei Adern abisolieren.
+3. **Nochmal messen — das ist der Punkt, den man leicht übersieht.** Sitzt die
+   5-V-Elektronik ausnahmsweise *im Stecker* statt im Panel, springt die Spannung
+   jetzt auf 6–7 V hoch. Dann das Kabel nicht verwenden, sondern den USB-Weg
+   nehmen (falls der Stecker passt) oder das Panel zurückschicken.
+4. Polarität notieren (meist rot = Plus, aber messen), Kabel durch die
+   Verschraubung führen, in die Klemme schrauben, **Tropfschlaufe** legen
+   ([4.5](04-bauplan.md#45-die-elektronikbox)).
+5. Website öffnen: Bei Sonne muss die Akkukarte „⬆ steigt" zeigen.
+
+> **Die USB-Buchse bleibt trotzdem nützlich:** Dort passt in einer Regenwoche
+> eine Powerbank hinein und lädt den Akku mit denselben 900 mA — ohne die Box zu
+> öffnen, wenn ein kurzes Kabel gleich beim Bauen nach außen gelegt wird.
+
+### Warum mehr Watt fast nichts bringt
+
+Der DFR0559 lädt mit **höchstens 900 mA**. Das sind ~3,5 W in den Akku, egal wie
+groß das Panel ist. Die Panelgröße entscheidet deshalb nicht über die
+Spitzenleistung, sondern nur darüber, **wie viele Stunden am Tag diese 900 mA
+überhaupt erreicht werden**:
+
+```
+   5-W-Panel  (1,0 A bei voller Sonne)  -> 900 mA nur um die Mittagszeit
+  10-W-Panel  (2,0 A bei voller Sonne)  -> 900 mA schon ab ~45 % Sonne,
+                                            also fast den ganzen hellen Tag
+  20-W-Panel                            -> derselbe Deckel, doppelter Preis
+```
+
+Gebraucht werden bei 16 Wh/Tag (Routerbetrieb, mit Ton) rund **4,7 Ah**, also
+**gut 5 Stunden bei vollen 900 mA**. Im Mai schafft das auch das 5-W-Panel; im
+März und bei Bewölkung ist das 10-W-Panel im Vorteil. Beides bleibt unter 30 €.
+
+### Die Hebel, die mehr bringen als jedes Panel — und 0 € kosten
+
+| Maßnahme | Ersparnis | Preis |
+|---|---|---|
+| `NETZ_MODUS NETZ_ROUTER` statt `NETZ_AUTO` | 22 → **16 Wh/Tag** | 0 € |
+| `AP_NACHTS_AUS true` (falls doch eigenes WLAN) | −2,5 Wh/Tag | 0 € |
+| `NACHT_PAUSE_MS 1800` statt 900 | ~−1 Wh/Tag | 0 € |
+| `IR_HELLIGKEIT 50` statt 75 | ~−0,5 Wh/Tag | 0 € |
+| `AUDIO_AN false` (letzte Reserve) | −1 Wh/Tag | kostet den Ton |
+| **Powerbank an den Laderegler**, wenn eine Regenwoche kommt | füllt den Akku ganz | 0 €, falls im Haus |
+
+Der letzte Punkt ist die eigentliche Antwort auf „was, wenn der März grau ist":
+Der DFR0559 hat neben dem Solareingang einen **USB-Eingang**. Eine Powerbank dort
+angesteckt lädt den Akku mit denselben 900 mA — ohne die Box zu öffnen, wenn man
+das Kabel gleich beim Bauen nach außen führt.
+
+> **Und wenn das Projekt später wächst:** Der 900-mA-Deckel und die 6,5-V-Grenze
+> gehören zum DFR0559, nicht zum Aufbau. Ein Laderegler mit 7–30 V Eingang und
+> 2 A Ladestrom (z. B. [DFRobot DFR0535](https://www.dfrobot.com/product-1714.html))
+> nimmt normale 12-V-Panels und lädt doppelt so schnell. Das ist ein Umbau für
+> einen späteren Winter, kein Muss für diese Saison.
 
 ---
 
@@ -125,7 +287,7 @@ Diese Teile kommen oft aus Asien und brauchen **2–4 Wochen**. Deshalb als Erst
 
 | ✓ | Anz. | Teil | Achtung! | Preis | Shop |
 |---|---|---|---|---|---|
-|  ✓ | 1 | **Solar Power Manager 5 V** (DFRobot DFR0559 o. gleichwertig) | MPPT + Laderegler + 5-V-Ausgang in einem, komplett lötfrei. Eingang **5–7 V** | 10 € | [DFRobot](https://www.dfrobot.com/product-1712.html) · [Datenblatt](https://wiki.dfrobot.com/dfr0559/) · [eBay-Suche](https://www.ebay.de/sch/i.html?_nkw=solar+power+manager+5V+MPPT+lipo) |
+|  ✓ | 1 | **Solar Power Manager 5 V** (DFRobot DFR0559 o. gleichwertig) | MPPT + Laderegler + 5-V-Ausgang in einem, komplett lötfrei. Eingang **4,5–6 V**, Ladestrom **max. 900 mA**, Panel **≤ 10 W** — die Grenzen erklärt [9.3b](#93b-️-welches-solarpanel-passt-zum-laderegler) | 10 € | [DFRobot](https://www.dfrobot.com/product-1712.html) · [Datenblatt](https://wiki.dfrobot.com/dfr0559/) · [eBay-Suche](https://www.ebay.de/sch/i.html?_nkw=solar+power+manager+5V+MPPT+lipo) |
 |  ✓ | 1 | **LiPo-Akku 1S, 5000 mAh**, mit Schutzschaltung + JST-PH 2.0 | ⚠️ **Mit Schutzschaltung** ist Pflicht. Steckertyp prüfen! 10000 mAh = +12 €, doppelte Reserve | 14 € | [Pollin](https://www.pollin.de/stromversorgung/akkus/lipo-akkus/) · [lithium-polymer-akkus.de](https://www.lithium-polymer-akkus.de/lipo-akku-pack-25mah-to-10000mah/) |
 | ✓ | 1 | **IP65-Gehäuse ca. 120×80×50 mm** | Muss Board, Laderegler und Akku fassen | 11 € | [Reichelt](https://www.reichelt.de/index.html?ACTION=446&LA=446&nbc=1&q=Installationsgeh%C3%A4use+IP65) |
 | ✓ | 3 | Kabelverschraubung M12 | Für Panelkabel, Kamerakabel, IR-Kabel | 5 € | [Reichelt](https://www.reichelt.de/index.html?ACTION=446&LA=446&nbc=1&q=Kabelverschraubung+M12) |
@@ -181,7 +343,7 @@ es bleibt für alle künftigen Projekte nützlich.
 | Gehäuse: Vorratsdose + Silikon | 11 € | Für einen Sommer okay, über den Winter nicht |
 | Acrylglas, Silikagel, Klettband, USB-Kabel aus dem Haus | 20 € | nichts, wenn vorhanden |
 | Lichtschranke weglassen | 3 € | Statistik wird geschätzt statt gemessen |
-| 10-W-Panel statt 15 W | 8 € | Nur wenn du **sicher** Routerbetrieb fährst ([9.0b](#90b-️-noch-eine-entscheidung-vor-dem-panel-kauf)) |
+| 5-W-Panel statt 10 W | 9 € | Reicht ab April; im März und bei Bewölkung wird es knapp ([9.3b](#93b-️-welches-solarpanel-passt-zum-laderegler)) |
 | **Zusammen** | **~52 €** | **→ ~140 € Bauteile** |
 
 **Wo man nicht sparen sollte:** Panel (B1) und Akku — sie erfüllen „läuft autonom". Und die
@@ -195,10 +357,10 @@ High-Endurance-Karte, die „muss stabil sein" erfüllt.
 |---|---|
 | A — BerryBase (Board, Stiftleiste) | 26 € |
 | B — eBay/AliExpress (2× Kamera, FPC) | 24 € |
-| C — Amazon (Karte, Panel, Module, Kleinteile) | 79 € |
+| C — Amazon (Karte, Panel, Module, Kleinteile) | 81 € |
 | D — Einzelbestellungen (Laderegler, Akku, Gehäuse, Verschraubungen) | 40 € |
 | Lichtschranke (optional) | 3 € |
-| **Bauteile gesamt** | **≈ 172 €** |
+| **Bauteile gesamt** | **≈ 174 €** |
 | Versand (4–5 Shops) | 15–25 € |
 | **Realistisch an der Kasse** | **≈ 190 €** |
 | *mit Sparliste 9.7* | *≈ 150 €* |
@@ -243,11 +405,15 @@ Bitte **vor** dem Einbau prüfen, nicht danach:
       im **dunklen** Raum schauen. Sieht man etwas → Filter ist weg. ✅
 - [ ] IR-LEDs: mit der **Handy-Frontkamera** prüfen, ob sie leuchten
 - [ ] MOSFET-Modul: steht **D4184** oder **AOD4184** auf dem Chip? (Nicht IRF520)
-- [ ] Solarpanel: Aufkleber sagt **6 V** und die Wattzahl passt zur Betriebsart
-      ([9.0b](#90b-️-noch-eine-entscheidung-vor-dem-panel-kauf))
+- [ ] **Solarpanel in der Sonne mit dem Multimeter gemessen: unter 6,5 V?**
+      Das ist die wichtigste Messung der ganzen Liste — darüber stirbt der
+      Laderegler ([9.3b](#93b-️-welches-solarpanel-passt-zum-laderegler))
+- [ ] Polarität des Panelkabels notiert (welche Ader ist Plus)
+- [ ] **Nach dem Abschneiden des USB-Steckers nochmal gemessen** — springt die
+      Spannung jetzt über 6,5 V, saß die Regelung im Stecker ([9.3b](#93b-️-welches-solarpanel-passt-zum-laderegler))
 - [ ] Akku: Schutzschaltung vorhanden, Stecker passt in den Laderegler
 - [ ] microSD: max. 32 GB, als FAT32 formatiert
-- [ ] Laderegler: Eingang **5–7 V**, JST-Buchse für Akku, USB-Ausgang
+- [ ] Laderegler: Eingang **4,5–6 V**, JST-Buchse für Akku, USB-Ausgang
 
 Der vierte Punkt ist der wichtigste. **Ein Kameramodul mit IR-Filter ist nachts blind** —
 und das merkt man sonst erst, wenn alles im Kasten verklebt ist.
