@@ -18,7 +18,7 @@
 //  Vergangene noch eine Weile aufhebt.
 //
 //  ⚠️ Was das NICHT kann: sagen, WELCHER Vogel singt. Dafür bräuchte man
-//  BirdNET, und das braucht einen Raspberry Pi. Siehe Machbarkeit 1.7.
+//  BirdNET, und das braucht einen Raspberry Pi. Siehe Überblick 1.7.
 // ============================================================================
 
 #pragma once

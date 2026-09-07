@@ -223,7 +223,7 @@ async function status(){
                  '-1':'⬇ f&auml;llt — l&auml;uft auf Akku'}[String(s.akkuTrend)];
     $('akkuinfo').innerHTML=hatAkku
       ? pfeil+' <span style="opacity:.6">(Verlauf &uuml;ber 10 Minuten)</span>'
-      : 'Spannungssensor nicht angeschlossen — siehe Schaltplan 3.3.';
+      : 'Spannungssensor nicht angeschlossen — siehe Schaltplan 3.8.';
     $('akkupille').textContent=hatAkku
       ? '\u{1F50B} '+s.akkuProzent+' %'+(s.akkuTrend>0?' ⚡':'') : '\u{1F50B} —';
 

@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" width="960" height="640" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+
+  <rect x="0" y="0" width="960" height="640" fill="#ffffff"/>
+  <rect x="1" y="1" width="958" height="638" fill="none" stroke="#d5dbe4" stroke-width="2" rx="6"/>
+
+  <text x="480" y="34" text-anchor="middle" font-size="21" font-weight="bold" fill="#16232f">Der XIAO ESP32-S3 Sense — welcher Pin wofür</text>
+  <text x="480" y="55" text-anchor="middle" font-size="13" fill="#5b6b7d">Von oben gesehen, der USB-C-Anschluss zeigt nach oben. Du brauchst 6 der 14 Pins.</text>
+
+  <!-- ================= Platine ================= -->
+  <rect x="380" y="92" width="200" height="400" rx="10" fill="#2b3f52" stroke="#16232f" stroke-width="3"/>
+
+  <!-- USB-C -->
+  <rect x="440" y="80" width="80" height="26" rx="10" fill="#b8bfc9" stroke="#7d8a99" stroke-width="2"/>
+  <rect x="450" y="87" width="60" height="12" rx="6" fill="#5b6b7d"/>
+  <text x="480" y="72" text-anchor="middle" font-size="12" font-weight="bold" fill="#2b3440">USB-C · Strom &amp; Programmieren</text>
+
+  <!-- Antenne -->
+  <rect x="404" y="118" width="152" height="20" rx="4" fill="#3d5468"/>
+  <text x="480" y="133" text-anchor="middle" font-size="11" fill="#c6d4e0">WLAN-Antenne</text>
+
+  <!-- Chip -->
+  <rect x="428" y="152" width="104" height="70" rx="6" fill="#16232f" stroke="#0b1219" stroke-width="2"/>
+  <text x="480" y="182" text-anchor="middle" font-size="12" font-weight="bold" fill="#dbe7de">ESP32-S3</text>
+  <text x="480" y="200" text-anchor="middle" font-size="10" fill="#8fa3bb">2 Kerne · 8 MB PSRAM</text>
+
+  <!-- Sense-Aufsatz -->
+  <rect x="396" y="392" width="168" height="86" rx="6" fill="#1d4530" stroke="#0f2a1c" stroke-width="2"/>
+  <text x="480" y="416" text-anchor="middle" font-size="12" font-weight="bold" fill="#c6ded0">Sense-Aufsatz</text>
+  <rect x="416" y="426" width="128" height="16" rx="3" fill="#8a6a3c"/>
+  <text x="480" y="439" text-anchor="middle" font-size="9" fill="#ffffff">24-pol Kamerabuchse</text>
+  <rect x="424" y="450" width="112" height="20" rx="3" fill="#3a4652"/>
+  <text x="480" y="464" text-anchor="middle" font-size="10" fill="#dbe7de">microSD-Schacht</text>
+
+  <!-- Mikrofon -->
+  <circle cx="410" cy="374" r="9" fill="#8fa3bb" stroke="#5b6b7d" stroke-width="2"/>
+  <text x="410" y="378" text-anchor="middle" font-size="9" fill="#16232f">🎤</text>
+
+  <!-- ================= Pins links ================= -->
+  <g>
+    <!-- D0 -->
+    <circle cx="392" cy="252" r="8" fill="#4ade80" stroke="#166534" stroke-width="2"/>
+    <line x1="384" y1="252" x2="330" y2="252" stroke="#4ade80" stroke-width="3"/>
+    <!-- D1 -->
+    <circle cx="392" cy="284" r="8" fill="#4ade80" stroke="#166534" stroke-width="2"/>
+    <line x1="384" y1="284" x2="330" y2="284" stroke="#4ade80" stroke-width="3"/>
+    <!-- D2 -->
+    <circle cx="392" cy="316" r="8" fill="#4ade80" stroke="#166534" stroke-width="2"/>
+    <line x1="384" y1="316" x2="330" y2="316" stroke="#4ade80" stroke-width="3"/>
+    <!-- D3..D6 frei -->
+    <circle cx="392" cy="348" r="8" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+    <circle cx="392" cy="380" r="8" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+    <circle cx="392" cy="412" r="8" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+    <circle cx="392" cy="444" r="8" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+  </g>
+
+  <g font-size="12" fill="#c6d4e0" text-anchor="start">
+    <text x="406" y="256">D0</text>
+    <text x="406" y="288">D1</text>
+    <text x="406" y="320">D2</text>
+    <text x="406" y="352">D3</text>
+    <text x="406" y="384">D4</text>
+    <text x="406" y="416">D5</text>
+    <text x="406" y="448">D6</text>
+  </g>
+
+  <!-- ================= Pins rechts ================= -->
+  <g>
+    <circle cx="568" cy="252" r="8" fill="#f87171" stroke="#991b1b" stroke-width="2"/>
+    <line x1="576" y1="252" x2="630" y2="252" stroke="#f87171" stroke-width="3"/>
+    <circle cx="568" cy="284" r="8" fill="#334155" stroke="#0f172a" stroke-width="2"/>
+    <line x1="576" y1="284" x2="630" y2="284" stroke="#334155" stroke-width="3"/>
+    <circle cx="568" cy="316" r="8" fill="#f0a5cd" stroke="#a3477b" stroke-width="2"/>
+    <line x1="576" y1="316" x2="630" y2="316" stroke="#e06ba8" stroke-width="3"/>
+    <circle cx="568" cy="348" r="8" fill="#fbbf24" stroke="#92400e" stroke-width="2"/>
+    <circle cx="568" cy="380" r="8" fill="#fbbf24" stroke="#92400e" stroke-width="2"/>
+    <circle cx="568" cy="412" r="8" fill="#fbbf24" stroke="#92400e" stroke-width="2"/>
+    <circle cx="568" cy="444" r="8" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+  </g>
+
+  <g font-size="12" fill="#c6d4e0" text-anchor="end">
+    <text x="554" y="256">5V</text>
+    <text x="554" y="288">GND</text>
+    <text x="554" y="320">3V3</text>
+    <text x="554" y="352">D10</text>
+    <text x="554" y="384">D9</text>
+    <text x="554" y="416">D8</text>
+    <text x="554" y="448">D7</text>
+  </g>
+
+  <!-- ================= Beschriftungen links ================= -->
+  <g fill="#2b3440">
+    <rect x="24" y="228" width="300" height="48" rx="7" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="2"/>
+    <text x="38" y="248" font-size="13" font-weight="bold" fill="#16232f">D0 → MOSFET „SIG“</text>
+    <text x="38" y="267" font-size="12" fill="#42546b">schaltet und dimmt das IR-Licht</text>
+
+    <rect x="24" y="286" width="300" height="48" rx="7" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="2"/>
+    <text x="38" y="306" font-size="13" font-weight="bold" fill="#16232f">D1 ← Spannungssensor „S“</text>
+    <text x="38" y="325" font-size="12" fill="#42546b">damit die Website den Akkustand kennt</text>
+
+    <rect x="24" y="344" width="300" height="48" rx="7" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="2"/>
+    <text x="38" y="364" font-size="13" font-weight="bold" fill="#16232f">D2 ← Lichtschranke „OUT“</text>
+    <text x="38" y="383" font-size="12" fill="#42546b">meldet jeden Vogel im Einflugloch</text>
+
+    <rect x="24" y="402" width="300" height="66" rx="7" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+    <text x="38" y="422" font-size="13" font-weight="bold" fill="#16232f">D3 – D7 bleiben frei</text>
+    <text x="38" y="441" font-size="12" fill="#42546b">Platz für später, z. B. einen</text>
+    <text x="38" y="459" font-size="12" fill="#42546b">Temperaturfühler im Kasten.</text>
+  </g>
+
+  <!-- ================= Beschriftungen rechts ================= -->
+  <g fill="#2b3440">
+    <rect x="640" y="228" width="296" height="48" rx="7" fill="#fef2f2" stroke="#d1332e" stroke-width="2"/>
+    <text x="654" y="248" font-size="13" font-weight="bold" fill="#16232f">5V → MOSFET „VIN+“</text>
+    <text x="654" y="267" font-size="12" fill="#42546b">der Strom für die IR-LEDs</text>
+
+    <rect x="640" y="286" width="296" height="48" rx="7" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+    <text x="654" y="306" font-size="13" font-weight="bold" fill="#16232f">GND → alle drei Module</text>
+    <text x="654" y="325" font-size="12" fill="#42546b">das gemeinsame Rückrohr</text>
+
+    <rect x="640" y="344" width="296" height="48" rx="7" fill="#fdf2f8" stroke="#a3477b" stroke-width="2"/>
+    <text x="654" y="364" font-size="13" font-weight="bold" fill="#16232f">3V3 → Lichtschranke „VCC“</text>
+    <text x="654" y="383" font-size="12" fill="#42546b">Sensoren bekommen 3,3 V, nicht 5 V</text>
+
+    <rect x="640" y="402" width="296" height="66" rx="7" fill="#fffbeb" stroke="#d99400" stroke-width="2.5"/>
+    <text x="654" y="422" font-size="13" font-weight="bold" fill="#92400e">D8 · D9 · D10 — Finger weg!</text>
+    <text x="654" y="441" font-size="12" fill="#42546b">Die gehören der SD-Karte. Wer sie</text>
+    <text x="654" y="459" font-size="12" fill="#42546b">benutzt, sucht den Fehler tagelang.</text>
+  </g>
+
+  <!-- ================= Fußnote ================= -->
+  <rect x="24" y="500" width="912" height="116" rx="9" fill="#fff9ec" stroke="#c9a227" stroke-width="2"/>
+  <text x="44" y="527" font-size="15" font-weight="bold" fill="#16232f">Drei Kabel gehen an GND — aber es gibt nur einen GND-Pin</text>
+  <text x="44" y="553" font-size="13" fill="#2b3440">Das ist normal und kein Problem. Steck eine kleine Lüsterklemme (Wago-Klemme) an den GND-Pin und</text>
+  <text x="44" y="574" font-size="13" fill="#2b3440">verteile von dort auf drei schwarze Kabel. Das nennt man einen <tspan font-weight="bold">Masse-Sammelpunkt</tspan>.</text>
+  <text x="44" y="600" font-size="12.5" font-style="italic" fill="#5b6b7d">Genauso beim 3V3-Pin, falls du dort später noch etwas anschließen willst.</text>
+
+</svg>

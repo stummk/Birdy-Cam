@@ -6,7 +6,7 @@
 //
 //  Vorher:
 //     1. USB-Kabel ABZIEHEN
-//     2. Kameramodul an die Flachbandbuchse (siehe Schaltplan 3.5)
+//     2. Kameramodul an die Flachbandbuchse (siehe Schaltplan 3.9)
 //     3. USB-Kabel wieder anstecken
 //     4. Unten WLAN-Name und Passwort eintragen
 //

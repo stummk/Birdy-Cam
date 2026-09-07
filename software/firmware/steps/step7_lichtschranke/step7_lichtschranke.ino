@@ -4,7 +4,7 @@
 //  Ziel: Den Infrarot-Strahl im Einflugloch justieren und sehen, wie aus
 //        zwei einfachen Ereignissen eine echte Messung wird.
 //
-//  Vorher verkabeln (siehe Variante-ESP32-Doku):
+//  Vorher verkabeln (siehe Schaltplan 3.7):
 //     Lichtschranke VCC  -> 3V3
 //     Lichtschranke GND  -> GND
 //     Lichtschranke OUT  -> D2 (GPIO3)

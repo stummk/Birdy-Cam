@@ -55,10 +55,9 @@
 //    schlafen. Das kostet etwa 0,25 W mehr — bei 16 Wh/Tag Grundverbrauch
 //    (mit Ton) sind das +6 Wh/Tag, also rund +40 %.
 //
-//    -> Der Laderegler lädt aber nur mit 900 mA, egal wie groß das Panel ist.
-//       Ein größeres Panel bringt deshalb weniger als der Routerbetrieb.
-//       Welches Panel passt (5 V, Leerlauf unter 6,5 V!), steht in
-//       Bestellliste 9.3b.
+//    -> Mit dem 15-W-Panel ist das an hellen Tagen kein Problem. Knapp wird
+//       es im März und bei Dauerbewölkung — dann ist NETZ_ROUTER die
+//       sparsamere Wahl. Rechnung dazu in Überblick 1.6.
 //    -> Oder hier auf true stellen: nachts schaltet das eigene WLAN ab,
 //       wenn niemand verbunden ist. Spart etwa die Hälfte davon.
 //       Nachteil: Nachts kommt man nicht dran, ohne zu warten.
@@ -126,7 +125,7 @@
 #define BILD_QUALITAET  18
 
 // Takt für die Kamera in MHz.
-// Bei Streifen oder Rauschen im Bild: auf 10 stellen! Siehe Schaltplan 3.5.
+// Bei Streifen oder Rauschen im Bild: auf 10 stellen! Siehe Schaltplan 3.9.
 #define XCLK_MHZ        20
 
 // Bild spiegeln / auf den Kopf stellen (je nachdem, wie die Kamera eingebaut ist)
@@ -213,7 +212,7 @@
 // Nachtbild zu dunkel? Hier ist die erste Stellschraube — bis 255 ist Luft,
 // also mehr als das Dreifache. 940-nm-LEDs sieht der Kamerasensor nur etwa
 // halb so gut wie 850-nm-LEDs; dafür sind sie für Menschen unsichtbar.
-// Für den VOGEL sind beide unsichtbar. Details in Machbarkeit 1.5.
+// Für den VOGEL sind beide unsichtbar. Details in Überblick 1.5.
 //
 // Reicht 255 nicht: mehr LEDs, oder auf 850 nm wechseln.
 #define IR_HELLIGKEIT         75
@@ -238,7 +237,7 @@
 // ----------------------------------------------------------------------------
 // Zählt Ein- und Ausflüge exakt — viel genauer als Bildvergleich, weil
 // Sonnenflecken und Blattschatten sie nicht interessieren.
-// Siehe Machbarkeit 1.3.
+// Siehe Überblick 1.3.
 #define LICHTSCHRANKE_AN      true
 
 // Kürzere Unterbrechungen sind kein Vogel (Insekt, Zittern).
@@ -335,7 +334,7 @@
 // mit den 2 Sekunden davor, sonst fehlt der Anfang jedes Rufs.
 //
 // Sie sagt NICHT, welcher Vogel singt. Dafür bräuchte es BirdNET auf einem
-// Raspberry Pi 4/5, siehe Machbarkeit 1.7.
+// Raspberry Pi 4/5, siehe Überblick 1.7.
 #define GESANG_AUFNEHMEN      false
 
 // Ab welcher Lautstärke gilt es als Gesang? Größer = unempfindlicher.
@@ -372,7 +371,7 @@
 #define NOTAUS_SCHLAF_MINUTEN 30
 
 // ----------------------------------------------------------------------------
-//  8. Pins  (siehe Schaltplan 3.2 — nur ändern, wenn du umgesteckt hast)
+//  8. Pins  (siehe Schaltplan 3.5 — nur ändern, wenn du umgesteckt hast)
 // ----------------------------------------------------------------------------
 #define PIN_IR_LED      1       // D0 -> MOSFET-Modul SIG
 #define PIN_AKKU        2       // D1 <- Spannungssensor S

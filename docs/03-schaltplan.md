@@ -1,360 +1,506 @@
-# 3. Schaltplan (Variante A — Raspberry Pi)
+# 3. Schaltplan — wo welches Kabel hinkommt
 
-Alles wird **gesteckt oder geschraubt**. Der Pi Zero 2 **WH** hat die Stiftleiste schon
-angelötet — es gibt in diesem Projekt keine einzige Lötstelle.
+Dieses Kapitel ist für Menschen geschrieben, die **noch nie etwas verkabelt haben**. Es
+erklärt jeden Schritt einzeln, und es gibt zu allem ein Bild.
 
-> 🧒 **Für den Baumeister:** Strom ist wie Wasser in Rohren. Er muss *hin* und wieder
-> *zurück*. Das Zurück-Rohr heißt **GND** (Masse) — schwarz. Alle schwarzen Kabel müssen
-> irgendwie zusammenhängen, sonst fließt nichts. Das ist die Regel, die 90 % aller
-> „warum geht das nicht?" erklärt.
-
-*(Schaltplan für Variante B steht in [8. Variante ESP32](08-variante-esp32.md#schaltplan).)*
+**Die gute Nachricht zuerst: Es wird nichts gelötet.** Alles wird gesteckt oder mit einem
+kleinen Schraubendreher festgeschraubt. Wenn du einen Stecker in eine Buchse schieben und
+eine Schraube drehen kannst, kannst du das hier auch.
 
 ---
 
-## 3.1 Der Gesamtplan
+## 3.1 Drei Wörter, und du verstehst jeden Schaltplan
 
-```mermaid
-flowchart TB
-  PV["☀️ Solarpanel<br/>30 W / 12 V"]
+Mehr braucht es wirklich nicht.
 
-  subgraph REG["Laderegler (B2)"]
-    RPV["PV + / −"]
-    RBAT["BAT + / −"]
-    RLOAD["LOAD + / −<br/>schaltet bei leerem<br/>Akku selbst ab"]
-  end
+### Strom ist wie Wasser in Rohren
 
-  FUSE["🔌 Sicherung 5 A"]
-  INA["INA219 (B5)<br/>misst Spannung<br/>UND Ladestrom"]
-  BAT["🔋 LiFePO4<br/>12 V / 12 Ah"]
-  BUCK["DC-DC 12 V → 5 V<br/>3 A (B4)"]
+Er muss **hin** und wieder **zurück**. Das Hinrohr heißt **Plus (+)** und ist meistens
+**rot**. Das Rückrohr heißt **Minus (−)** oder **GND** („Ground“, Masse) und ist meistens
+**schwarz**.
 
-  subgraph PI["Raspberry Pi Zero 2 WH"]
-    USB["Micro-USB PWR"]
-    P33["Pin 1 — 3V3"]
-    PGND["Pin 6 — GND"]
-    SDA["Pin 3 — GPIO2 SDA"]
-    SCL["Pin 5 — GPIO3 SCL"]
-    G17["Pin 11 — GPIO17"]
-    G18["Pin 12 — GPIO18 PWM"]
-    CSI["CSI-Buchse"]
-    OTG["Micro-USB DATA"]
-  end
+> ⭐ **Die wichtigste Regel im ganzen Kapitel:** Alle schwarzen Kabel müssen irgendwie
+> zusammenhängen. Sonst fließt gar nichts. Das erklärt neun von zehn Fällen von
+> „warum geht das nicht?“.
 
-  SSD[("USB-SSD<br/>Boot + Daten")]
-  MOS["MOSFET-Modul (C2)"]
-  IRL["4× IR-LED 940 nm (C1)"]
-  LS["IR-Lichtschranke (C3)"]
-  CAM["📷 NoIR-Kamera 1080p (A2)"]
+### Signal ist keine Kraft, sondern eine Nachricht
 
-  PV --> RPV
-  RBAT --> FUSE --> INA --> BAT
-  RLOAD --> BUCK
-  BUCK -->|"5 V USB"| USB
+Ein drittes Kabel überträgt oft weder Plus noch Minus, sondern eine **Information** —
+zum Beispiel „jetzt war ein Vogel im Loch“. So ein Kabel heißt **Signal** und wird in
+diesem Plan **gelb** gezeichnet. Es heißt auf den Modulen `S`, `SIG`, `OUT`, `PWM` oder
+`TRIG` — gemeint ist immer dasselbe.
 
-  INA -.->|"SDA"| SDA
-  INA -.->|"SCL"| SCL
-  P33 -.->|"3V3"| INA
-  PGND -.->|"GND"| INA
+### Ein Pin ist ein kleiner Metallstift
 
-  G18 -->|"PWM-Signal"| MOS
-  MOS -->|"geschaltete 5 V"| IRL
-  LS -->|"Signal"| G17
-  P33 -.->|"3V3 ⚠️"| LS
+Auf dem Bastelcomputer stehen 14 solche Stifte. Auf jeden davon passt ein Steckkabel
+(„Dupont-Kabel“). Jeder Pin hat einen Namen wie `D0` oder `GND`, und dieser Name steht
+auf der Platine — meist ganz klein daneben.
 
-  CSI -->|"CSI-Flachband 30 cm"| CAM
-  OTG -->|"OTG-Adapter"| SSD
-```
+### Und ein Wort noch: Volt
+
+Volt ist der **Druck** im Rohr. Unsere Bauteile arbeiten mit **3,3 Volt** oder **5 Volt**.
+Zum Vergleich: Eine Steckdose hat 230 Volt. Alles, was du hier anfasst, ist ungefährlich —
+nur der Akku braucht ein bisschen Respekt ([3.11](#311-sicherheit--die-fünf-dinge-die-man-nicht-tut)).
 
 ---
 
-## 3.2 Pinbelegung am Raspberry Pi
+## 3.2 Der Gesamtplan — einmal alles auf einem Bild
 
-Der Pi hat 40 Pins. Wir benutzen sieben davon.
+![Gesamtplan der Verdrahtung](bilder/verdrahtung-gesamt.svg)
 
-```
-        Pi Zero 2 WH, von oben, USB-Buchsen unten
+Neun Verbindungen, das ist alles. Hier stehen sie noch einmal als Liste zum Abhaken:
 
-          3V3  ( 1) ( 2)  5V
-   SDA GPIO2   ( 3) ( 4)  5V
-   SCL GPIO3   ( 5) ( 6)  GND
-       GPIO4   ( 7) ( 8)  GPIO14
-          GND  ( 9) (10)  GPIO15
-      GPIO17   (11) (12)  GPIO18   <- PWM für IR-LEDs
-      GPIO27   (13) (14)  GND
-         ...            ...
-```
+| # | Von | Nach | Kabel | Schwierigkeit |
+|---|---|---|---|---|
+| **1** | Solarpanel, rote Ader | Laderegler `SOLAR IN` **+** | die 2 Adern des Panelkabels | schrauben |
+| | Solarpanel, schwarze Ader | Laderegler `SOLAR IN` **−** | | |
+| **2** | Akku | Laderegler `BAT` | der weiße Stecker am Akku | einstecken |
+| **3** | Akku | Spannungssensor | Y-Kabel (siehe [3.8](#38-der-spannungssensor--damit-du-den-akkustand-siehst)) | einstecken |
+| **4** | Laderegler `USB-A OUT` | XIAO `USB-C` | ein normales USB-Kabel | einstecken |
+| **5** | Spannungssensor `S` | XIAO `D1` | gelbes Steckkabel | stecken |
+| | Spannungssensor `−` | XIAO `GND` | schwarzes Steckkabel | |
+| **6** | XIAO `D0` | MOSFET `SIG` | gelbes Steckkabel | stecken |
+| | XIAO `5V` | MOSFET `VIN+` | rotes Kabel | schrauben |
+| | XIAO `GND` | MOSFET `VIN−` | schwarzes Kabel | schrauben |
+| **7** | MOSFET `OUT+` / `OUT−` | 4 IR-LEDs, alle parallel | rot / schwarz | schrauben |
+| **8** | Lichtschranke `VCC` | XIAO `3V3` | rosa/rotes Steckkabel | stecken |
+| | Lichtschranke `GND` | XIAO `GND` | schwarzes Steckkabel | |
+| | Lichtschranke `OUT` | XIAO `D2` | gelbes Steckkabel | |
+| **9** | Kameramodul | XIAO, Flachbandbuchse | das Flachbandkabel | vorsichtig! |
 
-| Pin | Name | Belegung | Richtung |
-|---|---|---|---|
-| **1** | 3V3 | → INA219 `VCC`, Lichtschranke `VCC` | Versorgung |
-| **3** | GPIO2 / SDA | ↔ INA219 `SDA` | I2C-Daten |
-| **5** | GPIO3 / SCL | ↔ INA219 `SCL` | I2C-Takt |
-| **6** | GND | → gemeinsame Masse (mehrfach nötig) | Masse |
-| **11** | GPIO17 | ← Lichtschranke `OUT` | Eingang |
-| **12** | GPIO18 | → MOSFET-Modul `SIG` | Ausgang (PWM) |
-| 7 | GPIO4 | frei — z. B. DS18B20 Temperaturfühler | — |
-| 9, 14, 20… | GND | weitere Masse-Pins | Masse |
+> 💡 **Nimm dir das Bild als Ausdruck mit an den Tisch** und hake jede Nummer ab, sobald
+> sie steckt. Genau so ist es gemeint.
 
-> **GPIO18 ist kein Zufall.** Der Pi hat nur an GPIO12, 13, 18 und 19 einen echten
-> **Hardware**-PWM. An allen anderen Pins müsste die Software das Ein-/Ausschalten selbst
-> machen — das flackert und kostet Rechenzeit. GPIO18 ist der klassische PWM-Pin.
+### Und noch ein Blick von oben: Wer macht eigentlich was?
 
-Masse brauchen wir dreimal (INA219, Lichtschranke, MOSFET). Lösung: ein
-**F-F-Dupontkabel** in Pin 6 und mit einer kleinen Schraubklemme auf drei Kabel verteilen —
-der „Masse-Sammelpunkt". Oder einfach Pin 6, 9 und 14 einzeln benutzen.
-
----
-
-## 3.3 ⚠️ Die wichtigste Warnung: 3,3 V, nicht 5 V
-
-**Der Raspberry Pi verträgt an seinen GPIO-Pins maximal 3,3 V. 5 V zerstören ihn** — sofort
-und endgültig. Das ist ein Unterschied zu vielen Arduino-Boards, die 5 V aushalten.
-
-Konkret betrifft das die **Lichtschranke**:
-
-```
-   RICHTIG:                        FALSCH — tötet den Pi:
-
-   Pi Pin 1 (3V3) ──> VCC          Pi Pin 2 (5V) ──> VCC
-   Pi Pin 6 (GND) ──> GND          Pi Pin 6 (GND)──> GND
-   OUT ──> Pi Pin 11               OUT (jetzt 5 V!) ──> Pi Pin 11
-        (max. 3,3 V) ✅                              ☠️
-```
-
-**Regel: Jedes Modul, dessen Ausgang an einen GPIO-Pin geht, wird aus Pin 1 (3V3)
-versorgt — nie aus Pin 2 oder 4 (5 V).**
-
-Die IR-LEDs dürfen 5 V bekommen, weil zwischen ihnen und dem Pi das MOSFET-Modul sitzt: Der
-Pi steuert nur die kleine Signalseite, die 5 V berühren ihn nie.
-
----
-
-## 3.4 Die Stromversorgung im Detail
-
-```
-   ☀️  Solarpanel 30 W / 12 V
-       │  rot (+) / schwarz (−)
-       ▼
- ┌────────────────────────────────────────────────────┐
- │  Laderegler (B2)                                   │
- │                                                    │
- │  [PV + / −]     ← Solarpanel                       │
- │  [BAT + / −]    ← Akku (über Sicherung + INA219)   │
- │  [LOAD + / −]   → Verbraucher                      │
- │                                                    │
- │  Vier Aufgaben:                                    │
- │   1. Akku laden, ohne ihn zu überladen             │
- │   2. LiFePO4-Ladeprofil einhalten (3,65 V/Zelle)   │
- │   3. Last abschalten, wenn der Akku leer wird      │
- │   4. Last wieder einschalten, wenn Sonne kommt ⭐   │
- └────────────────────────────────────────────────────┘
-       │ LOAD                          ▲ BAT
-       ▼                               │
- ┌──────────────┐              ┌───────┴────────┐
- │ DC-DC 12→5 V │              │ Sicherung 5 A  │
- │    3 A       │              └───────┬────────┘
- └──────┬───────┘                      │
-        │ USB 5 V              ┌───────┴────────┐
-        ▼                      │ INA219  VIN+   │
-   Pi Micro-USB PWR            │         VIN−   │
-                               └───────┬────────┘
-                                       │
-                                 🔋 LiFePO4 12 V
-```
-
-### Punkt 4 ist der wichtige
-
-Ein Pi, der sich selbst herunterfährt, **startet nicht von allein wieder**. Der Ablauf, der
-das löst:
-
-| Akkuspannung | Was passiert |
+| Bauteil | Aufgabe in einem Satz |
 |---|---|
-| fällt auf **11,0 V** | Die Software fährt den Pi **sauber** herunter — Dateisystem bleibt intakt |
-| fällt auf **~10,5 V** | Der Laderegler trennt den LOAD-Ausgang (Tiefentladeschutz) |
-| steigt auf **~12,5 V** | Laderegler schaltet LOAD wieder ein → **der Pi bootet von selbst** |
-
-Deshalb steht in der Stückliste ausdrücklich „Laderegler **mit Last-Ausgang und
-Tiefentladeschutz**". Ein Regler ohne diese Funktion macht das Gerät nach dem ersten
-Regenwochenende dauerhaft tot, bis jemand hingeht.
-
-### Warum der INA219 in der Akkuleitung sitzt
-
-Nicht in der Lastleitung — dort würde er nur den Verbrauch messen. In der **Akkuleitung**
-misst er den **Nettostrom**:
-
-- **positiv** = der Akku wird geladen → „die Sonne bringt gerade 0,8 A"
-- **negativ** = der Akku wird entladen → „wir verbrauchen 0,2 A"
-
-Das ist die Zahl, an der man sofort sieht, ob die Anlage aufgeht. Auf der Website wird sie
-angezeigt.
-
-> 🧒 **Experiment:** Hand über das Panel halten und auf die Website schauen. Der Ladestrom
-> bricht sofort ein. Dann eine Wolke abwarten und wieder schauen. So versteht man in fünf
-> Minuten, warum das Panel nicht in den Schatten gehört.
+| **Solarpanel** | fängt Sonne ein |
+| **Laderegler** | füllt damit den Akku und macht daraus stabile 5 Volt |
+| **Akku** | überbrückt Nacht und Regentage |
+| **XIAO ESP32-S3** | das Gehirn: filmt, hört, rechnet, funkt, betreibt die Website |
+| **Kameramodul** | das Auge — ohne Infrarot-Filter, damit es nachts sieht |
+| **IR-LEDs + MOSFET** | unsichtbares Nachtlicht |
+| **Lichtschranke** | zählt Vögel im Einflugloch |
+| **Spannungssensor** | sagt dem XIAO, wie voll der Akku ist |
+| **microSD-Karte** | speichert Clips und Fotos |
 
 ---
 
-## 3.5 Die IR-Beleuchtung
+## 3.3 Der Laderegler — das Herz der Stromversorgung
 
-```
-                      ┌─── MOSFET-Modul D4184 (C2) ───┐
-  Pin 12 (GPIO18) ───→│ SIG                            │
-  Pin 1  (3V3) ──────→│ VCC          (Steuerseite)     │
-  Pin 6  (GND) ──────→│ GND                            │
-                      │                                │
-  Pin 2  (5V) ───────→│ VIN+   ┌──────┐  OUT+ ├────────┼──→ ┐
-  Pin 9  (GND) ──────→│ VIN−   │ FET  │  OUT− ├────────┼──→ │
-                      └────────┴──────┴────────────────┘    │
-                        ┌───────────────────────────────────┘
-                        ▼      alle 4 LEDs parallel
-        ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐
-        │ IR-LED │  │ IR-LED │  │ IR-LED │  │ IR-LED │
-        │ 940 nm │  │ 940 nm │  │ 940 nm │  │ 940 nm │
-        └────────┘  └────────┘  └────────┘  └────────┘
-         im Deckel, ca. 15 cm über dem Nestboden
-```
+Das ist das Bauteil, an dem am meisten dranhängt. Und es ist zum Glück auch das mit den
+freundlichsten Beschriftungen.
 
-**Warum ein MOSFET und nicht direkt der Pin?** Ein GPIO-Pin des Pi darf ~16 mA liefern.
-Vier LED-Module ziehen zusammen ~80 mA. Der Pin würde überlastet. Der MOSFET ist ein
-elektronischer Schalter: Ein winziger Steuerstrom vom Pin schaltet den großen Strom für die
-LEDs — wie ein Lichtschalter, der die Kraft nicht selbst aufbringen muss.
+![Der Waveshare Solar Power Manager](bilder/laderegler-waveshare.svg)
 
-**PWM = Dimmen.** Der Pi schaltet die LEDs ~1000-mal pro Sekunde ein und aus. Bei 30 %
-Einschaltdauer sind sie auf 30 % Helligkeit. Kein Bauteil wird warm, es gibt keinen
-Dimmwiderstand. Einstellbar in `config.yaml` als `ir_helligkeit`.
+### Was das Ding überhaupt macht
 
-> 🧒 **Experiment für später:** Handy-**Frontkamera** auf die LEDs halten. Viele
-> Handysensoren *sehen* 940 nm als schwaches violett-weißes Leuchten — unsere Augen nicht.
-> Ein sehr überzeugender „unsichtbares Licht gibt es wirklich"-Moment.
+Ein Solarpanel liefert je nach Wetter mal viel, mal wenig, mal gar nichts. Ein Akku will
+aber **ganz genau** geladen werden, sonst nimmt er Schaden. Und der XIAO will **immer
+exakt 5 Volt**, egal was gerade draußen los ist.
 
----
+Der Laderegler ist der Übersetzer dazwischen. Er macht drei Dinge gleichzeitig:
 
-## 3.6 Die Lichtschranke im Einflugloch
+1. **Er lädt den Akku**, so schnell die Sonne es hergibt — und hört rechtzeitig auf.
+2. **Er holt aus dem Panel das Beste heraus.** Das nennt man MPPT. Grob gesagt: Er probiert
+   dauernd aus, bei welcher Spannung das Panel gerade die meiste Leistung abgibt.
+3. **Er macht saubere 5 Volt** für den XIAO — auch nachts, wenn nur der Akku da ist.
 
-Das Bauteil, das die Statistik ehrlich macht.
+### Die vier Handgriffe, in dieser Reihenfolge
 
-```
-      Einflugloch von oben, im Schnitt durch die Vorderwand:
+**① Den kleinen Schalter auf der Rückseite auf `12V` stellen.**
+Er heißt **MPPT-SET** und hat fünf Stellungen: 6V, 9V, 12V, 18V, 24V. Unser Panel ist ein
+12-Volt-Panel, also `12V`. Steht er falsch, geht trotzdem alles — es lädt nur langsamer.
 
-         außen                          innen
-                ┌───────────────────┐
-         ┌──────┤                   ├──────┐
-         │ IR-  │   ●───────────●   │  IR- │
-         │Sender│    IR-Strahl      │Empf. │
-         └──────┤                   ├──────┘
-                └───────────────────┘
-                    Ø 28–32 mm
+**② Den Akku einstecken.**
+Der Akku hat einen kleinen weißen Stecker (JST-PH 2.0). Er passt **nur in einer Richtung**
+in die Buchse `BAT`. Wenn er nicht will, drehe ihn um — aber drücke nie mit Gewalt.
 
-      Beide Bauteile sitzen in kleinen Bohrungen SEITLICH
-      neben dem Einflugloch — nicht im Loch selbst,
-      damit der Vogel sie nicht berührt.
-```
+**③ Den Schalter neben der Akkubuchse auf `ON` schieben.**
+Das ist der Hauptschalter für den Akku. Steht er auf `OFF`, passiert gar nichts, und man
+sucht sehr lange nach dem Fehler.
 
-Anschluss (⚠️ **3,3 V**, siehe [3.3](#33-️-die-wichtigste-warnung-33-v-nicht-5-v)):
+**④ Das Solarpanel anschrauben** — siehe [3.4](#34-das-solarpanel-anschließen).
 
-| Modul | → Pi |
-|---|---|
-| `VCC` | Pin 1 (**3V3**, nicht 5 V!) |
-| `GND` | Pin 6 |
-| `OUT` | Pin 11 (GPIO17) |
+### Wie du siehst, dass es funktioniert — ganz ohne Messgerät
 
-**Wie die Software daraus Zahlen macht:** Der Strahl ist normalerweise geschlossen. Ein
-Vogel unterbricht ihn für ~100–300 ms. Die Software zählt:
+Auf dem Modul sitzen kleine Lämpchen. Die sagen dir alles:
 
-- **eine Unterbrechung** = ein Durchflug
-- **zwei Unterbrechungen** mit Pause dazwischen = Einflug + Ausflug → die Pause ist die
-  **Aufenthaltsdauer**
-- Unterbrechungen unter 30 ms werden ignoriert (Insekten, Zittern)
-
-Justage steht in [Tutorial Schritt 7](05-software-tutorial.md#schritt-7--die-lichtschranke-justieren).
-
----
-
-## 3.7 Kamera und SSD
-
-### Kamera
-
-```
-   Pi Zero: CSI-Buchse       CSI-Kabel 30 cm            Kameramodul
-   ┌──────────┐              22-pol 0,5 mm ↔           ┌─────────┐
-   │  ▭▭▭▭▭▭  │══════════════ 15-pol 1 mm ═════════════│ ▭▭▭▭▭▭  │
-   │  schmal! │                                        │  NoIR   │
-   └──────────┘                                        └─────────┘
-```
-
-⚠️ **Das Kabel aus der Kamerapackung passt nicht an den Zero.** Der Zero hat eine schmalere
-Buchse (22-polig, 0,5 mm Raster) als alle anderen Pi-Modelle. Man braucht das Zero-Kabel
-(A3).
-
-**Die drei Regeln:**
-
-- **Nie knicken.** Sanfte Bögen sind in Ordnung, scharfe Falten trennen die Leiterbahnen.
-- **Nie im laufenden Betrieb ein-/ausstecken.** Vorher den Pi herunterfahren und
-  Strom trennen.
-- **Bügel richtig bedienen:** kleinen schwarzen Bügel mit dem Fingernagel nach oben
-  klappen, Kabel gerade einschieben bis Anschlag, Bügel nach unten drücken. Es braucht
-  **keine** Kraft. Danach vorsichtig ziehen — es muss halten.
-
-### SSD
-
-```
-   Pi Zero hat zwei Micro-USB-Buchsen. Sie zu verwechseln
-   ist der häufigste Anfängerfehler:
-
-   ┌─────────────────────────────────┐
-   │  [PWR]   [DATA/OTG]   [HDMI]    │
-   │    ↑          ↑                 │
-   │  5 V vom     SSD über           │
-   │  DC-DC       OTG-Adapter        │
-   └─────────────────────────────────┘
-
-   PWR  = die Buchse AM RAND (nur Strom)
-   DATA = die INNERE Buchse (Daten + Strom)
-```
-
-Die SSD gehört an **DATA/OTG** (die innere). Kommt sie an PWR, passiert einfach nichts.
-
----
-
-## 3.8 Zusammenbau-Reihenfolge
-
-Nicht alles auf einmal. Nach jedem Schritt kurz testen — dann weiß man immer, welche
-Änderung den Fehler gebracht hat.
-
-| Schritt | Was | Test |
+| Lämpchen | Bedeutung | Was tun |
 |---|---|---|
-| 1 | Pi mit SD-Karte am Handy-Netzteil | Tutorial 1: bootet, WLAN da |
-| 2 | SSD an OTG, USB-Boot einrichten | Tutorial 2: bootet ohne SD-Karte |
-| 3 | Software installieren | Tutorial 3–4: Website erreichbar |
-| 4 | Kamera an CSI | Tutorial 5: Livebild |
-| 5 | MOSFET + IR-LEDs | Tutorial 6: Handykamera sieht LEDs |
-| 6 | Lichtschranke | Tutorial 7: Zähler springt |
-| 7 | INA219 + Akku + Laderegler + Panel | Tutorial 8: Ladestrom auf der Website |
-| 8 | Alles ins Gehäuse, in den Kasten | [Bauplan](04-bauplan.md) |
+| 🟡 **Solar Charge** | Die Sonne lädt gerade | nichts, so soll es sein |
+| 🟢 **Solar Done** | Der Akku ist voll | nichts, auch gut |
+| 🔴 **Solar Warning** | Die zwei Paneladern sind **vertauscht** | Panel abklemmen, Adern tauschen. Kaputt geht dabei nichts |
+| 🔴 **Battery Warning** | Der **Akku** hängt verkehrt herum dran | Sofort abziehen. ⚠️ Jetzt auf keinen Fall zusätzlich Strom anstecken |
+| 🟢🟢🟢🟢 | Tankanzeige: vier an ≈ voll, keins an ≈ leer | — |
+
+> ⚠️ **Der einzige Fehler, der wirklich etwas kaputt macht:** Wenn *Battery Warning*
+> leuchtet und du zusätzlich das Panel oder ein USB-Netzteil ansteckst. Das steht so auch
+> im Handbuch von Waveshare. Also: Leuchtet ein rotes Lämpchen — erst nachsehen, dann
+> weitermachen.
+
+**Blinken *Charge* und *Done* abwechselnd?** Dann ist gar kein Akku dran, oder der Schalter
+steht auf `OFF`.
+
+### Die Notfall-Buchse
+
+Neben dem Solareingang sitzt eine **Micro-USB-Buchse**. Dort kannst du eine ganz normale
+Powerbank oder ein Handy-Netzteil anstecken — und der Laderegler lädt den Akku damit
+genauso, wie er es mit der Sonne täte.
+
+Das ist die Rettung für Regenwochen im März. Leg beim Bauen ein kurzes USB-Kabel von dieser
+Buchse nach außen ([Bauplan 4.5](04-bauplan.md#45-die-elektronikbox)), dann musst du die
+Box dafür nicht einmal öffnen.
 
 ---
 
-## 3.9 Sicherheitsregeln
+## 3.4 Das Solarpanel anschließen
 
-Kurz, aber bitte einhalten. Der 12-V/12-Ah-Akku ist die einzige echte Gefahrenquelle — er
-kann kurzzeitig sehr viel Strom liefern.
+Aus dem Panel kommt ein Kabel mit **zwei Adern**: eine für Plus, eine für Minus.
 
-1. **Sicherung nicht weglassen.** Sie sitzt direkt am Akku-Plus. Ein Kurzschluss ohne
-   Sicherung bringt Kabel zum Glühen.
-2. **Akku nie kurzschließen.** Beim Verkabeln immer erst die Masse, dann Plus. Werkzeug
-   nicht auf den Akku legen.
-3. **Polarität doppelt prüfen**, bevor Strom draufkommt. Rot = Plus, schwarz = Minus.
-   Verpolung tötet Laderegler und DC-DC-Wandler sofort.
-4. **Reihenfolge beim Anschließen am Laderegler:** erst **Akku**, dann **Panel**, dann
-   **Last**. Die meisten Regler erkennen die Systemspannung am Akku — ohne Akku zuerst
-   stellen sie sich falsch ein.
-5. **Akku auf Klettband, nicht mit Kabelbindern quetschen.**
-6. **Nicht unter 0 °C laden** (siehe [1.8](01-machbarkeit.md#drei-dinge-die-das-kaputt-machen-können)).
-7. **Bläht sich der Akku oder wird heiß:** abklemmen, nach draußen auf nicht brennbaren
-   Untergrund, Wertstoffhof.
+```
+   ☀️ Panel  ──────── Kabel ────────  Laderegler
+                                       SOLAR IN
+   rote Ader   ────────────────────►      +
+   schwarze    ────────────────────►      −
+```
 
-> Die 5-V-Seite (Pi, LEDs, Sensoren) ist völlig ungefährlich — anfassen kann man alles.
-> Die Vorsicht gilt dem Akku und der 12-V-Seite.
+**So geht es:**
+
+1. Die zwei Adern am Ende **abisolieren** (etwa 6 mm Kunststoff abziehen, mit einer
+   Abisolierzange oder vorsichtig mit dem Seitenschneider).
+2. Die kleinen Schrauben in der **grünen Klemme** mit einem Schlitzschraubendreher lösen.
+3. Rote Ader ins Loch mit dem **+**, schwarze ins Loch mit dem **−**.
+4. Schrauben festziehen. Danach kurz an den Adern ziehen — sie müssen halten.
+
+**Welche Ader ist Plus?** Meistens die rote, oder die mit einem aufgedruckten Streifen.
+Wenn du unsicher bist, ist das kein Drama: Steck es an, halte das Panel in die Sonne und
+schau auf die Lämpchen. Leuchtet **Solar Warning** rot, sind die Adern vertauscht — dann
+tauschen. Das Modul verträgt das.
+
+> ⚠️ **Ein Punkt, den du wirklich prüfen solltest:** Auf dem Panel klebt ein Aufkleber mit
+> technischen Daten. Dort steht eine Zeile `Voc` oder „Leerlaufspannung“. Dieser Wert muss
+> **unter 24 Volt** liegen. Bei einem 12-Volt-Panel stehen dort typisch 18 bis 22 Volt —
+> das passt. Steht dort mehr, gehört ein anderes Panel her.
+
+**Warum ein 12-Volt-Panel und kein kleines 5-Volt-Panel?** Weil dieser Laderegler
+6 bis 24 Volt annimmt und daraus selbst herunterrechnet, was er braucht. Damit hast du bei
+der Panelauswahl freie Hand und musst nicht auf Zehntelvolt achten. Details in
+[Überblick 1.6](01-ueberblick.md#16-rechnet-die-stromversorgung).
+
+**Wo das Panel hinkommt** (nicht an den Nistkasten!) steht im
+[Bauplan 4.6](04-bauplan.md#46-solarpanel-montieren).
+
+---
+
+## 3.5 Der XIAO ESP32-S3 — welcher Pin wofür
+
+![Die Pins des XIAO ESP32-S3 Sense](bilder/xiao-pins.svg)
+
+Das Board hat 14 Pins. Du benutzt **sechs** davon:
+
+| Pin | Richtung | Geht an | Farbe im Plan |
+|---|---|---|---|
+| **3V3** | liefert Strom | Lichtschranke `VCC` | rosa |
+| **5V** | liefert Strom | MOSFET `VIN+` | rot |
+| **GND** | Rückweg | alle drei Module | schwarz |
+| **D0** | sendet | MOSFET `SIG` (IR-Licht an/aus/dimmen) | gelb |
+| **D1** | empfängt | Spannungssensor `S` (Akkustand) | gelb |
+| **D2** | empfängt | Lichtschranke `OUT` (Vogel!) | gelb |
+
+Frei bleiben **D3 bis D7** — Platz für Erweiterungen, zum Beispiel einen Temperaturfühler.
+
+> ⚠️ **Der häufigste Anfängerfehler in diesem Projekt: D8, D9 oder D10 benutzen.**
+> Die gehören der Speicherkarte. Steckt dort etwas anderes, funktioniert plötzlich die
+> SD-Karte nicht mehr — und man sucht den Fehler tagelang in der Software.
+> **Merksatz: D8, D9, D10 gehören der Speicherkarte.**
+
+### Drei Kabel wollen an GND — es gibt aber nur einen GND-Pin
+
+Das ist normal und kein Problem. Zwei Lösungen:
+
+- **Elegant:** Eine kleine Klemme (Wago-Klemme oder Lüsterklemme) an ein Kabel, das im
+  GND-Pin steckt. Von dort gehen drei schwarze Kabel weiter. Das nennt man einen
+  **Masse-Sammelpunkt**.
+- **Schnell:** Die schwarzen Kabelenden zusammendrehen und gemeinsam in eine Buchsenleiste
+  stecken.
+
+Beides funktioniert. Hauptsache, alle schwarzen Kabel hängen am Ende zusammen.
+
+### Wie kommt der Strom ins Board?
+
+Über das **USB-C-Kabel vom Laderegler** — Verbindung ④. Mehr ist es nicht.
+
+Zum **Programmieren** ziehst du dieses Kabel ab und steckst stattdessen das USB-C-Kabel vom
+Computer an. Beides gleichzeitig ist nicht nötig und auch nicht schlimm.
+
+---
+
+## 3.6 Das unsichtbare Nachtlicht — MOSFET und IR-LEDs
+
+![MOSFET und die vier IR-LEDs](bilder/ir-licht-mosfet.svg)
+
+### Warum ein Extra-Bauteil dazwischen muss
+
+Ein Pin des XIAO darf nur eine winzige Menge Strom liefern — deutlich weniger, als vier
+LED-Module brauchen (zusammen ungefähr 80 mA). Würde man die LEDs direkt anstecken, wäre
+der Pin überlastet.
+
+Der **MOSFET** löst das. Er ist ein **elektronischer Lichtschalter**: Der XIAO sagt ihm nur
+„an“ oder „aus“, und der MOSFET schaltet dann den großen Strom für die LEDs. Genau wie ein
+Lichtschalter an der Wand: Dein Finger muss die Kraft für die Deckenlampe nicht selbst
+aufbringen.
+
+### Der Anschluss
+
+Das MOSFET-Modul hat **zwei Seiten**:
+
+**Steuerseite** (kleine Steckstifte — hier redet der XIAO mit dem Modul):
+
+| MOSFET | XIAO | Farbe |
+|---|---|---|
+| `SIG` (auch `PWM` oder `TRIG` genannt) | `D0` | gelb |
+| `GND` | `GND` | schwarz |
+| `VCC` — **nur falls vorhanden** | `3V3` | rosa |
+
+**Lastseite** (Schraubklemmen — hier fließt der Strom für die LEDs):
+
+| MOSFET | Wohin | Farbe |
+|---|---|---|
+| `VIN+` | XIAO `5V` | rot |
+| `VIN−` | XIAO `GND` | schwarz |
+| `OUT+` | Plus aller vier LEDs | rot |
+| `OUT−` | Minus aller vier LEDs | schwarz |
+
+**„Alle vier parallel“ heißt:** Alle Plus-Anschlüsse der LEDs zusammen an `OUT+`, alle
+Minus-Anschlüsse zusammen an `OUT−`. Nicht hintereinander, sondern nebeneinander — wie vier
+Lampen an einer Steckdosenleiste.
+
+### Dimmen ohne Dimmer — das ist ein netter Trick
+
+Der XIAO schaltet die LEDs **20 000 Mal pro Sekunde** ein und aus. Sind sie dabei nur 30 %
+der Zeit an, leuchten sie mit 30 % Helligkeit. Das heißt **PWM**, kostet kein einziges
+Bauteil, und nichts wird dabei warm.
+
+Eingestellt wird das mit `IR_HELLIGKEIT` in
+[`config.h`](../software/firmware/birdycam/config.h) — Standard ist 75 von 255, also
+ungefähr 30 %. Ist das Nachtbild zu dunkel, drehst du hoch.
+
+*(Warum 20 000 Mal und nicht 1 000? Weil 1 000 Mal pro Sekunde ein hörbares Pfeifen wäre —
+und das Mikrofon hätte es jede Nacht mit aufgenommen.)*
+
+> 🔦 **Netter Test, wenn alles steckt:** Halte die **Frontkamera deines Handys** auf die
+> IR-LEDs. Viele Handykameras sehen Infrarot als schwaches violett-weißes Leuchten — deine
+> Augen nicht. Ein sehr überzeugender Moment.
+
+> ⚠️ **Beim Kauf:** Auf dem Chip des MOSFET-Moduls muss **D4184** oder **AOD4184** stehen.
+> Ein `IRF520`-Modul sieht genauso aus, schaltet aber bei 3,3 Volt nicht richtig durch —
+> die LEDs bleiben dann dunkel oder glimmen nur.
+
+---
+
+## 3.7 Die Lichtschranke im Einflugloch
+
+![Die Lichtschranke im Einflugloch](bilder/lichtschranke.svg)
+
+Das ist das schönste Bauteil im ganzen Projekt: ein unsichtbarer Infrarot-Strahl quer durch
+das Einflugloch. Fliegt ein Vogel durch, bricht er ihn — und wird gezählt.
+
+### Der Anschluss: drei Kabel
+
+| Lichtschranke | XIAO | Farbe |
+|---|---|---|
+| `VCC` | **`3V3`** — nicht 5V! | rosa |
+| `GND` | `GND` | schwarz |
+| `OUT` (manchmal `DO` oder `S`) | `D2` | gelb |
+
+> **Warum 3V3 und nicht 5V?** Weil das Modul sein Signal mit derselben Spannung
+> zurückschickt, die es bekommt. Bekommt es 3,3 Volt, schickt es 3,3 Volt zurück — und
+> genau das erwartet der Eingang des XIAO. Der ESP32 verzeiht auch 5 Volt meistens, aber
+> warum sollte man es darauf ankommen lassen?
+
+### Was das Programm daraus macht
+
+| Ereignis | Wird gewertet als |
+|---|---|
+| einmal unterbrochen | ein Durchflug |
+| zweimal, mit Pause dazwischen | Einflug + Ausflug — die Pause ist die **Aufenthaltsdauer** |
+| kürzer als 30 ms | Insekt oder Zittern → ignoriert |
+| länger als 2 Sekunden | Blatt oder Schmutz im Loch → ignoriert |
+
+Deshalb sind die Besuchszahlen auf der Website **echte Messwerte** und keine Schätzungen.
+Eine reine Bilderkennung würde auch auf wandernde Sonnenflecken anspringen.
+
+**Wo genau sie eingebaut wird** (seitlich neben dem Loch, 5 mm unter der Lochmitte, nie im
+Flugweg) steht im [Bauplan 4.4](04-bauplan.md#44-die-lichtschranke-einbauen). **Justiert**
+wird sie mit [Sketch 7](05-software.md#schritt-7--die-lichtschranke-justieren).
+
+> 💡 **Die Lichtschranke ist optional.** Ohne sie läuft alles weiter — dann löst nur die
+> Bilderkennung aus, und die Besuchszahlen fehlen. In `config.h`:
+> `LICHTSCHRANKE_AN false`.
+
+---
+
+## 3.8 Der Spannungssensor — damit du den Akkustand siehst
+
+Der XIAO kann Spannung messen, aber nur bis 3,3 Volt. Der Akku hat bis zu 4,2 Volt — zu
+viel. Der Spannungssensor ist deshalb nichts weiter als ein **Teiler**: Er gibt genau ein
+Fünftel der Spannung weiter. Aus 4,0 Volt werden 0,8 Volt, und die kann der XIAO messen.
+Die Software rechnet dann wieder mal fünf.
+
+```
+   🔋 Akku 4,0 V ──► Spannungssensor ──► 0,8 V ──► XIAO D1
+                        teilt durch 5
+```
+
+### Der Anschluss
+
+Das Modul hat eine **Schraubklemme** (dort kommt die zu messende Spannung rein) und drei
+**Steckstifte** (dort geht das Ergebnis raus):
+
+| Am Modul | Wohin |
+|---|---|
+| Schraubklemme `+` | Akku **Plus** |
+| Schraubklemme `−` | Akku **Minus** |
+| Stift `S` | XIAO `D1` |
+| Stift `−` | XIAO `GND` |
+| Stift `+` | bleibt frei |
+
+### Und wie kommt man an den Akku dran, wenn der doch im Laderegler steckt?
+
+Mit einem **JST-PH-2.0-Y-Kabel** (kostet 2–3 €, gibt es im 5er-Pack). Das ist ein Kabel mit
+einer Buchse und zwei Steckern:
+
+```
+   🔋 Akku ──► [ Y-Kabel ] ──┬──► Laderegler BAT
+                             └──► Spannungssensor (Schraubklemme)
+```
+
+So bekommen beide dieselbe Spannung, und du musst nichts anlöten oder aufschneiden.
+
+> **Kein Y-Kabel da?** Dann lass den Sensor einfach weg und setze in `config.h`
+> `AKKU_MESSEN false`. Alles läuft weiter — auf der Website fehlt dann nur die
+> Akkuanzeige. Die vier Lämpchen am Laderegler zeigen den Akkustand trotzdem, nur eben
+> erst, wenn man die Box öffnet.
+
+**Vor dem Einbau muss der Sensor einmal kalibriert werden** — das dauert fünf Minuten und
+steht in [Sketch 5](05-software.md#52-die-sieben-lern-sketches).
+
+---
+
+## 3.9 Die Kamera — das einzige empfindliche Kabel
+
+Die Kamera hängt an einem **Flachbandkabel**: dünn, biegsam, hellbraun, mit vielen feinen
+Leiterbahnen darin. Es ist das einzige Teil in diesem Projekt, das man beim Basteln
+wirklich kaputt machen kann.
+
+```
+   XIAO Sense                Verlängerung             Kameramodul
+   ┌────────────┐            (max. 15 cm)             ┌──────────┐
+   │  ▭▭▭▭▭▭▭▭  │══════════════════════════════════════│ ▭▭▭▭▭▭▭  │
+   │ 24 Kontakte│                                      │  OV2640  │
+   └────────────┘                                      └──────────┘
+```
+
+### So öffnest du die Buchse richtig
+
+An der Buchse sitzt ein winziger **schwarzer oder brauner Bügel**. Der muss auf, bevor das
+Kabel hineingeht:
+
+1. Bügel mit dem **Fingernagel** vorsichtig nach oben klappen. Er geht leicht, mit ganz
+   wenig Kraft.
+2. Das Flachbandkabel **gerade** einschieben, bis es nicht weiter geht. Die **blanken
+   Kontakte zeigen dabei zur Platine hin**.
+3. Bügel wieder nach unten drücken.
+4. Vorsichtig am Kabel ziehen. Es muss halten.
+
+### Die drei Regeln
+
+- **Nie knicken.** Sanfte Bögen sind völlig in Ordnung. Eine scharfe Falte trennt die
+  Leiterbahnen im Inneren — man sieht es von außen nicht, und die Kamera geht nie wieder.
+- **Nie ein- oder ausstecken, solange Strom drauf ist.** Erst USB abziehen.
+- **Nicht länger als 15 cm.** Eine längere Verlängerung fängt sich Störungen ein, und das
+  Bild rauscht.
+
+> ⚠️ **Bestell ein zweites Kameramodul mit.** Hier geht am ehesten etwas kaputt, und aus
+> Asien wartet man sonst mitten im Bau zwei bis vier Wochen. Zehn Euro Versicherung.
+
+**Bild rauscht oder hat Streifen?** In `config.h` `XCLK_MHZ` von 20 auf 10 stellen. Das ist
+der Takt, mit dem die Kamera ausgelesen wird — langsamer ist störungsfester.
+
+---
+
+## 3.10 Die Reihenfolge: nicht alles auf einmal
+
+Der wichtigste Rat des ganzen Kapitels: **Steck nicht alles zusammen und schalte dann ein.**
+Wenn dann etwas nicht geht, weißt du nicht, woran es liegt.
+
+Stattdessen Stück für Stück, und nach jedem Schritt ein kleines Testprogramm laufen lassen.
+Genau dafür gibt es die sieben Lern-Sketches in [Kapitel 5](05-software.md).
+
+| Schritt | Was du ansteckst | Was du testest | Sketch |
+|---|---|---|---|
+| 1 | nur den XIAO ans USB-Kabel vom Computer | Board meldet sich, LED blinkt | 1 |
+| 2 | SD-Karte einschieben | Karte wird erkannt, Schreibtest | 2 |
+| 3 | Kameramodul ans Flachband | 🎉 **erstes Livebild im Browser** | 3 |
+| 4 | MOSFET + 4 IR-LEDs (Verbindung ⑥ ⑦) | Handykamera sieht die LEDs leuchten | 4 |
+| 5 | Spannungssensor (Verbindung ③ ⑤) | Akkuspannung wird angezeigt, kalibrieren | 5 |
+| 6 | — (Mikrofon ist schon auf dem Board) | Lautstärkebalken bewegt sich | 6 |
+| 7 | Lichtschranke (Verbindung ⑧) | Zähler springt, wenn der Finger durchgeht | 7 |
+| 8 | Laderegler, Akku, Panel (Verbindung ① ② ④) | läuft ohne Computer, Akku steigt bei Sonne | fertige Firmware |
+
+> **Warum die Stromversorgung zuletzt kommt:** Solange der Computer per USB versorgt, kannst
+> du alles bequem am Schreibtisch testen. Akku und Panel sind der letzte Schritt, nicht der
+> erste.
+
+---
+
+## 3.11 Sicherheit — die fünf Dinge, die man nicht tut
+
+Die 3,3- und 5-Volt-Seite ist völlig harmlos: Du kannst alles anfassen, es passiert nichts.
+Die Vorsicht gilt dem **Akku**. Ein LiPo-Akku kann kurzzeitig sehr viel Strom liefern.
+
+1. **Den Akku nie kurzschließen.** Also nie die beiden Kontakte mit Metall verbinden, nie
+   Werkzeug auf dem Akku ablegen.
+2. **Nie mit Gewalt stecken.** Alle Stecker in diesem Projekt passen nur in eine Richtung.
+   Wenn es nicht geht, ist es falsch herum.
+3. **Bei einem roten Warnlämpchen am Laderegler nichts zusätzlich anstecken** — erst den
+   Fehler beheben ([3.3](#33-der-laderegler--das-herz-der-stromversorgung)).
+4. **Den Akku nicht quetschen.** Mit Klettband befestigen, nicht mit Kabelbindern
+   zusammenschnüren, nicht festkleben. Er soll tauschbar bleiben.
+5. **Bläht sich der Akku auf oder wird er heiß:** abziehen, nach draußen auf einen nicht
+   brennbaren Untergrund legen, zum Wertstoffhof bringen. Nicht in den Hausmüll.
+
+Und eine Regel, die nichts mit Gefahr zu tun hat, aber viel Ärger spart:
+**Vor dem Umstecken immer den Strom abziehen.** Also das USB-Kabel raus, bevor du ein Kabel
+umsteckst.
+
+---
+
+## 3.12 Es geht nicht — die häufigsten Verkabelungsfehler
+
+Bevor du in der Software suchst, arbeite diese Liste ab. Fast immer steckt es hier.
+
+| Was du siehst | Was fast immer die Ursache ist |
+|---|---|
+| **Gar nichts leuchtet, nichts läuft** | Schalter am Laderegler steht auf `OFF`. Oder Akku nicht eingesteckt |
+| **Der XIAO startet immer wieder neu** | Schlechtes USB-Kabel. Viele billige Kabel sind reine Ladekabel mit dünnen Adern — ein anderes probieren |
+| **Die SD-Karte wird nicht gefunden** | An `D8`, `D9` oder `D10` hängt etwas. Die gehören der Karte |
+| **Kein Bild, Kamera meldet Fehler** | Flachbandkabel sitzt nicht richtig, oder der Bügel ist nicht zu. Neu einlegen |
+| **Bild ist da, aber verrauscht/gestreift** | Flachband zu lang, oder `XCLK_MHZ` auf 10 stellen |
+| **IR-LEDs bleiben dunkel** | MOSFET ist ein `IRF520` statt `D4184`. Oder `SIG` steckt nicht auf `D0`. Oder die LEDs sind verpolt |
+| **Akkuanzeige zeigt 0,00 V** | Spannungssensor nicht angeschlossen, oder `S` steckt nicht auf `D1`, oder das schwarze Kabel zu `GND` fehlt |
+| **Akkuanzeige zeigt Unsinn** | Sensor ist nicht kalibriert → [Sketch 5](05-software.md#52-die-sieben-lern-sketches) |
+| **Vogelzähler läuft ohne Vögel hoch** | Lichtschranke schaut nicht genau geradeaus, oder Sonne blendet den Empfänger. Sonst `LICHTSCHRANKE_INVERTIERT` umstellen |
+| **Ein Modul reagiert überhaupt nicht** | Das schwarze GND-Kabel fehlt. **Immer zuerst prüfen.** |
+| **Akku wird nie voll** | `MPPT-SET` steht falsch, Panel im Schatten, oder Panel verschmutzt |
+| 🔴 **Solar Warning leuchtet** | Die zwei Paneladern sind vertauscht — einfach tauschen |
+
+> **Wenn gar nichts hilft:** Zieh alles ab und baue nur den Schritt wieder auf, der zuletzt
+> funktioniert hat ([3.10](#310-die-reihenfolge-nicht-alles-auf-einmal)). Dann einen Schritt
+> weiter. Der Fehler steckt fast immer in genau dem Teil, den du zuletzt dazugesteckt hast.
+
+---
 
 → Weiter mit [4. Bauplan](04-bauplan.md)

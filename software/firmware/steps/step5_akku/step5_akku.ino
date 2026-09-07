@@ -4,7 +4,7 @@
 //  Ziel: Die Akkuspannung messen — und den Messwert richtig einstellen
 //        ("kalibrieren"). Das ist echte Messtechnik.
 //
-//  Vorher verkabeln (siehe Schaltplan 3.3):
+//  Vorher verkabeln (siehe Schaltplan 3.8):
 //     Akku +  -> Spannungssensor VCC (Schraubklemme)
 //     Akku -  -> Spannungssensor GND (Schraubklemme)
 //     Sensor S   -> D1 (GPIO2)
@@ -30,7 +30,7 @@
 // ============================================================================
 
 #define PIN_AKKU   2        // = Pin D1 auf dem Board
-#define FAKTOR     5.00     // <<< HIER DEIN MESSWERT AUS SCHRITT 4 >>>
+#define FAKTOR     5.00     // <<< HIER DEIN FAKTOR AUS DER RECHNUNG OBEN >>>
 
 float messePin() {
   // 16 Messungen und Mittelwert — einzelne Messungen zappeln immer etwas

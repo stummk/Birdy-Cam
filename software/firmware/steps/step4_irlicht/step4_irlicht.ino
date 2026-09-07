@@ -4,7 +4,7 @@
 //  Ziel: Die IR-LEDs schalten und dimmen. Und beweisen, dass sie leuchten,
 //        obwohl man nichts sieht.
 //
-//  Vorher verkabeln (siehe Schaltplan 3.4):
+//  Vorher verkabeln (siehe Schaltplan 3.6):
 //     D0 (GPIO1) -> MOSFET-Modul SIG
 //     3V3        -> MOSFET-Modul VCC
 //     GND        -> MOSFET-Modul GND

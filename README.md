@@ -1,248 +1,183 @@
-# 🐦 BirdyCam — Nistkasten-Kamera
+# 🐦 BirdyCam — die Kamera im Nistkasten
 
-Ein Bauprojekt für eine
-solarbetriebene Kamera im Nistkasten mit Nachtsicht, Full-HD-Aufnahmen, Livestream und
-einer eigenen Website.
+Eine **solarbetriebene Kamera im Vogel-Nistkasten** mit Nachtsicht, Ton, Livestream und
+einer eigenen Website. Für ungefähr **200 €**, ohne Vorkenntnisse, ohne Computer im Haus.
 
-> **Zeitplan-Hinweis vorab:** Gebaut wird **September–Februar**, zugeschaut wird ab März.
+> ⚠️ **Zeitplan vorab:** Gebaut wird **September bis Februar**, zugeschaut wird ab März.
 > Ein belegter Nistkasten darf nicht geöffnet werden (§ 44 BNatSchG). Das ist keine
-> Formalie, sondern bestimmt den ganzen Projektplan. Details in
-> [Machbarkeit 1.8](docs/01-machbarkeit.md#18-rechtliches-und-tierschutz).
+> Formalie, sondern bestimmt den ganzen Projektplan —
+> [warum](docs/01-ueberblick.md#18-rechtliches-und-tierschutz).
 
 ---
 
-## Es gibt zwei Varianten — gebaut wird **Variante B**
+## Was das Ding kann
 
-> ✅ **Entscheidung: Variante B (ESP32-S3), ≈ 149 €.** Begründung: Als kleines Projekt
-> reichen Livestream, Clips, Statistik und Dashboard. Alles, was darüber hinausgeht
-> (Gesangsbestimmung, Artenerkennung), würde ohnehin eine Basisstation im Haus brauchen —
-> und damit ein anderes Projekt sein.
->
-> **Variante A bleibt als Alternative dokumentiert**, falls das Projekt später wächst:
-> [1. Machbarkeit](docs/01-machbarkeit.md) bis [7. Wartung](docs/07-wartung-und-fehlersuche.md)
-> beschreiben sie vollständig, der Code liegt in [`software/pi/`](software/pi/).
->
-> 👉 **Der Weg für Variante B: [8. Variante ESP32](docs/08-variante-esp32.md)**
+| | |
+|---|---|
+| 👀 **Live zusehen** | Handy ins WLAN, Adresse aufrufen, fertig |
+| 🌙 **Auch nachts** | unsichtbares Infrarotlicht, das die Vögel nicht stört |
+| 🎬 **Clips automatisch** | mit 2–3 Sekunden **Vorlauf**, damit der Anflug drauf ist |
+| 🔊 **Mit Ton** | Mikrofon ist schon auf der Platine. Bettelnde Junge sind laut |
+| 🔢 **Vögel zählen** | eine Lichtschranke im Einflugloch — echte Zahlen, keine Schätzung |
+| 📊 **Statistik** | Besuche pro Stunde, Aufenthaltsdauer, Verlauf über 30 Tage |
+| ☀️ **Monatelang allein** | Solarpanel und Akku, kein Kabel zum Haus |
 
-Beide sind vollständig ausgeplant. Sie unterscheiden sich in Preis und Videoqualität.
-
-| | **Variante A — Raspberry Pi Zero 2 W** | **Variante B — ESP32-S3** ⭐ gewählt |
-|---|---|---|
-| **Preis** | **≈ 269 €** | **≈ 155 €** |
-| Video | **H.264, 1080p, 15–30 fps** | MJPEG, 1080p bei ~6 fps |
-| **Ton** | ❌ kein Mikrofon | ✅ **Clips und Livestream mit Ton** |
-| Clips im Browser abspielbar | ✅ **MP4, direkt klickbar** | ❌ Download + VLC Player |
-| 10-Sekunden-Clip | ~5 MB **bei 15 fps** | ~7 MB **bei nur 6 fps** |
-| Speicher | **USB-SSD, SD-Karte wird entfernt** | High-Endurance-SD-Karte |
-| Statistik-Verlauf | SQLite, Jahre | CSV, eine Zeile je Tag — Wochen und Monate |
-| Verbrauch | 42 Wh/Tag | 16 Wh/Tag |
-| Solarpanel | 30 W / 12 V | 10 W / **5 V** (Leerlauf < 6,5 V!) |
-| Akku | LiFePO4 12 V / 12 Ah | LiPo 1S 5000 mAh |
-| Sprache | Python (gut lesbar) | C++ (näher an der Hardware) |
-
-
-### Was Variante B beim Video kostet — offen gesagt
-
-Der Pi hat einen Hardware-H.264-Encoder, der ESP32 kann nur Einzelbilder (MJPEG). Bei Full
-HD heißt das konkret:
-
-| | Pi (A) | ESP32 (B) |
-|---|---|---|
-| 1080p-Bildrate | 15–30 | **~6** |
-| 10-Sekunden-Clip | ~5 MB | ~7 MB |
-| Clip abspielen | Klick im Browser | Download + [VLC](https://www.videolan.org/) |
-
-Der Unterschied steckt **nicht in der Dateigröße, sondern in der Bildrate**: Beide landen
-bei ~0,5–0,7 MB/s, nur liefert H.264 dafür 15–30 Bilder/s statt 6. Für dieselbe Flüssigkeit
-bräuchte MJPEG etwa das Dreifache an Platz — und das kann die SD-Karte nicht schreiben.
-
-**Full HD funktioniert bei Variante B — es ruckelt aber.** Zwei Gegenmaßnahmen stecken im
-Plan:
-
-1. **Stream ODER Aufnahme, nie beides.** Ein Bild geht entweder ins WLAN oder auf die
-   SD-Karte. Genau die Trennung, die für dieses Projekt gewünscht war — und sie ist bei
-   Full HD technisch notwendig, weil die SD-Karte am ESP32 nur ~1,2 MB/s schreibt.
-2. **JPEG-Qualität 18 statt 12.** Bringt die SD-Auslastung von über 100 % auf 67 %.
-   Sichtbar kaum ein Unterschied.
-
-**Und ein Fund, der die Sache entspannt:** Das gut lieferbare OV2640-Nachtsichtmodul kann
-1600×1200 = **1,92 Megapixel** — gegen 2,07 bei Full HD. Das sind **7 % Unterschied**, dafür
-die doppelte Bildrate (8–12 statt 6). Die Firmware ist deshalb auf `FRAMESIZE_UXGA`
-voreingestellt. Details in [9.0](docs/09-bestellliste.md#90-️-die-eine-entscheidung-die-du-vorher-treffen-musst).
-
-Wer echtes 16:9 will, nimmt ein OV5640-Modul und stellt `FRAMESIZE_FHD` ein — beides ist
-vorbereitet.
-
-📄 **Der Weg für Variante B: [8. Variante ESP32](docs/08-variante-esp32.md).** Die Kapitel
-[3. Schaltplan](docs/03-schaltplan.md) und [4. Bauplan](docs/04-bauplan.md) gelten für beide
-Varianten.
+**Das Gehirn ist ein XIAO ESP32-S3 Sense** — ein Bastelcomputer in Briefmarkengröße, der
+alles selbst macht: filmen, hören, rechnen, funken, Website ausliefern. Kein Server, keine
+Cloud, kein Abo, keine App.
 
 ---
 
-## Was gebaut wird (Variante B — die gewählte)
+## Der Aufbau in einem Bild
+
+![Gesamtplan der Verdrahtung](docs/bilder/verdrahtung-gesamt.svg)
+
+Neun Verbindungen, alle gesteckt oder geschraubt. **Gelötet wird nichts.**
+
+---
+
+## Die Anleitung, in Leseordnung
+
+| Kapitel | Inhalt |
+|---|---|
+| **[1. Überblick](docs/01-ueberblick.md)** | Was es kann, was nicht, und ob die Sonne reicht |
+| **[2. Stückliste](docs/02-stueckliste.md)** | Welche Teile, und warum genau die |
+| **[3. Schaltplan](docs/03-schaltplan.md)** ⭐ | **Wo welches Kabel hinkommt — mit Bildern, für Anfänger** |
+| **[4. Bauplan](docs/04-bauplan.md)** | Einbau in den Nistkasten, Maße, Panelmontage |
+| **[5. Software](docs/05-software.md)** | Arduino einrichten, 7 Lernprogramme, fertige Firmware |
+| **[6. Website & Daten](docs/06-website-und-daten.md)** | Dashboard, Statistik, Tagesarchiv |
+| **[7. Wartung & Fehlersuche](docs/07-wartung-und-fehlersuche.md)** | Jahresrhythmus, Fehlertabellen, Notfallkarte |
+| **[8. Bestellliste](docs/08-bestellliste.md)** 🛒 | Nach Shop sortiert, zum Abhaken |
+
+**Wenn du sofort loslegen willst:** [8. Bestellliste](docs/08-bestellliste.md) → bestellen →
+[5. Software](docs/05-software.md) Schritt 0.
+
+---
+
+## So funktioniert es
 
 ```mermaid
 flowchart LR
   subgraph SUN["☀️ sonnigste Stelle im Garten"]
-    PV["Solarpanel 5 V / 10 W<br/>Leerlaufspannung &lt; 6,5 V"]
+    PV["Solarpanel<br/>15 W / 12 V"]
   end
-  subgraph BOX["📦 Elektronikbox — außen am Kasten, Nordseite"]
-    SPM["Solar Power Manager<br/>MPPT + Laderegler + 5 V"]
-    BAT["LiPo 1S 5000 mAh"]
+  subgraph BOX["📦 Elektronikbox — außen am Kasten"]
+    SPM["Waveshare<br/>Solar Power Manager"]
+    BAT["LiPo-Akku 5000 mAh"]
     ESP["XIAO ESP32-S3 Sense"]
-    MIC["🎤 Mikrofon<br/>auf dem Board"]
-    SD[("microSD 32 GB<br/>High Endurance")]
+    SD[("microSD 32 GB")]
   end
   subgraph NEST["🏠 im Nistkasten"]
-    CAM["OV5640 ohne IR-Filter<br/>1920×1080"]
+    CAM["Kamera ohne IR-Filter"]
     IR["4× IR-LED 940 nm"]
-    LS["IR-Lichtschranke<br/>im Einflugloch"]
+    LS["Lichtschranke<br/>im Einflugloch"]
   end
-  PHONE["📱 Handy im WLAN"]
+  PHONE["📱 Handy"]
 
   PV --> SPM
   SPM <--> BAT
   SPM -->|"5 V über USB"| ESP
   ESP --- SD
-  MIC -->|"hört durch ein 6-mm-Loch<br/>in den Kasten"| ESP
-  ESP -->|"24-pol Flachband"| CAM
-  ESP -->|"PWM D0"| IR
-  LS -->|"D2"| ESP
+  ESP --> CAM
+  ESP --> IR
+  LS --> ESP
   ESP <-.->|"WLAN"| PHONE
 ```
 
-**Zwei Betriebsarten, die sich abwechseln:**
+### Zwei Betriebsarten, die sich abwechseln
 
 ```
    Niemand schaut zu          Jemand ruft die Website auf
    ─────────────────────      ───────────────────────────
-   ⏺ AUFNAHMEBEREIT           📹 STREAM
-   Kamera → Vorlaufpuffer     Kamera → WLAN, Full HD
-   Auslöser → Clip auf SD     Aufnahme pausiert
+   ⏺ AUFNAHMEBEREIT           📹 LIVESTREAM
+   Kamera → Vorlaufpuffer     Kamera → ins WLAN
+   Bewegung → Clip auf SD     Aufnahme pausiert
    Lichtschranke zählt        Lichtschranke zählt weiter
    Mikrofon → Tonspur         Mikrofon → Ton ins WLAN
 ```
 
-Der **Ton läuft in beiden Betriebsarten mit** — er kostet nur 0,03 MB/s auf der
-Karte und arbeitet auf dem zweiten Prozessorkern. Details in
-[8.2d](docs/08-variante-esp32.md#82d-ton--bild-und-ton-zusammen).
+Ein Bild geht entweder ins WLAN **oder** auf die Speicherkarte — beides zusammen ist mehr,
+als die Karte schreiben kann. Die Umschaltung passiert automatisch.
 
-*(Diagramm für Variante A steht in [1. Machbarkeit](docs/01-machbarkeit.md).)*
+---
 
-### Die IR-Lichtschranke ist der beste Teil
+## Die Lichtschranke ist der beste Teil
 
 Ein Infrarot-Strahl quer durch das Einflugloch. Fliegt ein Vogel durch, bricht er ihn.
-Zwei Vorteile gegenüber reiner Bilderkennung:
 
-1. **Exaktes Zählen.** Kein Sonnenfleck, kein wackelnder Ast löst aus. Die Besuchszahlen
-   auf der Website sind echte Zahlen, nicht Schätzungen.
-2. **Ein-/Ausflug unterscheidbar** — und damit die Aufenthaltsdauer im Kasten.
+1. **Exaktes Zählen.** Kein Sonnenfleck, kein wackelnder Ast löst aus. Die Besuchszahlen auf
+   der Website sind echte Messwerte, keine Schätzungen.
+2. **Ein- und Ausflug unterscheidbar** — und damit die Aufenthaltsdauer im Kasten.
 
-Kostet 6 € und braucht Mikrowatt.
-
----
-
-## Anforderungen: was erfüllt wird
-
-| # | Anforderung | **Variante B (gewählt)** | Variante A |
-|---|---|---|---|
-| 1 | Tag- und Nachtsicht | ✅ | ✅ |
-| 2 | Livestream beim Verbinden | ✅ 1600×1200 (1,92 MP) **mit Ton** | ✅ ohne Ton |
-| 3 | Clips bei Bewegung, Round-Robin | ✅ 1600×1200, ~2,4 s Vorlauf, **Bild + Ton** | ✅ ohne Ton |
-| 4 | Clips nur, wenn nicht gestreamt wird | ✅ eingebaut | (nicht nötig) |
-| 5 | Statistik + Dashboard | ✅ inkl. Akku & Systemzustand | ✅ |
-| 5b | **Verlauf über 30 Tage** | ✅ `tage.csv`, eine Zeile je Tag | ✅ SQLite |
-| 6 | **Router *oder* eigenes WLAN** | ✅ beides, automatisch umschaltend | nur Router |
-| 6 | Stabiler Speicher (kein SD-Tod) | ✅ High-Endurance-SD, kein OS auf der Karte | ✅ SSD, keine SD im Betrieb |
-| — | Vogelgesang als eigene WAV-Datei | ⬜ Code liegt bereit, abgeschaltet | ⬜ nicht vorgesehen |
-| — | Artenerkennung | ⬜ gestrichen | ⬜ gestrichen |
-
-Gesang und Artenerkennung sind **gestrichen** — beides würde ohnehin eine Basisstation im
-Haus brauchen und ist damit ein eigenes Projekt. Die Begründung mit Zahlen steht in
-[Machbarkeit 1.7](docs/01-machbarkeit.md#17-was-bewusst-fehlt-und-warum).
-
-> **Zur Speicherfrage:** Die SD-Karte ist hier weniger kritisch als befürchtet, weil auf
-> einem ESP32 **kein Betriebssystem** auf der Karte liegt — keine Logs, kein Swap, kein
-> Journal. Sie sieht nur große, zusammenhängende Schreibvorgänge. Details und Rechnung in
-> [8.8](docs/08-variante-esp32.md#88-speicher--warum-die-sd-karte-hier-hält).
+Kostet 3 € und braucht fast keinen Strom.
+[Wie sie funktioniert](docs/03-schaltplan.md#37-die-lichtschranke-im-einflugloch)
 
 ---
 
-## Die Dokumente, in Leseordnung
+## Ehrlich gesagt: das Video ruckelt
 
-### Für Variante B — den gewählten Weg
+Der ESP32 kann Video nicht komprimieren wie eine Handykamera. Er macht sehr schnell
+Einzelfotos und hängt sie aneinander. Ergebnis:
 
-| Dokument | Inhalt |
+| | |
 |---|---|
-| [1. Machbarkeit](docs/01-machbarkeit.md) | Strom-, Speicher- und Ertragsrechnung | 
-| [2. Stückliste](docs/02-stueckliste.md) → Abschnitt **Variante B** | Teile mit Kauflinks, ≈ 149 € |
-| **[8. Variante ESP32](docs/08-variante-esp32.md)** ⭐ | **Schaltplan, Tutorial, Firmware — der Hauptweg** | gemeinsam |
-| **[9. Bestellliste](docs/09-bestellliste.md)** 🛒 | **Nach Shop gruppiert, zum Abhaken** | 
-| [3. Schaltplan](docs/03-schaltplan.md) | IR-LEDs, Lichtschranke, Kamera-Regeln (gilt für beide) |
-| [4. Bauplan](docs/04-bauplan.md) | Einbau in Kasten, Panel-Montage, Maße (gilt für beide) | 
+| Auflösung | 1600 × 1200 (1,92 Megapixel) — praktisch so viel Detail wie Full HD |
+| Bilder pro Sekunde | **8 bis 12** (Fernsehen hat 25) |
+| Jedes Einzelbild | gestochen scharf |
+| Clip abspielen | **nicht** im Browser — herunterladen und mit [VLC](https://www.videolan.org/) öffnen |
 
-### Für Variante A — die dokumentierte Alternative
+**Das Ruckeln ist der Preis, das Bild selbst ist gut.** Eine Zeile in `config.h` macht
+daraus 800 × 600 mit ~15 Bildern/s, falls dir Flüssigkeit wichtiger ist.
+[Mehr dazu](docs/01-ueberblick.md#14-das-video--ehrlich-gesagt)
 
-| Dokument | Inhalt |
-|---|---|
-| [5. Software-Tutorial](docs/05-software-tutorial.md) | 8 Schritte, Raspberry Pi |
-| [6. Website & Daten](docs/06-website-und-daten.md) | Website, Ringspeicher, SQLite |
-| [7. Wartung & Fehlersuche](docs/07-wartung-und-fehlersuche.md) | Jahresrhythmus, Fehlertabellen |
-
-*Kapitel 7 lohnt sich auch für Variante B — der Jahresrhythmus und die Wartungsliste gelten
-unabhängig von der Hardware.*
+---
 
 ## Der Code
 
-| Ordner | Für | Inhalt |
-|---|---|---|
-| [`software/firmware/birdycam/`](software/firmware/birdycam/) | **Variante B** ⭐ | Arduino-Firmware, 10 Module |
-| [`software/firmware/steps/`](software/firmware/steps/) | **Variante B** ⭐ | 7 Lern-Sketches zum Einzeltesten |
-| [`software/pi/`](software/pi/) | Variante A | Python-Programm, Website, systemd-Dienst, Installer |
+| Ordner | Inhalt |
+|---|---|
+| [`software/firmware/birdycam/`](software/firmware/birdycam/) | Die fertige Firmware, 12 Module |
+| [`software/firmware/steps/`](software/firmware/steps/) | 7 Lernprogramme zum Einzeltesten |
+
+**Anfassen musst du nur eine Datei:**
+[`config.h`](software/firmware/birdycam/config.h). Alles darin ist auf Deutsch kommentiert
+und erklärt.
 
 ---
 
 ## Aufwand
 
-Für Variante B (ESP32):
-
 | Phase | Zeit |
 |---|---|
 | Teile bestellen | 30 min |
 | Arduino IDE einrichten | 30 min |
-| Lern-Sketches 1–4 (Board, SD, **erstes Livebild**, IR-Licht) | 2 h |
-| Lern-Sketches 5+7 (Akku kalibrieren, Lichtschranke) | 1 h |
-| Fertige Firmware, Feineinstellung | 1 h | 
-| Einbau in Kasten + Panel montieren | 2–3 h | 
-| Feinjustierung, Empfindlichkeit, Deko | über Wochen | 
+| Lernprogramme 1–4 (Board, Karte, **erstes Livebild**, IR-Licht) | 2 h |
+| Lernprogramme 5–7 (Akku kalibrieren, Mikrofon, Lichtschranke) | 1,5 h |
+| Fertige Firmware, Feineinstellung | 1 h |
+| Einbau in den Kasten, Panel montieren | 2–3 h |
+| Feinjustierung, Empfindlichkeit, Deko | über Wochen |
 
-Das erste Livebild kommt in **Sketch 3** — nicht am Ende. Das ist absichtlich so gebaut.
+**Das erste Livebild kommt in Schritt 3 — nicht am Ende.** Das ist Absicht.
 
 ---
 
 ## Wenn du nur fünf Minuten hast
 
-1. Der Kasten bekommt eine **Kamera ohne Infrarot-Filter** (Full HD), vier unsichtbare
-   IR-LEDs und eine **Lichtschranke im Einflugloch**, die Vögel exakt zählt.
+1. Der Kasten bekommt eine **Kamera ohne Infrarot-Filter**, vier unsichtbare IR-LEDs und
+   eine **Lichtschranke im Einflugloch**, die Vögel exakt zählt.
 2. Ein **XIAO ESP32-S3 Sense** macht alles: Stream, Aufnahme, Ton, Statistik, Website.
    Kein Rechner im Haus nötig.
-3. **Stream und Aufnahme wechseln sich ab.** Schaut jemand zu → Full-HD-Stream. Schaut
-   niemand zu → Clips auf die SD-Karte, mit 3 Sekunden Vorlauf. **Ton läuft immer mit** —
-   im Clip als zweite Spur, im Stream auf Knopfdruck.
-4. **Zwei Netzwerk-Betriebsarten, beide eingebaut:** Sie hängt sich an deinen **Router**
-   (sparsam, vom Sofa erreichbar) **oder** macht ihr **eigenes WLAN** auf (autark, überall
-   im Garten, ohne Router). `NETZ_AUTO` probiert erst den Router und schaltet sonst selbst
-   um. ⚡ Eigenes WLAN kostet ~40 % mehr Strom — und weil der Laderegler bei 900 mA
-   dichtmacht, ist Routerbetrieb sparen sinnvoller als ein größeres Panel
-   ([warum, mit konkretem Panel](docs/09-bestellliste.md#93b-️-welches-solarpanel-passt-zum-laderegler)).
-5. **Solar + LiPo 5000 mAh.** Der ESP32 braucht nur 0,7 W — deshalb reicht ein kleines
-   Panel. Für Regenwochen gibt es eine USB-Notlade-Buchse.
-5. **Full HD ruckelt** (~6 Bilder/s). Eine Zeile in `config.h` macht daraus SVGA mit
-   ~15 Bildern/s — falls Flüssigkeit doch wichtiger ist.
+3. **Stream und Aufnahme wechseln sich ab.** Schaut jemand zu → Livestream. Schaut niemand
+   zu → Clips auf die Karte, mit Vorlauf. **Ton läuft immer mit.**
+4. **Zwei Netzwerk-Betriebsarten:** am **Router** (sparsam, vom Sofa erreichbar) **oder**
+   ein **eigenes WLAN** (autark, überall im Garten). Ab Werk probiert sie erst den Router
+   und schaltet sonst selbst um.
+5. **Solar + LiPo-Akku.** Der ESP32 braucht nur 0,7 Watt. Für Regenwochen gibt es eine
+   USB-Notlade-Buchse am Laderegler — Powerbank anstecken, fertig.
 6. **Der Verlauf bleibt erhalten:** Jede Stunde schreibt die Kamera eine Zeile in
    `tage.csv` — Besuche, erster und letzter Anflug, Aufenthaltsdauer, Akku-Minimum.
    Die Website zeigt daraus die **letzten 30 Tage**, und die Datei öffnet sich in Excel.
 7. Gebaut wird im **Winter**, geschaut wird im **Frühling**. Ab März bleibt der Kasten zu.
 
-→ Los geht's mit **[8. Variante ESP32](docs/08-variante-esp32.md)**
-(Hintergrund und Rechnungen: [1. Machbarkeit](docs/01-machbarkeit.md))
+→ Los geht's mit **[1. Überblick](docs/01-ueberblick.md)**
+oder direkt mit der **[8. Bestellliste](docs/08-bestellliste.md)**

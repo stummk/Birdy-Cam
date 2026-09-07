@@ -1,162 +1,156 @@
-# 2. Stückliste & Kauflinks
+# 2. Stückliste — was du kaufen musst
 
-> **Zu den Preisen:** Stand August 2026, Bruttopreise, deutsche Händler. Hardwarepreise
-> schwanken — betrachte die Zahlen als Budgetrahmen, nicht als Kassenzettel.
+> 🛒 **Zum Bestellen nimm besser [8. Bestellliste](08-bestellliste.md).** Dort ist alles
+> nach Shop sortiert, mit Prüfpunkten und der richtigen Bestellreihenfolge. Diese Seite
+> hier erklärt, **warum** genau dieses Teil und kein anderes.
+
+> **Zu den Preisen:** Stand September 2026, Bruttopreise, deutsche Händler. Hardwarepreise
+> schwanken — sieh die Zahlen als Budgetrahmen, nicht als Kassenzettel.
 >
-> **Zu den Links:** Wo ich die exakte Produktseite kenne, ist sie direkt verlinkt. Wo
-> mehrere gleichwertige Produkte existieren (Kabel, Gehäuse, Kleinteile), verlinke ich
-> bewusst eine **Suchseite** — Direktlinks auf Zubehör veralten schneller als der Rest des
-> Plans, und ein totes Link ist schlimmer als eine Suche.
-
-> ⚠️ **Korrektur gegenüber meiner ersten Schätzung:** Ich hatte Variante A mit „≈ 269 €"
-> angegeben. Nach Aufstellung jeder einzelnen Position sind es **≈ 295 €** — ich hatte
-> Kleinteile zu optimistisch gerechnet (Sicherungen, OTG-Adapter, Strommesser, größeres
-> Gehäuse, vier Kabelverschraubungen statt zwei). Eine Sparliste in
-> [2.4](#24-wenn-es-billiger-sein-muss) bringt es auf **≈ 262 €**. Die Zahl im Kopf sollte
-> **~300 €** sein, nicht 269 €.
+> **Zu den Links:** Wo ich die genaue Produktseite kenne, ist sie verlinkt. Wo es viele
+> gleichwertige Produkte gibt (Kabel, Gehäuse, Kleinteile), verlinke ich absichtlich eine
+> **Suchseite** — Direktlinks auf Zubehör veralten schneller als der Rest der Anleitung.
 
 ---
 
-## VARIANTE A — Raspberry Pi Zero 2 W ⭐
+## 2.1 Die Teileliste
 
-### 2.1 Gruppe A — Rechner, Kamera, Speicher
+| # | Teil | Warum genau das | ~Preis |
+|---|---|---|---|
+| **E1** | **Seeed XIAO ESP32-S3 Sense** | Das Gehirn. Kamera-Anschluss, SD-Slot und Mikrofon sind schon drauf. ⚠️ Es muss die **„Sense“**-Version sein — die normale hat keinen Kameraanschluss. Möglichst **mit angelöteten Pins** kaufen | 25 € |
+| **E2** | **Kameramodul 24-polig DVP, ohne IR-Filter** | Das Auge. „Night Vision“, „no IR filter“ oder „NoIR“ muss dabeistehen, sonst ist es nachts blind. Empfehlung: **OV2640 Night Vision**, weitwinklig (120–160°) | 10 € |
+| **E3** | **microSD 32 GB, High Endurance** | Der Speicher. ⚠️ **Höchstens 32 GB** — mehr kann das Board nicht. „High Endurance“ oder „Dashcam“ ist für Dauervideo gebaut | 12 € |
+| **E4** | FPC-Verlängerung, 24-polig, 0,5 mm, ~10 cm | Damit die Kamera in den Kasten kann und das Board nach außen. ⚠️ **Nicht länger als 15 cm**, sonst rauscht das Bild | 3 € |
+| **E5** | **Waveshare Solar Power Manager** | Laderegler, MPPT und 5-V-Netzteil in einem — komplett lötfrei. Nimmt Panels von **6 bis 24 V**, lädt einen 3,7-V-Akku, gibt **5 V / 1 A** über eine USB-Buchse aus. Hat obendrein eine **USB-Notladebuchse** | 9 € |
+| **E6** | **Solarpanel HPLive 15 W / 12 V** | Der Tank-Nachfüller. 15 W sind an Sonnentagen großzügig — genau darum geht es: An **trüben** Tagen zählt jedes Watt. ⚠️ Auf dem Aufkleber muss `Voc` **unter 24 V** stehen (bei 12-V-Panels üblich: 18–22 V) | ~30 € |
+| **E7** | **LiPo-Akku 1S, 5000 mAh**, mit Schutzschaltung + JST-PH-2.0-Stecker | Überbrückt Nacht und Regentage. ⚠️ **Mit Schutzschaltung** ist Pflicht. Für doppelte Reserve: 10 000 mAh, +12 € | 14 € |
+| **E8** | Spannungssensor-Modul 0–25 V | Damit die Website den Akkustand zeigt. Kommt meist im 5er-Pack | 2 € |
+| **E8b** | **JST-PH-2.0-Y-Kabel** (1 Buchse → 2 Stecker) | Damit Laderegler **und** Spannungssensor gleichzeitig am Akku hängen, ohne zu löten. Gibt es im 5er-Pack. [Warum](03-schaltplan.md#38-der-spannungssensor--damit-du-den-akkustand-siehst) | 3 € |
+| **E9** | **4 × IR-LED-Modul 940 nm** | Das unsichtbare Nachtlicht. ⚠️ **940 nm**, nicht 850 nm — letzteres glimmt für Menschen sichtbar rot | 7 € |
+| **E10** | **MOSFET-Modul, Logic Level** (D4184 / AOD4184) | Der elektronische Lichtschalter für die LEDs. ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch | 4 € |
+| **E11** | **IR-Lichtschranke** mit Digitalausgang, 3,3 V | Zählt Ein- und Ausflüge exakt. Optional, aber das schönste Bauteil im Projekt ([1.3](01-ueberblick.md#13-die-lichtschranke--die-beste-idee-im-ganzen-plan)) | 3 € |
+| **E12** | Dupont-Steckkabel-Set (F-F und F-M) | Alle Steckverbindungen. 10–20 cm Länge reicht | 5 € |
+| **E13** | IP65-Gehäuse, ca. 120 × 80 × 50 mm | Die Elektronikbox außen am Kasten. Muss Board, Laderegler und Akku fassen | 11 € |
+| **E14** | Kabelverschraubungen M12, 3 Stück | Für Panelkabel, Kamerakabel, IR-/Lichtschrankenkabel | 5 € |
+| **E15** | Acrylglas 3 mm, ca. 10 × 10 cm | Schutzscheibe vor der Kameraöffnung. ⚠️ **Kein Glas** — Acryl lässt Infrarot durch, Fensterglas dämpft es | 6 € |
+| **E16** | Silikagel-Beutel | Gegen Kondenswasser und beschlagene Linse. Jährlich tauschen | 5 € |
+| **E17** | USB-Kabel A → C, ca. 30 cm | Verbindet Laderegler und Board. Oft schon im Haus | 5 € |
+| **E18** | Klettband, Kabelbinder, Schrauben | Kleinteile. Klettband für den Akku — er soll tauschbar bleiben | 5 € |
+| | **Summe Bauteile** | | **≈ 159 €** |
 
-| # | Teil | Warum genau das | ~Preis | Link |
-|---|---|---|---|---|
-| A1 | **Raspberry Pi Zero 2 WH** | ⭐ Die Version **mit H** hat die Stiftleiste **schon angelötet** — genau das, was „möglichst lötfrei" bedeutet. Ohne H müsste man 40 Pins löten. | 22 € | [BerryBase](https://www.berrybase.de/en/raspberry-pi-zero-2-wh) · [Welectron](https://www.welectron.com/Raspberry-Pi-Zero-2-W_1) |
-| A2 | **NoIR-Kamera 1080p** (OV5647, 5 MP) | Ohne IR-Filter → Nachtsicht. 1080p30. Weitwinkel nehmen, wenn wählbar — der Kasten ist eng. | 16 € | [Roboter-Bausatz](https://www.roboter-bausatz.de/p/kamera-mit-nachtsicht-1080p-5mp-ov5647-fuer-raspberry-pi) · [Geizhals: Pi NoIR](https://geizhals.de/raspberry-pi-noir-kameramodul-a1135965.html) |
-| A3 | **CSI-Kabel für Zero** (22-pol 0,5 mm ↔ 15-pol 1 mm), 30 cm | ⚠️ **Zwingend nötig.** Der Zero hat eine schmalere Buchse als alle anderen Pis. Das Kabel in der Kamerapackung passt **nicht**. | 5 € | [BerryBase Suche](https://www.berrybase.de/search?sSearch=CSI+Kabel+Raspberry+Pi+Zero) |
-| A4 | **USB-SSD 240 GB** (2,5-Zoll SATA im USB-Gehäuse) | Ersetzt die SD-Karte vollständig. **2,5-Zoll-SATA bewusst statt NVMe** — sparsamer, und der Zero kann nur USB 2.0. | 32 € | [Amazon Suche](https://www.amazon.de/s?k=externe+SSD+240GB+USB+2.5+Zoll) |
-| A5 | Micro-USB-OTG-Adapter | Der Zero hat nur Micro-USB. Verbindet die SSD. | 5 € | [Amazon Suche](https://www.amazon.de/s?k=Micro+USB+OTG+Adapter) |
-| A6 | microSD 16 GB | **Nur** zum Einrichten (OTP-Bit setzen). Wird danach herausgezogen und weggelegt. Billigste reicht. | 6 € | [Amazon Suche](https://www.amazon.de/s?k=microSD+16GB) |
-| A7 | Ersatz-CSI-Kabel | Flachbandkabel brechen beim Basteln. 5 € Versicherung. | 5 € | s. A3 |
-| | **Summe Gruppe A** | | **91 €** | |
+> **Realistisch an der Kasse: 195–210 €.** Der Unterschied kommt von Versandkosten über
+> mehrere Shops und davon, dass es viele Kleinteile nur im Mehrfachpack gibt. Die genaue
+> Aufstellung steht in [8.8](08-bestellliste.md#88-summen).
 
-### 2.2 Gruppe B — Solar & Akku
+---
 
-| # | Teil | Warum genau das | ~Preis | Link |
-|---|---|---|---|---|
-| B1 | **Solarpanel 30 W / 12 V** | 30 Wp gegen 42 Wh/Tag Bedarf. Klingt groß und ist an Sonnentagen überdimensioniert — genau das ist der Punkt: An **trüben** Tagen zählt jedes Watt. Rechnung in [1.8](01-machbarkeit.md#18-rechnet-die-stromversorgung--ja-für-märz-bis-juli). | 35 € | [Amazon Suche](https://www.amazon.de/s?k=Solarpanel+30W+12V+monokristallin) |
-| B2 | **Laderegler mit Last-Ausgang & LiFePO4-Profil** | ⚠️ Drei Eigenschaften sind Pflicht: **LiFePO4-fähig**, **Last-Ausgang**, **Tiefentladeschutz mit Wiedereinschaltung**. Nur so bootet der Pi nach leerem Akku von selbst wieder — siehe [1.8](01-machbarkeit.md#wie-der-pi-wieder-aufwacht-wenn-der-akku-leer-war). MPPT ist besser, PWM reicht. | 28 € | [Amazon Suche](https://www.amazon.de/s?k=MPPT+Laderegler+LiFePO4+Lastausgang+12V) |
-| B3 | **LiFePO4 12 V / 12 Ah** | 154 Wh, davon ~123 Wh nutzbar = **2,9 Tage ohne Sonne**. LiFePO4 statt Li-Ion wegen Hitzefestigkeit, Zyklenzahl und Brandverhalten — Begründung in [1.8](01-machbarkeit.md#warum-lifepo4-und-nicht-li-ion). | 68 € | [Amazon Suche](https://www.amazon.de/s?k=LiFePO4+12V+12Ah+Akku+BMS) |
-| B4 | **DC-DC-Wandler 12 V → 5 V, 3 A**, mit USB-Buchse | ⚠️ **3 A nehmen, nicht 1 A.** Der Pi plus SSD zieht in Spitzen ~1,5 A; ein knapper Wandler ist die häufigste Ursache für unerklärliche Neustarts. | 10 € | [Amazon Suche](https://www.amazon.de/s?k=DC+DC+Wandler+12V+5V+3A+USB) |
-| B5 | **INA219** Strom-/Spannungssensor (I2C) | Der Pi hat **keinen Analogeingang** — anders als ein ESP32. Der INA219 misst über I2C und liefert obendrein den **Ladestrom**: Man sieht auf der Website, wie viel die Sonne gerade bringt. Pädagogisch das beste Bauteil im Projekt. | 5 € | [Amazon Suche](https://www.amazon.de/s?k=INA219+Modul+I2C) |
-| B6 | Sicherungshalter + Sicherungen (5 A, 2 A) | Zwischen Akku und Regler. Bei 12 V/12 Ah kann ein Kurzschluss Kabel zum Glühen bringen. **Nicht weglassen.** | 5 € | [Reichelt Suche](https://www.reichelt.de/index.html?ACTION=446&LA=446&nbc=1&q=KFZ+Sicherungshalter) |
-| | **Summe Gruppe B** | | **151 €** | |
+## 2.2 Die drei Teile, bei denen man aufpassen muss
 
-### 2.3 Gruppe C & D — Nachtsicht, Lichtschranke, Gehäuse
+Wenn du dir nur drei Dinge aus diesem Kapitel merkst, dann diese.
 
-| # | Teil | Warum genau das | ~Preis | Link |
-|---|---|---|---|---|
-| C1 | **IR-LED-Module 940 nm, 4 Stück** | 940 nm ist für Menschen unsichtbar, 850 nm glimmt rot. Fertigmodule mit Vorwiderstand und Steckerleiste → lötfrei. | 6 € | [Amazon Suche](https://www.amazon.de/s?k=IR+LED+Modul+940nm+Arduino) |
-| C2 | **MOSFET-Schaltmodul, Logic-Level** (D4184/AOD4184) | Schaltet und dimmt die LEDs per PWM. **„Logic Level" ist Pflicht** — muss mit 3,3 V durchschalten. Ein IRF520-Modul tut das *nicht* zuverlässig. | 4 € | [Amazon Suche](https://www.amazon.de/s?k=MOSFET+Modul+D4184+PWM+Schalter) |
-| C3 | **IR-Lichtschranke**, Sender + Empfänger mit Digitalausgang | ⭐ Zählt Ein- und Ausflüge exakt. Der Grund, warum die Statistik echte Zahlen zeigt statt Schätzungen — siehe [1.3](01-machbarkeit.md#13-die-lichtschranke--die-beste-idee-im-ganzen-plan). | 6 € | [Amazon Suche](https://www.amazon.de/s?k=Infrarot+Lichtschranke+Modul+Sender+Empfaenger) |
-| C4 | Dupont-Steckkabel-Set (F-F, F-M) | Alle GPIO-Verbindungen. | 5 € | [Amazon Suche](https://www.amazon.de/s?k=Dupont+Kabel+Set+female+female) |
-| D1 | **IP65-Gehäuse ca. 200×150×75 mm** | Muss Pi, SSD, Laderegler **und den 12-Ah-Akku** fassen. Der Akku ist der Grund für die Größe — nicht kleiner kaufen. | 18 € | [Reichelt Suche](https://www.reichelt.de/index.html?ACTION=446&LA=446&nbc=1&q=Installationsgeh%C3%A4use+IP65) |
-| D2 | Kabelverschraubungen M12/M16 (4×) | Panel, CSI, IR-Kabel, Lichtschranke. | 6 € | [Reichelt Suche](https://www.reichelt.de/index.html?ACTION=446&LA=446&nbc=1&q=Kabelverschraubung+M16) |
-| D3 | Acrylglas 3 mm, ~10×10 cm | Schutzscheibe vor der Kameraöffnung. **Kein normales Glas** — Acryl lässt Infrarot besser durch. | 5 € | [Amazon Suche](https://www.amazon.de/s?k=Acrylglas+3mm+Platte+zuschnitt) |
-| D4 | Silikagel-Beutel | Gegen Kondenswasser und beschlagene Linse. Jährlich tauschen. | 4 € | [Amazon Suche](https://www.amazon.de/s?k=Silikagel+Beutel+Trockenmittel) |
-| D5 | Klettband, Kabelbinder, Schrauben, Kabel 0,75 mm² | Kleinteile. Klettband für den Akku — er soll tauschbar bleiben. | 8 € | — |
-| | **Summe Gruppen C + D** | | **62 €** | |
+### ① Das Kameramodul muss **ohne** IR-Filter sein
 
-### Gesamtsumme Variante A
+Im Angebot muss stehen: **„no IR filter“**, **„night vision“**, **„NoIR“** oder
+**„850nm/940nm“**. Steht dort nichts davon, ist ab Werk ein winziges Filterglas über dem
+Sensor — und die Kamera sieht nachts absolut nichts, egal wie stark die IR-LEDs sind.
 
-| Gruppe | Summe |
+> **Bestell zwei Stück.** Hier geht am ehesten etwas kaputt, und aus Asien wartet man sonst
+> mitten im Bau zwei bis vier Wochen. Und teste **vor** dem Einbau in den Kasten
+> ([8.9](08-bestellliste.md#89-wareneingangs-prüfung)).
+
+### ② Das MOSFET-Modul muss **Logic Level** sein
+
+Auf dem schwarzen Chip muss **D4184** oder **AOD4184** stehen. Die optisch fast gleichen
+Module mit `IRF520` brauchen mehr als 3,3 Volt zum Durchschalten — die IR-LEDs bleiben dann
+dunkel oder glimmen nur.
+
+### ③ Das Panel muss unter 24 Volt Leerlaufspannung haben
+
+Auf dem Aufkleber hinten am Panel steht eine Zeile `Voc` oder „Open Circuit Voltage“ oder
+„Leerlaufspannung“. Dieser Wert muss **unter 24 V** liegen.
+
+Bei einem 12-V-Panel wie dem HPLive stehen dort typisch **18 bis 22 Volt** — das passt
+bequem. Nur wenn dort mehr steht (etwa bei einem 24-V-Panel), gehört ein anderes her.
+
+> 💡 **Das ist der Vorteil des Waveshare-Ladereglers:** Er nimmt alles zwischen 6 und
+> 24 Volt und rechnet selbst herunter. Du musst bei der Panelauswahl also nicht auf
+> Zehntelvolt achten — nur nach oben ist eine Grenze.
+
+---
+
+## 2.3 Warum diese Kombination aus Laderegler und Panel
+
+Das ist die eine echte Entwurfsentscheidung in der Stromversorgung, und sie ist es wert,
+kurz erklärt zu werden.
+
+| | **Waveshare Solar Power Manager** |
 |---|---|
-| A — Rechner, Kamera, Speicher | 91 € |
-| B — Solar & Akku | 151 € |
-| C + D — Nachtsicht, Lichtschranke, Gehäuse | 62 € |
-| **Gesamt** | **≈ 304 €** |
-| *ohne Ersatzkabel A7* | *≈ 299 €* |
+| Panel-Eingang | **6 – 24 V** — Schraubklemme oder Hohlstecker |
+| Zusätzlicher Eingang | **Micro-USB** — für Powerbank oder Netzteil |
+| Akku | 3,7-V-Lithium, **JST-PH-2.0-Buchse** |
+| Ausgang | **5 V / 1 A**, USB-A-Buchse und Steckstifte |
+| MPPT | ✅ mit Schiebeschalter für 6/9/12/18/24 V |
+| Schutz | Überladung, Tiefentladung, Verpolung, Überhitzung, Überstrom |
+| Anzeige | Lämpchen für Laden, Voll, Verpolung und Akkustand |
+| Eigenverbrauch | unter 2 mA |
+| Preis | ~9 € |
 
-**Der Akku und das Panel machen zusammen 103 € — ein Drittel des Projekts.** Das ist der
-Preis für „autonom über Solar".
+**Drei Gründe, warum das gut zu diesem Projekt passt:**
+
+1. **Lötfrei.** Schraubklemme fürs Panel, Steckbuchse für den Akku, USB-Buchse für den
+   Bastelcomputer. Kein einziger Lötpunkt.
+2. **Der breite Eingang macht die Panelwahl entspannt.** Jedes gängige 12-V-Gartenpanel
+   passt. Man muss nicht nach exotischen 5-V-Panels suchen und deren Leerlaufspannung
+   ausmessen.
+3. **Die Lämpchen ersetzen ein Messgerät.** Verpolt angeschlossen? Rotes Lämpchen. Lädt
+   gerade? Gelbes Lämpchen. Akku voll? Grünes. Für jemanden ohne Elektronikerfahrung ist
+   das mehr wert als jedes Datenblatt.
+
+> **Wie viel Ladestrom das Modul höchstens liefert, gibt Waveshare nicht an.** Der verbaute
+> Ladechip (CN3791) ist für bis zu 2 A ausgelegt. Praktisch heißt das: Der Regler nimmt
+> sich, was er braucht, und mehr Panel schadet nie — es wird dann einfach nicht ausgereizt.
+> Deshalb ist ein 15-W-Panel eine gute Wahl und kein Overkill: Es erreicht die volle
+> Ladeleistung **auch dann noch, wenn nur ein Drittel Sonne da ist.**
 
 ---
 
-## 2.4 Wenn es billiger sein muss
+## 2.4 Wenn es billiger sein soll
 
-| Sparmaßnahme | Ersparnis | Was es kostet |
+| Weglassen oder ersetzen | Ersparnis | Was es kostet |
 |---|---|---|
-| **PWM- statt MPPT-Laderegler** | 10 € | ~15 % weniger Ertrag. Bei einem 30-W-Panel gegen 42 Wh Bedarf verkraftbar |
-| **SSD 128 GB statt 240 GB** | 7 € | Nichts. 128 GB sind für den Ringspeicher mehr als genug |
-| Ersatzkabel A7 weglassen | 5 € | Risiko, mitten im Bau drei Tage zu warten |
-| Gehäuse: Vorratsdose + Silikon | 12 € | Für einen Sommer okay, über den Winter nicht |
-| Akku 12 V / 7 Ah statt 12 Ah | 23 € | Nur ~1,7 Tage Reserve statt 2,9. Du hattest 3 Tage gewählt — davon rate ich ab |
-| **Zusammen (die ersten vier)** | **34 €** | **→ ≈ 262 €** |
+| Nur ein Kameramodul statt zwei | 10 € | Bei einem Defekt 2–4 Wochen Wartezeit mitten im Bau |
+| Gehäuse: Vorratsdose + Silikon | 11 € | Für einen Sommer okay, über den Winter nicht |
+| Acrylglas, Silikagel, Klettband, USB-Kabel aus dem Haus | 20 € | nichts, wenn vorhanden |
+| Lichtschranke weglassen | 3 € | Die Statistik wird geschätzt statt gemessen |
+| 10-W-Panel statt 15 W | ~8 € | Reicht ab April. Im März und bei Bewölkung wird es knapp |
 
-**An welchen Teilen man nicht sparen sollte:** DC-DC-Wandler (B4 — 3 A, sonst Neustarts),
-Laderegler mit Lastabschaltung (B2 — sonst bootet der Pi nach leerem Akku nie wieder),
-Sicherung (B6) und Panel (B1).
+**Wo man **nicht** sparen sollte:** Akku mit Schutzschaltung, High-Endurance-Speicherkarte
+und das Kameramodul ohne IR-Filter. Diese drei erfüllen die eigentlichen Anforderungen.
 
-### Wenn mehr Budget da ist
+## 2.5 Wenn mehr Budget da ist
 
 | Aufpreis | Was es bringt |
 |---|---|
-| **+37 €** Akku 20 Ah statt 12 Ah | 5 Tage Reserve statt 3. Praktisch nie Handarbeit |
-| +15 € 50-W-Panel statt 30 W | Deutlich entspannter im März und bei Teilschatten |
-| +15 € Laderegler mit NTC-Temperaturfühler | Löst das Frost-Ladeproblem richtig |
+| **+12 €** Akku 10 000 mAh statt 5 000 | Doppelte Reserve. Der lohnendste Aufpreis der Liste |
 | +5 € DS18B20 Temperaturfühler (wasserdicht) | Nesttemperatur auf der Website. Am Verlauf erkennt man, ob gebrütet wird — der Vogel *heizt*. Für 5 € das lehrreichste Extra |
-| +6 € USB-Y-Kabel mit Stromeinspeisung | Rückfallebene, falls die SSD den USB-Port des Zero überlastet ([1.6](01-machbarkeit.md#️-ein-risiko-bei-der-ssd-das-man-kennen-muss)) |
+| +3 € zwei IR-LEDs mehr (6 statt 4) | Helleres Nachtbild, falls 4 nicht reichen |
+| +20 € Multimeter | Macht das Kalibrieren exakt statt geschätzt — und bleibt für alle künftigen Projekte nützlich |
 
 ---
 
-## VARIANTE B — ESP32-S3 ⭐ (die gewählte Variante)
+## 2.6 Werkzeug
 
-Vollständig beschrieben in [8. Variante ESP32](08-variante-esp32.md), Code liegt fertig
-bereit.
-
-> 🛒 **Zum Bestellen nicht diese Tabelle benutzen, sondern
-> [9. Bestellliste](09-bestellliste.md)** — dort ist alles nach Shop gruppiert, mit
-> Prüfpunkten, Bestellreihenfolge und realistischen Kassenpreisen inklusive Versand
-> (**~190 €**, nicht die 149 € Bauteilkosten von hier).
-
-| # | Teil | Warum | ~Preis | Link |
-|---|---|---|---|---|
-| E1 | **Seeed XIAO ESP32-S3 Sense** | Kamera-Anschluss + SD-Slot + Mikrofon auf einem Board, 8 MB PSRAM, 0,7 W. **Version mit vorgelöteten Pins nehmen.** | 25 € | [BerryBase](https://www.berrybase.de/en/seeed-xiao-esp32s3-sense-esp32-s3r8-wlan-ble-5.0-ov2640-camera-sensor-8mb-psram-8mb-flash) |
-| E2 | **Kameramodul 24-pol DVP, ohne IR-Filter** | ⭐ **OV2640 „Night Vision"** (1600×1200 = 1,92 MP, 8–12 fps, sicher lieferbar) **oder** OV5640 (1920×1080 = 2,07 MP, ~6 fps, schwer zu finden). Nur 7 % Pixelunterschied — Entscheidungshilfe in [9.0](09-bestellliste.md#90-️-die-eine-entscheidung-die-du-vorher-treffen-musst) | 10–13 € | [OV2640 Night Vision](https://esp32s.com/product/24pin-ov2640-camera-module-for-esp32-cam-camera-module-2mp-180-66-120-160-222-200-degree-650nm-850nm-night-vision-dvp/) · [eBay OV5640](https://www.ebay.de/sch/i.html?_nkw=OV5640+24pin+no+IR+filter+DVP) |
-| E3 | microSD 32 GB **High Endurance** | Dashcam-Klasse. **Max. 32 GB** — mehr kann das Board nicht. | 12 € | [Amazon Suche](https://www.amazon.de/s?k=microSD+32GB+High+Endurance) |
-| E4 | FPC-Verlängerung 24-pol, 0,5 mm, ~10 cm | Kamera in den Kasten, Board nach außen. **Max. 15 cm.** | 3 € | [AliExpress Suche](https://de.aliexpress.com/w/wholesale-24pin-0.5mm-FPC-extension-cable.html) |
-| E5 | **Solar Power Manager 5 V** (DFRobot DFR0559 o. ä.) | MPPT + Laderegler + 5-V-Ausgang in einem. Schraubklemme, JST, USB — komplett lötfrei. Grenzen: Eingang **4,5–6 V**, Ladestrom **900 mA**, Panel **≤ 10 W** | 10 € | [DFRobot](https://www.dfrobot.com/product-1712.html) · [Wiki](https://wiki.dfrobot.com/dfr0559/) |
-| E6 | **5-V-Solarpanel für Akku-Kameras, 10 W, IP65** | ⚠️ Entscheidend ist die **Leerlaufspannung: unter 6,5 V**, sonst stirbt E5. Ein Panel mit Aufdruck „6 V" hat 7,2 V und ist **nicht** geeignet. Das USB-Kabel wird gekürzt und in die Schraubklemme geschraubt. Messanleitung in [9.3b](09-bestellliste.md#93b-️-welches-solarpanel-passt-zum-laderegler) | ~22 € | [Beispiel](https://www.amazon.de/Tragbares-Solarpanel-Ladeger%C3%A4t-Wasserdicht-%C3%9Cberwachungskamera/dp/B0BB79WH7K) · [5-W-Sparvariante](https://www.pearl.de/a-ZX5350-1322.shtml) |
-| E7 | **LiPo 1S 5000 mAh** mit Schutzschaltung + JST-PH 2.0 | 18,5 Wh ≈ 1,2 Tage. Für 3 Tage: 10000 mAh (+12 €). | 14 € | [Pollin](https://www.pollin.de/stromversorgung/akkus/lipo-akkus/) |
-| E8 | Spannungssensor-Modul 25 V | Akkustand. Der ESP32 hat — anders als der Pi — einen Analogeingang. | 2 € | [Amazon Suche](https://www.amazon.de/s?k=Spannungssensor+Modul+25V+Arduino) |
-| E9 | IR-LEDs, MOSFET-Modul, Lichtschranke, Dupont | wie C1–C4 bei Variante A | 21 € | s. oben |
-| E10 | IP65-Gehäuse (klein), Verschraubungen, Acryl, Silikagel, Kleinteile | Kleineres Gehäuse als bei A — kein 12-Ah-Akku darin | 30 € | s. oben |
-| | **Gesamt Variante B** | | **≈ 149 €** | |
+| Werkzeug | Wofür | Muss es sein? |
+|---|---|---|
+| Kleiner Schlitzschraubendreher | Schraubklemmen am Laderegler und MOSFET | ✅ ja |
+| Abisolierzange oder Seitenschneider | Panelkabel abisolieren | ✅ ja |
+| Akkuschrauber + Holzbohrer 3, 5, 6, 12 mm | Löcher im Deckel und in der Wand | ✅ ja |
+| Heißklebepistole | Kamera, LEDs, Lichtschranke fixieren und abdichten | ✅ ja |
+| Laubsäge oder Cutter | Acrylglas zuschneiden | ✅ ja |
+| Handy | IR-Test, Livebild beim Justieren | ✅ ja ⭐ |
+| Multimeter | Akku kalibrieren, Panel prüfen | empfohlen |
+| Lötkolben | **nur** falls das Board ohne angelötete Pins kommt | meist nein |
 
 ---
 
-## 2.5 Bestell-Checkliste
-
-### Beide Varianten
-
-- [ ] Kameramodul ist **ohne IR-Filter** („NoIR" / „no IR filter" / „night vision")
-- [ ] IR-LEDs sind **940 nm**, nicht 850 nm
-- [ ] MOSFET-Modul ist **Logic-Level** (D4184/AOD4184), **nicht** IRF520
-- [ ] Lichtschranke hat einen **digitalen** Ausgang (nicht nur analog)
-
-### Nur Variante A (Pi)
-
-- [ ] Pi ist die **„WH"**-Version (Stiftleiste bereits angelötet)
-- [ ] CSI-Kabel ist das **Zero-Kabel** (22-pol 0,5 mm ↔ 15-pol 1 mm) — das aus der
-      Kamerapackung passt nicht
-- [ ] Laderegler ist **LiFePO4-fähig**, hat **Last-Ausgang** und **Tiefentladeschutz**
-- [ ] Panel ist **12 V** (nicht 6 V)
-- [ ] DC-DC-Wandler kann **3 A** (nicht 1 A)
-- [ ] Sicherung ist dabei
-- [ ] SSD ist **2,5-Zoll-SATA im USB-Gehäuse** (sparsamer als NVMe)
-
-### Nur Variante B (ESP32)
-
-- [ ] XIAO ist die **„Sense"**-Version, möglichst mit vorgelöteten Pins
-- [ ] Kamera ist **OV5640** (nicht OV2640) — nur der schafft 1080p
-- [ ] Panel-**Leerlaufspannung** in der Sonne gemessen: **unter 6,5 V** (kein „6 V"-Panel!)
-- [ ] Akku hat **Schutzschaltung** und **JST-PH-2.0-Stecker**
-- [ ] microSD ist **max. 32 GB** und **High Endurance**
-
-> **Bestellreihenfolge:** Kameramodul und Laderegler haben die längsten Lieferzeiten —
-> **die beiden zuerst**. Der Rest kommt in zwei Sammelbestellungen (BerryBase/Reichelt und
-> Amazon).
-
-→ Weiter mit [3. Schaltplan](03-schaltplan.md)
+→ Weiter mit [3. Schaltplan](03-schaltplan.md) · Zum Bestellen: [8. Bestellliste](08-bestellliste.md)
