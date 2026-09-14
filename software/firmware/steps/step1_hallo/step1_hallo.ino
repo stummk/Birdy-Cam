@@ -13,6 +13,8 @@
 //     - im Seriellen Monitor erscheint jede Sekunde eine neue Zeile
 // ============================================================================
 
+#define LED_BUILTIN 21
+
 void setup() {
   Serial.begin(115200);
   delay(1000);                    // dem USB-Anschluss Zeit geben

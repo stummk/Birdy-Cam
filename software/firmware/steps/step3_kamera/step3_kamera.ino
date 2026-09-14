@@ -19,8 +19,8 @@
 #include <esp_camera.h>
 
 // <<< HIER EINTRAGEN >>>
-const char* WLAN_NAME     = "HierDeinWLANName";
-const char* WLAN_PASSWORT = "HierDeinPasswort";
+const char* WLAN_NAME     = "CHANGEME";
+const char* WLAN_PASSWORT = "CHANGEME";
 
 // Pinbelegung der Kamera auf dem XIAO ESP32-S3 Sense (nicht ändern)
 #define XCLK_GPIO_NUM  10
@@ -81,11 +81,25 @@ void setup() {
   }
   Serial.println("Kamera laeuft!");
 
-  // ---- WLAN --------------------------------------------------------------
+ // ---- WLAN MIT WPA3 SUPPORT STARTEN -------------------------------------
+  WiFi.disconnect(true);
+  delay(150);
+  
+  WiFi.mode(WIFI_STA);
+  delay(100);
+
+  // Wichtig: Erlaubt dem ESP32, sich auch mit WPA3/WPA2-Mixed Hotspots zu verbinden
+  WiFi.setMinSecurity(WIFI_AUTH_WPA2_PSK); 
+
   WiFi.begin(WLAN_NAME, WLAN_PASSWORT);
-  Serial.print("Verbinde mit WLAN");
-  while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print("."); }
-  Serial.println();
+  WiFi.setTxPower(WIFI_POWER_15dBm); // Drosselung für den XIAO S3
+
+  Serial.print("Verbinde mit Hotspot");
+  while (WiFi.status() != WL_CONNECTED) { 
+    delay(500); 
+    Serial.print("."); 
+  }
+  Serial.println("\nErfolgreich verbunden!");
 
   server.begin();
 
