@@ -16,28 +16,37 @@
 //
 //  Wenn es genau umgekehrt ist (frei zeigt UNTERBROCHEN), dann unten
 //  INVERTIERT auf true stellen.
+//
+//  SCHRITT 7 — Die Lichtschranke (Optimiert gegen Sensor-Flackern)
 // ============================================================================
 
 #define PIN_LICHTSCHRANKE   3       // = Pin D2
 #define INVERTIERT          false
-#define MIN_UNTERBRECHUNG   30      // kürzer = Insekt, wird ignoriert
-#define MAX_UNTERBRECHUNG   2000    // länger  = Blatt im Loch
+#define MIN_UNTERBRECHUNG   60     // Mindestdauer in ms für einen echten Durchflug
+#define MAX_UNTERBRECHUNG   2000    // Länger = blockiert (z.B. Blatt)
+#define DEBOUNCE_TIME       30      // Ignoriere Signalwechsel, die schneller als X ms sind
 
 volatile uint32_t unterbrochenSeit = 0;
 volatile uint32_t letzteDauer      = 0;
 volatile bool     neuesEreignis    = false;
+volatile uint32_t letzterWechsel   = 0; // Für die Entprellung
 
 uint32_t vogelDrinSeit = 0;
 uint32_t durchfluege   = 0;
 uint32_t ignoriert     = 0;
 
-// Der Interrupt: wird sofort aufgerufen, wenn sich der Pin ändert.
-// Er muss ganz kurz sein — deshalb rechnet er nur und setzt eine Flagge.
 void IRAM_ATTR ereignis() {
+  uint32_t jetzt = millis();
+  
+  // Software-Entprellung: Ignoriere den Wechsel, wenn der letzte zu kurz her ist
+  if (jetzt - letzterWechsel < DEBOUNCE_TIME) {
+    return; 
+  }
+  letzterWechsel = jetzt;
+
   bool gebrochen = (digitalRead(PIN_LICHTSCHRANKE) == LOW);
   if (INVERTIERT) gebrochen = !gebrochen;
 
-  uint32_t jetzt = millis();
   if (gebrochen) {
     if (unterbrochenSeit == 0) unterbrochenSeit = jetzt;
   } else if (unterbrochenSeit != 0) {
@@ -56,17 +65,12 @@ bool strahlFrei() {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("\n=== Schritt 7: Lichtschranke ===\n");
+  Serial.println("\n=== Schritt 7: Lichtschranke (Entprellt) ===\n");
 
   pinMode(PIN_LICHTSCHRANKE, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(PIN_LICHTSCHRANKE), ereignis, CHANGE);
 
   Serial.printf("Strahl ist gerade: %s\n\n", strahlFrei() ? "FREI" : "GEBROCHEN");
-  if (!strahlFrei()) {
-    Serial.println(">>> Der Strahl ist schon gebrochen!");
-    Serial.println(">>> Justiere Sender und Empfaenger, oder stelle");
-    Serial.println(">>> oben INVERTIERT auf true.\n");
-  }
   Serial.println("Fahre mit dem Finger durch den Strahl. Zweimal!\n");
 }
 
@@ -74,7 +78,7 @@ uint32_t letzteAnzeige = 0;
 bool     alterZustand  = true;
 
 void loop() {
-  // --- Justierhilfe: jede Änderung sofort melden ---
+  // --- Justierhilfe ---
   bool frei = strahlFrei();
   if (frei != alterZustand) {
     alterZustand = frei;
@@ -88,7 +92,7 @@ void loop() {
 
     if (dauer < MIN_UNTERBRECHUNG) {
       ignoriert++;
-      Serial.printf("Zu kurz (%u ms) — ignoriert. Insekt? Zittern?\n", dauer);
+      Serial.printf("Zu kurz (%u ms) — ignoriert. Sensor-Zittern abgefangen!\n", dauer);
     } else if (dauer > MAX_UNTERBRECHUNG) {
       ignoriert++;
       Serial.printf("Zu lang (%u ms) — ignoriert. Sitzt etwas im Loch?\n", dauer);

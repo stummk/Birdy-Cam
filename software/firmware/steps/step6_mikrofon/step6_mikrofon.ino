@@ -80,10 +80,20 @@ void aufnehmen() {
   memcpy(k + 36,"data", 4);   *(uint32_t*)(k + 40) = datenBytes;
   f.write(k, 44);
 
-  uint32_t geschrieben = 0;
+   uint32_t geschrieben = 0;
   while (geschrieben < datenBytes) {
     size_t bytes = I2S.readBytes((char*)block, BLOCK * sizeof(int16_t));
     if (bytes == 0) continue;
+
+    // --- VERSTÄRKUNG FÜR DIE SD-KARTE ---
+    size_t samples = bytes / sizeof(int16_t);
+    for (size_t i = 0; i < samples; i++) {
+      int32_t verstärkt = (int32_t)block[i] << 4; // Experimentiere mit << 3, << 4 oder << 5
+      if (verstärkt > 32767) verstärkt = 32767;
+      if (verstärkt < -32768) verstärkt = -32768;
+      block[i] = (int16_t)verstärkt;
+    }
+
     f.write((uint8_t*)block, bytes);
     geschrieben += bytes;
     if (geschrieben % (ABTASTRATE * 2) < BLOCK * 2)
@@ -123,14 +133,29 @@ void setup() {
 }
 
 void loop() {
-  // Tastendruck vom Computer?
   if (Serial.available()) {
     char z = Serial.read();
     if (z == 'r' || z == 'R') aufnehmen();
   }
 
   size_t bytes = I2S.readBytes((char*)block, BLOCK * sizeof(int16_t));
-  if (bytes > 0) balken(lautstaerke(block, bytes / sizeof(int16_t)));
+  if (bytes > 0) {
+    size_t samples = bytes / sizeof(int16_t);
+    
+    // --- VERSTÄRKUNG FÜR DEN BALKEN ---
+    for (size_t i = 0; i < samples; i++) {
+      // Verschiebt die Bits um 4 Stellen nach links (entspricht Multiplikation mit 16)
+      // Ein int32_t verhindert den sofortigen Überlauf beim Berechnen
+      int32_t verstärkt = (int32_t)block[i] << 4; 
+      // Begrenzen, damit es nicht zu hässlichem digitalen Rauschen (Überlauf) kommt
+      if (verstärkt > 32767) verstärkt = 32767;
+      if (verstärkt < -32768) verstärkt = -32768;
+      block[i] = (int16_t)verstärkt;
+    }
+
+    balken(lautstaerke(block, samples));
+  }
 
   delay(100);
 }
+
