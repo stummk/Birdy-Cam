@@ -14,6 +14,11 @@ Nach **Shop sortiert**, damit du Versandkosten sparst. Am Ende steht eine
 > **Realistisch an der Kasse: 195–210 €.** Mit der [Sparliste](#86-sparliste) sind ~160 €
 > erreichbar, wenn Werkzeug und Kleinteile schon im Haus sind.
 
+> 🧪 **Baust du [Variante B](04-bauplan.md#410-variante-b--alles-im-kasten-kamera-hinter-dem-klardeckel)**
+> — alles im Kasten, Kamera hinter dem Klardeckel? Dann **zuerst
+> [8.4d](#84d-variante-b--was-sich-an-der-bestellung-ändert) lesen.** Zwei Positionen unten
+> fallen weg, eine wird ausgetauscht, fünf kommen dazu, und der Akku bekommt ein Maximalmaß.
+
 ---
 
 ## 8.0 ⚠️ Die eine Entscheidung, die du vorher treffen musst
@@ -229,6 +234,51 @@ Suchbegriffe:
 
 ---
 
+## 8.4d Variante B — was sich an der Bestellung ändert
+
+Nur für [4.10 Variante B](04-bauplan.md#410-variante-b--alles-im-kasten-kamera-hinter-dem-klardeckel)
+(alles im Kasten, Kamera hinter dem Klardeckel). Wer Variante A baut, überspringt das hier.
+
+**Streichen** — diese zwei Zeilen brauchst du nicht:
+
+| Wo | Zeile | Warum |
+|---|---|---|
+| [8.2](#82-sammelbestellung-b--ebay--aliexpress--zuerst-bestellen) | FPC-Verlängerung 24-polig | Die Kamera bleibt in der Box, es geht kein Flachbandkabel nach draußen |
+| [8.3](#83-sammelbestellung-c--amazon) | Acrylglas 3 mm | Der Klardeckel ist das Objektivfenster |
+
+**Ändern** — statt der Gehäusezeile in [8.4](#84-sammelbestellung-d--akku-gehäuse-verschraubungen):
+
+| ✓ | Anz. | Teil | Achtung! | Preis | Shop |
+|---|---|---|---|---|---|
+| ☐ | 1 | **Hammond `1555FL2GY`** — Gehäuse 120 × 90 × 45 mm, Polycarbonat | Das **`2GY`** im Namen ist Polycarbonat (UV-stabil), nicht ABS. [Datenblatt](https://www.hammfg.com/electronics/small-case/plastic/1555) | ~18 € | [Reichelt](https://www.reichelt.com/de/en/shop/manufacturer/hammond%20manufacturing) · [TME](https://www.tme.eu/de/katalog/?search=1555FL2GY) · [Distrelec](https://www.distrelec.de/de/search?q=1555FL2GY) |
+| ☐ | 1 | **Hammond `1554FCL`** — Klardeckel, 120 × 90 × 15 mm | ⚠️ **Separate Position.** Ohne ihn liegt ein grauer Deckel im Karton und die ganze Variante fällt in sich zusammen. Passt auf F, FL und G. [Datenblatt](https://www.hammfg.com/electronics/small-case/plastic/1554-1555lid) | ~8 € | dieselben |
+
+**Dazu** — diese fünf Kleinteile kommen neu hinzu:
+
+| ✓ | Anz. | Teil | Achtung! | Preis |
+|---|---|---|---|---|
+| ☐ | 1 | **USB-Kabel A → C mit 90°-Winkelstecker, 10–15 cm** | *Statt* des 30-cm-Kabels aus [8.3](#83-sammelbestellung-c--amazon). Auch hier ein **Datenkabel** | 6 € |
+| ☐ | 1 | **Steuerkabel LiYY 6 × 0,14 mm², 1 m** | IR-LEDs **und** Lichtschranke gehen durch **eine** M12-Verschraubung. Einzellitzen dichten darin nicht | 3 € |
+| ☐ | 1 | **Reedschalter**, Glasröhrchen, Schließer (+ kleiner Neodym-Magnet) | Kommt an `RST`/`GND`. Der einzige Weg, das Board im April neu zu starten | 1 € |
+| ☐ | 1 | **PVC-Platte 2 mm** + 4 × **M3-Distanzhülse 12 mm** | Zwischenboden für den Laderegler. Darf **nicht** auf dem Akku aufliegen | 3 € |
+| ☐ | 1 | **Moosgummi schwarz, 2–3 mm** | Blendring ums Objektiv, gegen Reflexionen im Fenster. Rest reicht auch fürs Mikrofonloch | 2 € |
+
+> ⚠️ **Die Akkuzeile in [8.4](#84-sammelbestellung-d--akku-gehäuse-verschraubungen) bekommt
+> eine harte Nebenbedingung:** höchstens **95 × 58 × 12 mm**. In der 45-mm-Box stapeln sich
+> Akku (11) + Zwischenboden (2) + Laderegler (23) auf 36 von 37 verfügbaren Millimetern —
+> da ist kein Spielraum. Steht kein Maß in der Artikelbeschreibung, woanders bestellen.
+> Und **10 000 mAh geht nicht mehr**, der Pack ist zu dick.
+
+> ⚠️ **Bevor du bestellst, lies
+> [4.10.6](04-bauplan.md#4106-vor-dem-zuschrauben-drei-versicherungen).** In Variante B
+> kommst du fünf Monate nicht an den USB-Anschluss, und die Firmware hat heute weder OTA
+> noch Watchdog. Das ist kein Bestellposten, aber die eigentliche Voraussetzung.
+
+**Delta unterm Strich: ≈ +12 €** (−3 FPC, −6 Acryl, +14 Gehäuse, +9 Kleinteile,
++1 teureres USB-Kabel).
+
+---
+
 ## 8.5 Werkzeug — falls nicht im Haus
 
 | ✓ | Werkzeug | Preis | Wofür |
@@ -278,6 +328,11 @@ Die Reihenfolge ist nicht beliebig — sie entscheidet, ob du wartest:
              ▶ Akku
 ```
 
+> 🧪 **In [Variante B](#84d-variante-b--was-sich-an-der-bestellung-ändert)** entfallen in
+> Woche 1 das FPC-Kabel und in Woche 2 das Acrylglas. Das **Hammond-Gehäuse samt Klardeckel**
+> ist dafür oft Lagerware beim Distributor statt Sofortversand — in Woche 1 mitbestellen,
+> nicht erst in Woche 2.
+
 > ⭐ **Der Trick:** Mit Board und Speicherkarte allein kannst du schon
 > [Sketch 1 und 2](05-software.md#52-die-sieben-lern-sketches) machen. Du fängst also an,
 > während die Kamera noch unterwegs ist — und die Vorfreude hat einen Zwischenschritt.
@@ -293,6 +348,7 @@ Die Reihenfolge ist nicht beliebig — sie entscheidet, ob du wartest:
 | C — Amazon (Panel, Karte, Module, Kleinteile) | 95 € |
 | D — Akku, Gehäuse, Verschraubungen | 30 € |
 | **Bauteile gesamt** | **≈ 187 €** |
+| *Aufschlag für [Variante B](#84d-variante-b--was-sich-an-der-bestellung-ändert)* | *+ ≈ 12 €* |
 | Versand (4–5 Shops) | 12–25 € |
 | **Realistisch an der Kasse** | **≈ 200–210 €** |
 | *mit Sparliste [8.6](#86-sparliste)* | *≈ 160 €* |
@@ -325,6 +381,19 @@ Bitte **vor** dem Einbau prüfen, nicht danach.
 > ⭐ **Der vierte Punkt ist der wichtigste.** Ein Kameramodul mit IR-Filter ist nachts
 > blind — und das merkst du sonst erst, wenn alles im Kasten verklebt ist und der Kasten
 > bis September nicht mehr geöffnet werden darf.
+
+**Nur für [Variante B](#84d-variante-b--was-sich-an-der-bestellung-ändert):**
+
+- [ ] ⭐ **Klardeckel `1554FCL` wirklich dabei?** Liegt ein grauer Deckel im Karton, wurde er
+      vergessen — nachbestellen, bevor du weiterbaust
+- [ ] **Akku mit dem Lineal nachmessen:** höchstens **95 × 58 × 12 mm**. Nicht der
+      Artikelbeschreibung glauben
+- [ ] **Probestapeln ohne Schrauben:** Akku + Zwischenboden + Laderegler in die Box legen,
+      Deckel auflegen. Schließt er spannungsfrei? (36 von 37 mm — es ist knapp)
+- [ ] USB-Kabel A→C: **90°-Winkelstecker** und trotzdem ein **Datenkabel**?
+- [ ] **Klardeckel auf IR-Durchlass prüfen:** IR-LED dahinter halten, mit der
+      Handy-Frontkamera durchschauen. Leuchtet sie klar durch?
+- [ ] Reedschalter: Magnet nähern — piept der Durchgangsprüfer?
 
 ---
 

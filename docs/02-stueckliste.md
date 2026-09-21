@@ -44,6 +44,49 @@
 
 ---
 
+## 2.1b Variante B — das Teile-Delta
+
+[4.10 Variante B](04-bauplan.md#410-variante-b--alles-im-kasten-kamera-hinter-dem-klardeckel)
+baut die ganze Elektronik **in** den Kasten, hinter einen durchsichtigen Gehäusedeckel — von
+außen führt nur noch das Panelkabel hinein. Wer so baut, bestellt anders:
+
+| # | Änderung gegenüber [2.1](#21-die-teileliste) | Δ |
+|---|---|---|
+| **E4** | **entfällt** — die Kamera bleibt in der Box, es gibt kein Flachbandkabel nach draußen | −3 € |
+| **E13** | → **Hammond `1555FL2GY` + Klardeckel `1554FCL`**, 120 × 90 × 45 mm. Polycarbonat, UV-stabil, mit Dichtung bis IP68. **Der Deckel wird separat bestellt** | +14 € |
+| **E15** | **entfällt** — der Klardeckel *ist* das Objektivfenster | −6 € |
+| **E17** | → dasselbe Kabel, aber **mit 90°-Winkelstecker und nur 10–15 cm**. Ein gerader Stecker braucht 4 cm Biegeradius, die hast du in der Box nicht | 0 € |
+| **E19** *neu* | **Steuerkabel LiYY 6 × 0,14 mm², ~1 m.** IR-LEDs und Lichtschranke gehen durch **eine** Verschraubung — fünf Einzellitzen dichten darin nicht | +3 € |
+| **E20** *neu* | **Reedschalter** (Glasröhrchen, Schließer). Liegt an `RST`/`GND`: Magnet von außen an die Kastenwand = Neustart, ohne zu öffnen | +1 € |
+| **E21** *neu* | **PVC-Platte 2 mm + 4 × M3-Distanzhülse 12 mm.** Zwischenboden, auf dem der Laderegler über dem Akku sitzt | +3 € |
+| **E22** *neu* | Moosgummi schwarz (Blendring ums Objektiv), Brett 10 mm + Leisten für die Zwischendecke | Restholz |
+| | **Summe Bauteile** | **≈ 171 €** |
+
+> ⚠️ **Der Akku wird zum kritischen Maß.** In die 45-mm-Box passt nur bis
+> **95 × 58 × 12 mm**. „5000 mAh 1S“ gibt es in einem Dutzend Bauformen — steht das Maß
+> nicht in der Artikelbeschreibung, nimm einen anderen Anbieter. Und die Ausbaustufe
+> **10 000 mAh aus [2.5](#25-wenn-mehr-budget-da-ist) fällt weg**, die passt nicht mehr.
+
+> ⚠️ **Zwei Werkzeuge mehr** als in [2.6](#26-werkzeug): eine **Stichsäge oder Laubsäge**
+> für den 122 × 92-mm-Ausschnitt in der Zwischendecke, und ein **Lötkolben** für die zwei
+> Punkte am Reedschalter.
+
+> ⚠️ **Und eine Sache, die kein Bauteil ist:** In Variante B kommst du fünf Monate lang
+> nicht mehr an den USB-Anschluss. Die Firmware in diesem Repo hat heute **kein OTA und
+> keinen Watchdog** — das gehört eingebaut, *bevor* die Box zugeschraubt wird
+> ([4.10.6](04-bauplan.md#4106-vor-dem-zuschrauben-drei-versicherungen)).
+
+**Wo es die Box gibt:** Hammond führen in Deutschland unter anderem
+[Reichelt](https://www.reichelt.com/de/en/shop/manufacturer/hammond%20manufacturing),
+[TME](https://www.tme.eu/de/katalog/?search=1555FL2GY),
+[Distrelec](https://www.distrelec.de/de/search?q=1555FL2GY) und RS. Datenblätter:
+[Gehäuse 1555](https://www.hammfg.com/electronics/small-case/plastic/1555) ·
+[Klardeckel 1554/1555LID](https://www.hammfg.com/electronics/small-case/plastic/1554-1555lid).
+Der Klardeckel `1554FCL` passt auf die Baugrößen F, FL und G — nicht vergessen, ihn
+**mitzubestellen**, sonst liegt ein grauer Deckel im Karton.
+
+---
+
 ## 2.2 Die drei Teile, bei denen man aufpassen muss
 
 Wenn du dir nur drei Dinge aus diesem Kapitel merkst, dann diese.
@@ -144,7 +187,7 @@ und das Kameramodul ohne IR-Filter. Diese drei erfüllen die eigentlichen Anford
 
 | Aufpreis | Was es bringt |
 |---|---|
-| **+12 €** Akku 10 000 mAh statt 5 000 | Doppelte Reserve. Der lohnendste Aufpreis der Liste |
+| **+12 €** Akku 10 000 mAh statt 5 000 | Doppelte Reserve. Der lohnendste Aufpreis der Liste — **außer in [Variante B](#21b-variante-b--das-teile-delta)**, dort passt der dickere Pack nicht in die Box |
 | +5 € DS18B20 Temperaturfühler (wasserdicht) | Nesttemperatur auf der Website. Am Verlauf erkennt man, ob gebrütet wird — der Vogel *heizt*. Für 5 € das lehrreichste Extra |
 | +3 € zwei IR-LEDs mehr (6 statt 4) | Helleres Nachtbild, falls 4 nicht reichen. Für MOSFET und 5-V-Zweig kein Problem — [Rechnung](03-schaltplan.md#schafft-das-modul-überhaupt-vier-leds) |
 | +20 € Multimeter | Macht das Kalibrieren exakt statt geschätzt — und bleibt für alle künftigen Projekte nützlich |
