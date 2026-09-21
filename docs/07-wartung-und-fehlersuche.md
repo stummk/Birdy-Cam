@@ -103,8 +103,13 @@ Die IR-LEDs leuchten direkt ins Objektiv. Das ist ein **Bauproblem**, kein Softw
 In dieser Reihenfolge probieren:
 
 1. `IR_HELLIGKEIT` erhöhen — bis 255 ist Luft, das ist mehr als das Dreifache
-2. Zwei LEDs mehr einbauen (6 statt 4)
-3. Auf 850-nm-LEDs wechseln — der Vogel merkt es nicht, nur ein Mensch, der nachts direkt
+2. Bleibt es auch bei 255 dunkel, ist es nicht die Helligkeit, sondern der **MOSFET**:
+   Das kleine Modul „HW-532“ bekommt an unseren 5 V nur die halbe Gate-Spannung ab und
+   schaltet dann nicht voll durch. [Sketch 4](05-software.md#52-die-sieben-lern-sketches)
+   zeigt es in zwei Minuten, [Schaltplan 3.6](03-schaltplan.md#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds)
+   erklärt den Ausweg
+3. Zwei LEDs mehr einbauen (6 statt 4) — für MOSFET und 5-V-Zweig kein Problem
+4. Auf 850-nm-LEDs wechseln — der Vogel merkt es nicht, nur ein Mensch, der nachts direkt
    ins Einflugloch schaut, sieht ein schwaches rotes Glimmen
 
 ### Der Ton stimmt nicht

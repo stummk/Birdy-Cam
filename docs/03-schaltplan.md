@@ -59,10 +59,11 @@ Neun Verbindungen, das ist alles. Hier stehen sie noch einmal als Liste zum Abha
 | **4** | Laderegler `USB-A OUT` | XIAO `USB-C` | ein normales USB-Kabel | einstecken |
 | **5** | Spannungssensor `S` | XIAO `D1` | gelbes Steckkabel | stecken |
 | | Spannungssensor `−` | XIAO `GND` | schwarzes Steckkabel | |
-| **6** | XIAO `D0` | MOSFET `SIG` | gelbes Steckkabel | stecken |
-| | XIAO `5V` | MOSFET `VIN+` | rotes Kabel | schrauben |
-| | XIAO `GND` | MOSFET `VIN−` | schwarzes Kabel | schrauben |
-| **7** | MOSFET `OUT+` / `OUT−` | 4 IR-LEDs, alle parallel | rot / schwarz | schrauben |
+| **6** | XIAO `D0` | MOSFET `PWM` (heißt auf manchen Modulen `SIG`) | gelbes Steckkabel | stecken |
+| | XIAO `GND` | MOSFET `GND` (Steuerseite) | schwarzes Steckkabel | stecken |
+| | XIAO `5V` | MOSFET `+` | rotes Kabel | schrauben |
+| | XIAO `GND` | MOSFET `−` | schwarzes Kabel | schrauben |
+| **7** | MOSFET `+` / `LOAD` | 4 IR-LEDs, alle parallel | rot / schwarz | schrauben |
 | **8** | Lichtschranke `VCC` | XIAO `3V3` | rosa/rotes Steckkabel | stecken |
 | | Lichtschranke `GND` | XIAO `GND` | schwarzes Steckkabel | |
 | | Lichtschranke `OUT` | XIAO `D2` | gelbes Steckkabel | |
@@ -203,9 +204,9 @@ Das Board hat 14 Pins. Du benutzt **sechs** davon:
 | Pin | Richtung | Geht an | Farbe im Plan |
 |---|---|---|---|
 | **3V3** | liefert Strom | Lichtschranke `VCC` | rosa |
-| **5V** | liefert Strom | MOSFET `VIN+` | rot |
-| **GND** | Rückweg | alle drei Module | schwarz |
-| **D0** | sendet | MOSFET `SIG` (IR-Licht an/aus/dimmen) | gelb |
+| **5V** | liefert Strom | MOSFET `+` (Lastseite) | rot |
+| **GND** | Rückweg | **vier** schwarze Kabel — siehe unten | schwarz |
+| **D0** | sendet | MOSFET `PWM` (IR-Licht an/aus/dimmen) | gelb |
 | **D1** | empfängt | Spannungssensor `S` (Akkustand) | gelb |
 | **D2** | empfängt | Lichtschranke `OUT` (Vogel!) | gelb |
 
@@ -216,17 +217,40 @@ Frei bleiben **D3 bis D7** — Platz für Erweiterungen, zum Beispiel einen Temp
 > SD-Karte nicht mehr — und man sucht den Fehler tagelang in der Software.
 > **Merksatz: D8, D9, D10 gehören der Speicherkarte.**
 
-### Drei Kabel wollen an GND — es gibt aber nur einen GND-Pin
+### Vier Kabel wollen an GND — es gibt aber nur einen GND-Pin
 
-Das ist normal und kein Problem. Zwei Lösungen:
+Der XIAO hat genau **einen** GND-Pin in der Stiftleiste. Dorthin wollen:
+
+| # | Von | Warum |
+|---|---|---|
+| 1 | MOSFET `GND` (**Steuerseite**) | Rückweg für das Signal von `D0` |
+| 2 | MOSFET `−` (**Lastseite**) | Rückweg für den LED-Strom |
+| 3 | Lichtschranke `GND` | Rückweg für Versorgung und Signal |
+| 4 | Spannungssensor `−` | Rückweg für das Messsignal |
+
+> 🔑 **Warum der MOSFET zwei GND-Kabel braucht und nicht eins.** Beim kleinen Modul
+> „HW-532“ sind Steuerseite und Lastseite durch den Optokoppler **galvanisch getrennt** —
+> das ist ja gerade sein Zweck. Innen gibt es keine Verbindung zwischen `GND` und `−`.
+> Jede der beiden Seiten braucht darum ihren eigenen Rückweg. Lässt du einen weg, passiert
+> je nachdem gar nichts oder die LEDs bleiben dunkel.
+>
+> Beim großen Modul „XY-MOS“ (Variante B) ist das anders: Dort sind `GND` und `VIN−` intern
+> derselbe Anschluss, ein Kabel genügt. Dann sind es insgesamt drei statt vier.
+
+**So löst man das** — beides funktioniert:
 
 - **Elegant:** Eine kleine Klemme (Wago-Klemme oder Lüsterklemme) an ein Kabel, das im
-  GND-Pin steckt. Von dort gehen drei schwarze Kabel weiter. Das nennt man einen
+  GND-Pin steckt. Von dort gehen die vier schwarzen Kabel weiter. Das nennt man einen
   **Masse-Sammelpunkt**.
 - **Schnell:** Die schwarzen Kabelenden zusammendrehen und gemeinsam in eine Buchsenleiste
   stecken.
 
-Beides funktioniert. Hauptsache, alle schwarzen Kabel hängen am Ende zusammen.
+Hauptsache, alle schwarzen Kabel hängen am Ende zusammen. Elektrisch ist es völlig egal,
+wo sie sich treffen — Hauptsache, sie treffen sich.
+
+> ⚠️ **Der häufigste Fehler beim Sammelpunkt:** Ein Kabel rutscht heraus und man merkt es
+> nicht, weil die anderen drei Module weiterlaufen. Wenn *ein* Modul nicht reagiert und
+> alles andere geht — immer zuerst hier nachsehen.
 
 ### Wie kommt der Strom ins Board?
 
@@ -252,11 +276,53 @@ Der **MOSFET** löst das. Er ist ein **elektronischer Lichtschalter**: Der XIAO 
 Lichtschalter an der Wand: Dein Finger muss die Kraft für die Deckenlampe nicht selbst
 aufbringen.
 
-### Der Anschluss
+### Zuerst: Welche Bauform hast du? Zähl die Anschlüsse
 
-Das MOSFET-Modul hat **zwei Seiten**:
+Es gibt zwei ganz verschiedene Platinen, die beide als „D4184-Modul“ verkauft werden. Sie
+werden **unterschiedlich angeschlossen**. Zählen genügt:
 
-**Steuerseite** (kleine Steckstifte — hier redet der XIAO mit dem Modul):
+| | **Variante A — „HW-532“** (die häufigste) | **Variante B — „XY-MOS“** |
+|---|---|---|
+| Größe | winzig, 23 × 17 mm | groß, ca. 50 × 25 mm |
+| **Steuerseite** | **2** Anschlüsse: `PWM`, `GND` | **3** Stifte: `SIG`, `VCC`, `GND` |
+| **Lastseite** | **3** Schraubklemmen: `+`, `LOAD`, `−` | **4** Schraubklemmen: `VIN+`, `VIN−`, `OUT+`, `OUT−` |
+| Optokoppler | **ja** — kleiner schwarzer 4-Beiner `PC817` neben dem MOS-Chip | nein |
+| Lastspannung laut Hersteller | 5–30 V | 5–36 V |
+| An unseren 5 V | **Grenzfall** — siehe Kasten unten | unkritisch |
+
+Auf dem Chip muss bei **beiden** `D4184` oder `AOD4184` stehen. Ein `IRF520` schaltet bei
+3,3 V nicht durch.
+
+### Variante A — das kleine Modul mit 2 + 3 Anschlüssen
+
+**Steuerseite** (zwei Anschlüsse, Stiftleiste oder Schraubklemme — hier redet der XIAO mit
+dem Modul):
+
+| MOSFET | XIAO | Farbe |
+|---|---|---|
+| `PWM` | `D0` | gelb |
+| `GND` | `GND` | schwarz |
+
+Eine `VCC`-Leitung gibt es hier **nicht** und sie wird auch nicht gebraucht: Das Modul holt
+sich alles, was es braucht, von der Lastseite.
+
+**Lastseite** (drei Schraubklemmen `+` · `LOAD` · `−`):
+
+| MOSFET | Wohin | Farbe |
+|---|---|---|
+| `+` | XIAO `5V` **und** Plus aller vier LEDs | rot (zwei Adern in einer Klemme) |
+| `LOAD` | Minus aller vier LEDs | schwarz |
+| `−` | XIAO `GND` | schwarz |
+
+> 🔑 **Der Denkfehler, den hier jeder einmal macht:** Man sucht vergeblich nach einem
+> `OUT+`. Es gibt keins. Dieses Modul schaltet nur die **Minus**-Leitung der LEDs (das
+> heißt „Low-Side“). Der Plus der LEDs geht direkt mit an die `+`-Klemme, zusammen mit dem
+> roten Kabel vom XIAO. **Zwei Adern in einer Schraubklemme** — das ist so gewollt. Beide
+> Adern vorher verdrillen, dann hält es.
+
+### Variante B — das große Modul mit 3 + 4 Anschlüssen
+
+**Steuerseite** (kleine Steckstifte):
 
 | MOSFET | XIAO | Farbe |
 |---|---|---|
@@ -264,7 +330,7 @@ Das MOSFET-Modul hat **zwei Seiten**:
 | `GND` | `GND` | schwarz |
 | `VCC` — **nur falls vorhanden** | `3V3` | rosa |
 
-**Lastseite** (Schraubklemmen — hier fließt der Strom für die LEDs):
+**Lastseite** (Schraubklemmen):
 
 | MOSFET | Wohin | Farbe |
 |---|---|---|
@@ -273,29 +339,76 @@ Das MOSFET-Modul hat **zwei Seiten**:
 | `OUT+` | Plus aller vier LEDs | rot |
 | `OUT−` | Minus aller vier LEDs | schwarz |
 
-**„Alle vier parallel“ heißt:** Alle Plus-Anschlüsse der LEDs zusammen an `OUT+`, alle
-Minus-Anschlüsse zusammen an `OUT−`. Nicht hintereinander, sondern nebeneinander — wie vier
-Lampen an einer Steckdosenleiste.
+**„Alle vier parallel“ heißt** (bei beiden Varianten): Alle Plus-Anschlüsse der LEDs
+zusammen, alle Minus-Anschlüsse zusammen. Nicht hintereinander, sondern nebeneinander —
+wie vier Lampen an einer Steckdosenleiste.
+
+> ⚠️ **Variante A und die 5 Volt — bitte einmal lesen, bevor du bestellst**
+>
+> Das kleine Modul stellt die Steuerspannung für den MOS-Chip aus der **Lastspannung** her,
+> und zwar über einen Spannungsteiler hinter dem Optokoppler: Am Gate landet ungefähr die
+> **Hälfte** der Lastspannung. Bei den 12 V, für die diese Module gedacht sind, sind das
+> 6 V — reichlich. Bei unseren **5 V sind es nur noch etwa 2,5 V**, und genau dort liegt
+> die Einschaltschwelle des AOD4184 (Datenblatt: 1,0–2,5 V).
+>
+> Im Klartext: Ob es geht, hängt am einzelnen Chip. Die meisten Exemplare schalten bei
+> 2,5 V am Gate noch sauber durch, ein ungünstiges Exemplar bleibt dunkel oder glimmt nur.
+> **Darum steht Schritt 4 vor dem Einbau** — [`step4_irlicht`](../software/firmware/steps/step4_irlicht/step4_irlicht.ino)
+> sagt dir in zwei Minuten, was Sache ist.
+>
+> **Bleiben die LEDs dunkel oder glimmen sie nur:** nimm **Variante B**. Die treibt das
+> Gate direkt aus dem 3,3-V-Signal und ist von der Lastspannung unabhängig. Die beiden
+> Module kosten zusammen keine 10 €, und du hast ohnehin meist ein Mehrfachpack.
 
 ### Dimmen ohne Dimmer — das ist ein netter Trick
 
-Der XIAO schaltet die LEDs **20 000 Mal pro Sekunde** ein und aus. Sind sie dabei nur 30 %
+Der XIAO schaltet die LEDs **1 000 Mal pro Sekunde** ein und aus. Sind sie dabei nur 30 %
 der Zeit an, leuchten sie mit 30 % Helligkeit. Das heißt **PWM**, kostet kein einziges
 Bauteil, und nichts wird dabei warm.
 
-Eingestellt wird das mit `IR_HELLIGKEIT` in
+Eingestellt wird die Helligkeit mit `IR_HELLIGKEIT` in
 [`config.h`](../software/firmware/birdycam/config.h) — Standard ist 75 von 255, also
 ungefähr 30 %. Ist das Nachtbild zu dunkel, drehst du hoch.
 
-*(Warum 20 000 Mal und nicht 1 000? Weil 1 000 Mal pro Sekunde ein hörbares Pfeifen wäre —
-und das Mikrofon hätte es jede Nacht mit aufgenommen.)*
+> **Warum ausgerechnet 1 000 Mal und nicht 20 000?** Wegen des Optokopplers auf
+> **Variante A**. Ein PC817 braucht einige Dutzend Mikrosekunden zum Ein- und Ausschalten.
+> Bei 20 kHz ist eine ganze Periode nur 50 µs lang — der Optokoppler käme gar nicht
+> hinterher, und aus dem Dimmen würde ein unbrauchbarer Matsch. 1 kHz schafft er locker,
+> und **Variante B** schafft es sowieso.
+>
+> Die Frequenz steht als `IR_PWM_FREQUENZ` in `config.h`. Hast du **Variante B** und hörst
+> irgendwo ein leises Pfeifen, dreh sie auf `20000` hoch — dann liegt sie über dem, was
+> Menschen und Mikrofon hören.
 
 > 🔦 **Netter Test, wenn alles steckt:** Halte die **Frontkamera deines Handys** auf die
 > IR-LEDs. Viele Handykameras sehen Infrarot als schwaches violett-weißes Leuchten — deine
 > Augen nicht. Ein sehr überzeugender Moment.
 
+### „Schafft das Modul überhaupt vier LEDs?“
+
+Ja — mit sehr viel Luft nach oben. Man hört zu diesen Modulen oft „zwei LEDs, mehr nicht“;
+das stimmt hier nicht, und es lohnt sich zu wissen, warum:
+
+| | Wert |
+|---|---|
+| Vier IR-LED-Module zusammen | **rund 80 mA** |
+| Davon bei `IR_HELLIGKEIT` 75/255 im Mittel | rund 25 mA |
+| Was der AOD4184 laut Datenblatt kann | **40 V / 50 A** |
+| Was die Platine realistisch kann | einige Ampere |
+
+Der Schalter ist also um den **Faktor Hundert** überdimensioniert — daran scheitert nichts.
+Die echte Grenze im Projekt ist der **5-V-Zweig**: Der USB-A-Ausgang des Ladereglers
+liefert bis 5 V / 2,4 A, davon braucht der XIAO mit Kamera und WLAN in Spitzen schon
+gut 400 mA. Für die LEDs bleibt reichlich übrig; selbst die sechs LEDs aus
+[2.5](02-stueckliste.md#25-wenn-mehr-budget-da-ist) wären noch unkritisch.
+
+Wo die Zahl „zwei“ herkommt: Wer **Variante A an 5 V** betreibt, hat am Gate nur die halbe
+Spannung — der MOS-Chip ist dann nicht voll durchgeschaltet und wird zum Widerstand, statt
+zum Schalter. Dann zählt plötzlich jedes Milliampere. Das ist aber kein Argument gegen vier
+LEDs, sondern eins für den Test aus Schritt 4 (und notfalls für Variante B).
+
 > ⚠️ **Beim Kauf:** Auf dem Chip des MOSFET-Moduls muss **D4184** oder **AOD4184** stehen.
-> Ein `IRF520`-Modul sieht genauso aus, schaltet aber bei 3,3 Volt nicht richtig durch —
+> Ein `IRF520`-Modul sieht genauso aus, schaltet aber bei 3,3 V nicht richtig durch —
 > die LEDs bleiben dann dunkel oder glimmen nur.
 
 ---
@@ -444,7 +557,7 @@ Genau dafür gibt es die sieben Lern-Sketches in [Kapitel 5](05-software.md).
 | 1 | nur den XIAO ans USB-Kabel vom Computer | Board meldet sich, LED blinkt | 1 |
 | 2 | SD-Karte einschieben | Karte wird erkannt, Schreibtest | 2 |
 | 3 | Kameramodul ans Flachband | 🎉 **erstes Livebild im Browser** | 3 |
-| 4 | MOSFET + 4 IR-LEDs (Verbindung ⑥ ⑦) | Handykamera sieht die LEDs leuchten | 4 |
+| 4 | MOSFET + 4 IR-LEDs (Verbindung ⑥ ⑦) | Handykamera sieht die LEDs leuchten — **und ob dein Modul an 5 V durchschaltet** ([3.6](#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds)) | 4 |
 | 5 | Spannungssensor (Verbindung ③ ⑤) | Akkuspannung wird angezeigt, kalibrieren | 5 |
 | 6 | — (Mikrofon ist schon auf dem Board) | Lautstärkebalken bewegt sich | 6 |
 | 7 | Lichtschranke (Verbindung ⑧) | Zähler springt, wenn der Finger durchgeht | 7 |
@@ -489,7 +602,8 @@ Bevor du in der Software suchst, arbeite diese Liste ab. Fast immer steckt es hi
 | **Die SD-Karte wird nicht gefunden** | An `D8`, `D9` oder `D10` hängt etwas. Die gehören der Karte |
 | **Kein Bild, Kamera meldet Fehler** | Flachbandkabel sitzt nicht richtig, oder der Bügel ist nicht zu. Neu einlegen |
 | **Bild ist da, aber verrauscht/gestreift** | Flachband zu lang, oder `XCLK_MHZ` auf 10 stellen |
-| **IR-LEDs bleiben dunkel** | MOSFET ist ein `IRF520` statt `D4184`. Oder `SIG` steckt nicht auf `D0`. Oder die LEDs sind verpolt |
+| **IR-LEDs bleiben dunkel** | MOSFET ist ein `IRF520` statt `D4184`. Oder `PWM` steckt nicht auf `D0`. Oder die LEDs sind verpolt. Oder bei der kleinen **Variante A** hängt der LED-Plus nicht mit an der `+`-Klemme — dieses Modul hat kein `OUT+` ([3.6](#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds)) |
+| **IR-LEDs glimmen nur schwach**, obwohl `IR_HELLIGKEIT` hoch steht | Die kleine **Variante A** bekommt an 5 V nur die halbe Gate-Spannung ab. Erst `IR_PWM_FREQUENZ` prüfen (muss ≤ 1000 sein), sonst auf **Variante B** wechseln — [3.6](#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds) |
 | **Akkuanzeige zeigt 0,00 V** | Spannungssensor nicht angeschlossen, oder `S` steckt nicht auf `D1`, oder das schwarze Kabel zu `GND` fehlt |
 | **Akkuanzeige zeigt Unsinn** | Sensor ist nicht kalibriert → [Sketch 5](05-software.md#52-die-sieben-lern-sketches) |
 | **Vogelzähler läuft ohne Vögel hoch** | Lichtschranke schaut nicht genau geradeaus, oder Sonne blendet den Empfänger. Sonst `LICHTSCHRANKE_INVERTIERT` umstellen |

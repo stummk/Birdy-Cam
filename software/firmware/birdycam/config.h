@@ -224,6 +224,19 @@
 // Das spart ~90 % der LED-Energie. Zeit in Millisekunden zum Vorglühen.
 #define IR_BLITZ_VORLAUF_MS   120
 
+// Wie oft pro Sekunde das Dimmsignal ein- und ausschaltet (Hertz).
+//
+// 1000 Hz, weil das kleine MOSFET-Modul "HW-532" (23 x 17 mm, 2 + 3
+// Anschluesse) einen Optokoppler PC817 im Signalweg hat. Der braucht einige
+// Dutzend Mikrosekunden zum Schalten und kaeme bei 20 kHz nicht hinterher —
+// aus dem Dimmen wuerde Matsch. Bei 1000 Hz schafft er es locker.
+//
+// Hast du das grosse Modul ohne Optokoppler ("XY-MOS", 3 + 4 Anschluesse)
+// und hoerst nachts ein Pfeifen in der Tonaufnahme: 20000 eintragen. Das
+// liegt ueber dem Hoerbaren und ueber dem, was das Mikrofon durchlaesst.
+// Details in Schaltplan 3.6.
+#define IR_PWM_FREQUENZ       1000
+
 // ----------------------------------------------------------------------------
 //  5. Speicher (Round-Robin-Ringe)
 // ----------------------------------------------------------------------------
@@ -373,7 +386,7 @@
 // ----------------------------------------------------------------------------
 //  8. Pins  (siehe Schaltplan 3.5 — nur ändern, wenn du umgesteckt hast)
 // ----------------------------------------------------------------------------
-#define PIN_IR_LED      1       // D0 -> MOSFET-Modul SIG
+#define PIN_IR_LED      1       // D0 -> MOSFET-Modul PWM (auf manchen Modulen "SIG")
 #define PIN_AKKU        2       // D1 <- Spannungssensor S
 #define PIN_LICHTSCHRANKE 3     // D2 <- Lichtschranke OUT
 #define PIN_SD_CS       21      // SD-Karte (fest verbaut, nicht ändern)

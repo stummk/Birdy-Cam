@@ -3,26 +3,22 @@
 #include "speicher.h"
 #include <esp_sleep.h>
 
-// 20 000 mal pro Sekunde ein/aus — und zwar mit Absicht so hoch:
-//
 // Die IR-LEDs werden per PWM gedimmt, also im Takt ein- und ausgeschaltet.
-// Bei 1000 Hz liegt dieser Takt mitten im Hörbereich, und der Stromstoß
-// koppelt über die 3,3-V-Leitung ins Mikrofon — nachts, wenn das IR-Licht
-// an ist, hört man dann ein Pfeifen genau im Vogelgesang-Bereich.
-// 20 kHz ist oberhalb des Hörbaren UND oberhalb dessen, was das Mikrofon
-// überhaupt durchlässt (es filtert bei ~8 kHz). Damit ist der Ton nachts
-// still, und die LEDs merken vom höheren Takt nichts.
+// Die Taktfrequenz steht als IR_PWM_FREQUENZ in config.h, weil sie von der
+// Bauform des MOSFET-Moduls abhängt: Das verbreitete kleine Modul "HW-532"
+// hat einen Optokoppler PC817 im Signalweg und schafft nur rund 1 kHz.
 //
-// Sollten die LEDs dunkler werden oder das MOSFET-Modul warm: zurück auf
-// 1000 — dann kann nachts wieder ein Pfeifen im Ton sein.
-#define PWM_FREQUENZ   20000
+// Der Preis dafür: 1 kHz liegt im Hörbereich. Sollte nachts ein Pfeifen in
+// der Tonaufnahme landen, hilft nur ein Modul ohne Optokoppler und dann
+// IR_PWM_FREQUENZ auf 20000 — das liegt über dem, was das Mikrofon
+// überhaupt durchlässt (es filtert bei ~8 kHz).
 #define PWM_BITS       8       // Auflösung: 0-255
 
 static uint8_t irStand = 0;
 
 void stromStart() {
   // PWM auf dem IR-Pin einrichten (Arduino-ESP32-Kern 3.x)
-  ledcAttach(PIN_IR_LED, PWM_FREQUENZ, PWM_BITS);
+  ledcAttach(PIN_IR_LED, IR_PWM_FREQUENZ, PWM_BITS);
   ledcWrite(PIN_IR_LED, 0);
 
   if (AKKU_MESSEN) {

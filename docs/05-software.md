@@ -106,6 +106,11 @@ plötzlich echt wird.
 du die **Frontkamera deines Handys** davor und siehst ein schwaches violett-weißes Glimmen.
 Viele Handysensoren sehen Infrarot, unsere Augen nicht.
 
+> Dieser Sketch hat noch eine zweite Aufgabe: Er sagt dir, ob dein MOSFET-Modul an unseren
+> 5 Volt sauber durchschaltet. Bei der verbreiteten kleinen Bauform ist das nicht
+> selbstverständlich — [Schaltplan 3.6](03-schaltplan.md#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds)
+> erklärt, warum, und was du tust, wenn es nicht klappt.
+
 **Schritt 5 — echte Messtechnik.** Hier kalibrierst du den Spannungssensor. Das geht so:
 
 1. Sketch hochladen, Seriellen Monitor öffnen, die Zeile `Am Pin: x.xxx V` ablesen.

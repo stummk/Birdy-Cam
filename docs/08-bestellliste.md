@@ -94,7 +94,7 @@ Diese Teile kommen oft aus Asien und brauchen **2–4 Wochen**. Deshalb als Erst
 | ☐ | 1 | **[Solarpanel HPLive 15 W / 12 V](https://www.amazon.de/s?k=HPLive+Solarpanel+15W+12V)** | ⚠️ Auf dem Aufkleber muss `Voc` / „Leerlaufspannung“ **unter 24 V** stehen. Bei 12-V-Panels üblich: 18–22 V. Siehe [8.3b](#83b-zum-solarpanel) | ~30 € |
 | ☐ | 1 | **[microSD 32 GB High Endurance](https://www.amazon.de/s?k=microSD+32GB+High+Endurance)** | **Höchstens 32 GB** (Grenze des Boards) und **„High Endurance“** / „Dashcam“ | 12 € |
 | ☐ | 4 | **[IR-LED-Module 940 nm](https://www.amazon.de/s?k=IR+LED+Modul+940nm+Arduino)** | ⚠️ **940 nm**, nicht 850 nm (das glimmt sichtbar rot) | 7 € |
-| ☐ | 1 | **[MOSFET-Modul Logic Level](https://www.amazon.de/s?k=MOSFET+Modul+D4184+PWM)** (D4184 / AOD4184) | ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch. Meist 3er-Pack | 8 € |
+| ☐ | 1 | **[MOSFET-Modul Logic Level](https://www.amazon.de/s?k=MOSFET+Modul+D4184+PWM)** (D4184 / AOD4184) | ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch. Kommt meist im Mehrfachpack. Zwei Bauformen im Umlauf — am besten **von beiden eine** mitbestellen, siehe [8.4c](#84c-zum-mosfet-modul) | 8 € |
 | ☐ | 1 | [Spannungssensor-Modul 0–25 V](https://www.amazon.de/s?k=Spannungssensor+Modul+25V+Arduino) | Kommt meist im 5er-Pack | 6 € |
 | ☐ | 1 | **[JST-PH-2.0-Y-Kabel](https://www.amazon.de/s?k=JST+PH+2.0+Y+Kabel+1+auf+2)** (1 Buchse → 2 Stecker) | Damit Laderegler und Spannungssensor gleichzeitig am Akku hängen. Meist 5er-Pack | 6 € |
 | ☐ | 1 | [Dupont-Steckkabel-Set](https://www.amazon.de/s?k=Dupont+Kabel+Set+female+female) (F-F und F-M) | 10–20 cm Länge reicht | 6 € |
@@ -163,6 +163,37 @@ die Reflexion am Vogel. Das funktioniert, hat aber zwei Schwächen:
 Alternative, falls du sie findest:
 [Lichtschranken-Paar Sender/Empfänger](https://www.ebay.de/sch/i.html?_nkw=Infrarot+Lichtschranke+Modul+Sender+Empf%C3%A4nger) (~6 €).
 Die Firmware kommt mit beiden Bauarten zurecht.
+
+---
+
+### 8.4c Zum MOSFET-Modul
+
+Unter dem Namen „D4184-Modul“ werden **zwei verschiedene Platinen** verkauft. Auf den
+Angebotsbildern sehen sie ähnlich aus; angeschlossen werden sie unterschiedlich. Zähl
+einfach die Anschlüsse:
+
+| | **Variante A — „HW-532“** | **Variante B — „XY-MOS“** |
+|---|---|---|
+| Größe | 23 × 17 mm | ca. 50 × 25 mm |
+| Steuerseite | **2**: `PWM`, `GND` | **3**: `SIG`, `VCC`, `GND` |
+| Lastseite | **3**: `+`, `LOAD`, `−` | **4**: `VIN+`, `VIN−`, `OUT+`, `OUT−` |
+| Optokoppler `PC817` | ja | nein |
+| Lieferbarkeit | ✅ überall, meist 5er/6er-Pack | 🟡 seltener |
+| An unseren 5 V | meistens ja, aber nicht garantiert | ✅ sicher |
+| Maximale PWM-Frequenz | ~1 kHz (Optokoppler) | 20 kHz |
+
+Variante A erzeugt die Gate-Spannung als **Hälfte der Lastspannung**. Bei 12 V ist das
+bequem, bei unseren 5 V bleiben nur ~2,5 V — genau an der Einschaltschwelle des AOD4184.
+Die meisten Exemplare schalten trotzdem sauber durch, manche nicht. Die ganze Erklärung
+steht in [3.6](03-schaltplan.md#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds).
+
+> 💡 **Empfehlung: von beiden eine mitbestellen.** Zusammen unter 10 €, und
+> [Sketch 4](05-software.md#52-die-sieben-lern-sketches) sagt dir in zwei Minuten, welche
+> bei dir funktioniert. Das ist billiger als eine Woche Wartezeit mitten im Bau.
+
+Suchbegriffe:
+[Variante A „HW-532 D4184“](https://www.amazon.de/s?k=HW-532+D4184+MOSFET+Modul) ·
+[Variante B „MOSFET Modul 5-36V 15A“](https://www.amazon.de/s?k=MOSFET+Modul+D4184+5-36V+15A+PWM)
 
 ---
 
@@ -249,6 +280,7 @@ Bitte **vor** dem Einbau prüfen, nicht danach.
       im **abgedunkelten** Raum ins Bild schauen. Sieht man etwas → der Filter ist weg ✅
 - [ ] IR-LEDs: mit der **Handy-Frontkamera** prüfen, ob sie leuchten
 - [ ] MOSFET-Modul: steht **D4184** oder **AOD4184** auf dem Chip? (Nicht IRF520)
+- [ ] MOSFET-Modul: Anschlüsse zählen — 2 + 3 ist Variante A, 3 + 4 ist Variante B ([8.4c](#84c-zum-mosfet-modul))
 - [ ] **Solarpanel: `Voc` auf dem Aufkleber unter 24 V?**
 - [ ] Laderegler: **MPPT-SET-Schalter** auf der Rückseite gefunden? Auf **12V** stellen
 - [ ] Laderegler: **Akkuschalter** gefunden? Muss später auf **ON**

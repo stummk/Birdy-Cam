@@ -27,7 +27,7 @@
 | **E8** | Spannungssensor-Modul 0–25 V | Damit die Website den Akkustand zeigt. Kommt meist im 5er-Pack | 2 € |
 | **E8b** | **JST-PH-2.0-Y-Kabel** (1 Buchse → 2 Stecker) | Damit Laderegler **und** Spannungssensor gleichzeitig am Akku hängen, ohne zu löten. Gibt es im 5er-Pack. [Warum](03-schaltplan.md#38-der-spannungssensor--damit-du-den-akkustand-siehst) | 3 € |
 | **E9** | **4 × IR-LED-Modul 940 nm** | Das unsichtbare Nachtlicht. ⚠️ **940 nm**, nicht 850 nm — letzteres glimmt für Menschen sichtbar rot | 7 € |
-| **E10** | **MOSFET-Modul, Logic Level** (D4184 / AOD4184) | Der elektronische Lichtschalter für die LEDs. ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch | 4 € |
+| **E10** | **MOSFET-Modul, Logic Level** (D4184 / AOD4184) | Der elektronische Lichtschalter für die LEDs. ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch. Es gibt zwei Bauformen — [welche du hast und was das ändert](03-schaltplan.md#zuerst-welche-bauform-hast-du-zähl-die-anschlüsse) | 4 € |
 | **E11** | **IR-Lichtschranke** mit Digitalausgang, 3,3 V | Zählt Ein- und Ausflüge exakt. Optional, aber das schönste Bauteil im Projekt ([1.3](01-ueberblick.md#13-die-lichtschranke--die-beste-idee-im-ganzen-plan)) | 3 € |
 | **E12** | Dupont-Steckkabel-Set (F-F und F-M) | Alle Steckverbindungen. 10–20 cm Länge reicht | 5 € |
 | **E13** | IP65-Gehäuse, ca. 120 × 80 × 50 mm | Die Elektronikbox außen am Kasten. Muss Board, Laderegler und Akku fassen | 11 € |
@@ -63,6 +63,19 @@ Sensor — und die Kamera sieht nachts absolut nichts, egal wie stark die IR-LED
 Auf dem schwarzen Chip muss **D4184** oder **AOD4184** stehen. Die optisch fast gleichen
 Module mit `IRF520` brauchen mehr als 3,3 Volt zum Durchschalten — die IR-LEDs bleiben dann
 dunkel oder glimmen nur.
+
+Und es gibt **zwei Bauformen**, die beide „D4184-Modul“ heißen. Zähl die Anschlüsse:
+
+- **Variante A „HW-532“**, winzig (23 × 17 mm): **2** Steueranschlüsse (`PWM`, `GND`) und
+  **3** Schraubklemmen (`+`, `LOAD`, `−`), mit Optokoppler `PC817`. Das ist die, die man
+  fast überall bekommt. Sie funktioniert an unseren 5 V meistens, aber nicht garantiert —
+  warum, steht in [3.6](03-schaltplan.md#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds).
+- **Variante B „XY-MOS“**, groß (ca. 50 × 25 mm): **3** Steuerstifte (`SIG`, `VCC`, `GND`)
+  und **4** Schraubklemmen (`VIN+`, `VIN−`, `OUT+`, `OUT−`), ohne Optokoppler. An 5 V die
+  sichere Wahl.
+
+> 💡 **Am entspanntesten:** Beide bestellen. Zusammen unter 10 €, und beide kommen ohnehin
+> meist im Mehrfachpack. Dann bleibt Schritt 4 garantiert kein Abend voller Ratespiele.
 
 ### ③ Das Panel muss unter 24 Volt Leerlaufspannung haben
 
@@ -133,7 +146,7 @@ und das Kameramodul ohne IR-Filter. Diese drei erfüllen die eigentlichen Anford
 |---|---|
 | **+12 €** Akku 10 000 mAh statt 5 000 | Doppelte Reserve. Der lohnendste Aufpreis der Liste |
 | +5 € DS18B20 Temperaturfühler (wasserdicht) | Nesttemperatur auf der Website. Am Verlauf erkennt man, ob gebrütet wird — der Vogel *heizt*. Für 5 € das lehrreichste Extra |
-| +3 € zwei IR-LEDs mehr (6 statt 4) | Helleres Nachtbild, falls 4 nicht reichen |
+| +3 € zwei IR-LEDs mehr (6 statt 4) | Helleres Nachtbild, falls 4 nicht reichen. Für MOSFET und 5-V-Zweig kein Problem — [Rechnung](03-schaltplan.md#schafft-das-modul-überhaupt-vier-leds) |
 | +20 € Multimeter | Macht das Kalibrieren exakt statt geschätzt — und bleibt für alle künftigen Projekte nützlich |
 
 ---

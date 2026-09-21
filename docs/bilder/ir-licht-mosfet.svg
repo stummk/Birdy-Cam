@@ -1,26 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 670" width="960" height="670" font-family="Segoe UI, Helvetica, Arial, sans-serif">
 
-  <rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
-  <rect x="1" y="1" width="958" height="618" fill="none" stroke="#d5dbe4" stroke-width="2" rx="6"/>
+  <rect x="0" y="0" width="960" height="670" fill="#ffffff"/>
+  <rect x="1" y="1" width="958" height="668" fill="none" stroke="#d5dbe4" stroke-width="2" rx="6"/>
 
   <text x="480" y="34" text-anchor="middle" font-size="21" font-weight="bold" fill="#16232f">Das unsichtbare Nachtlicht — MOSFET und die vier IR-LEDs</text>
-  <text x="480" y="55" text-anchor="middle" font-size="13" fill="#5b6b7d">Der MOSFET ist ein Lichtschalter, den der XIAO bedienen kann, ohne selbst die Kraft aufzubringen.</text>
+  <text x="480" y="55" text-anchor="middle" font-size="13" fill="#5b6b7d">Gezeichnet ist das kleine Modul „HW-532“ mit 2 + 3 Anschlüssen. Zur großen Bauform siehe Kasten rechts unten.</text>
 
   <!-- ============ Kabel ============ -->
-  <!-- D0 -> SIG -->
-  <path d="M 214 158 L 330 158" fill="none" stroke="#d99400" stroke-width="4"/>
-  <!-- GND -> GND (Signalseite) -->
-  <path d="M 214 190 L 330 190" fill="none" stroke="#2b3440" stroke-width="4"/>
-  <!-- 5V -> VIN+ -->
-  <path d="M 214 262 L 270 262 L 270 296 L 330 296" fill="none" stroke="#d1332e" stroke-width="4"/>
-  <!-- GND -> VIN- -->
-  <path d="M 214 294 L 250 294 L 250 328 L 330 328" fill="none" stroke="#2b3440" stroke-width="4"/>
+  <!-- D0 -> PWM -->
+  <path d="M 214 159 L 290 159 L 290 171 L 344 171" fill="none" stroke="#d99400" stroke-width="4"/>
+  <!-- GND -> GND (Steuerseite) -->
+  <path d="M 214 191 L 302 191 L 302 205 L 344 205" fill="none" stroke="#2b3440" stroke-width="4"/>
 
-  <!-- OUT+ / OUT- zu den LEDs -->
-  <path d="M 594 301 L 660 301 L 660 140" fill="none" stroke="#d1332e" stroke-width="4"/>
-  <path d="M 594 333 L 690 333 L 690 140" fill="none" stroke="#2b3440" stroke-width="4"/>
-  <line x1="660" y1="140" x2="660" y2="470" stroke="#d1332e" stroke-width="4"/>
-  <line x1="690" y1="160" x2="690" y2="470" stroke="#2b3440" stroke-width="4"/>
+  <!-- 5V -> oben herum zum Sammelpunkt vor der +-Klemme -->
+  <path d="M 214 263 L 246 263 L 246 92 L 640 92 L 640 267 L 660 267" fill="none" stroke="#d1332e" stroke-width="4"/>
+  <!-- Sammelpunkt -> +-Klemme -->
+  <path d="M 596 267 L 640 267" fill="none" stroke="#d1332e" stroke-width="4"/>
+  <!-- GND -> Minus-Klemme, unten herum -->
+  <path d="M 214 295 L 266 295 L 266 424 L 559 424 L 559 348" fill="none" stroke="#2b3440" stroke-width="4"/>
+  <!-- LOAD -> Minus-Sammelschiene der LEDs -->
+  <path d="M 596 301 L 690 301" fill="none" stroke="#2b3440" stroke-width="4"/>
+
+  <!-- Sammelschienen zu den LEDs -->
+  <line x1="660" y1="152" x2="660" y2="392" stroke="#d1332e" stroke-width="4"/>
+  <line x1="690" y1="172" x2="690" y2="412" stroke="#2b3440" stroke-width="4"/>
 
   <line x1="660" y1="152" x2="756" y2="152" stroke="#d1332e" stroke-width="3"/>
   <line x1="690" y1="172" x2="756" y2="172" stroke="#2b3440" stroke-width="3"/>
@@ -31,8 +34,13 @@
   <line x1="660" y1="392" x2="756" y2="392" stroke="#d1332e" stroke-width="3"/>
   <line x1="690" y1="412" x2="756" y2="412" stroke="#2b3440" stroke-width="3"/>
 
+  <!-- Knotenpunkte -->
+  <circle cx="640" cy="267" r="6" fill="#d1332e"/>
+  <circle cx="660" cy="267" r="6" fill="#d1332e"/>
+  <circle cx="690" cy="301" r="6" fill="#2b3440"/>
+
   <!-- ============ XIAO ============ -->
-  <rect x="30" y="110" width="184" height="220" rx="9" fill="#eaf6ef" stroke="#2f7d4f" stroke-width="2.5"/>
+  <rect x="30" y="110" width="184" height="244" rx="9" fill="#eaf6ef" stroke="#2f7d4f" stroke-width="2.5"/>
   <text x="122" y="136" text-anchor="middle" font-size="15" font-weight="bold" fill="#16232f">XIAO ESP32-S3</text>
 
   <rect x="46" y="146" width="152" height="26" rx="4" fill="#fffbeb" stroke="#d99400" stroke-width="2"/>
@@ -47,42 +55,42 @@
   <rect x="46" y="282" width="152" height="26" rx="4" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
   <text x="122" y="300" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">GND</text>
 
-  <text x="122" y="326" text-anchor="middle" font-size="11" fill="#5b6b7d">liefert nur ein Signal</text>
+  <text x="122" y="324" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#a02320">Es gibt nur EINEN GND-Pin.</text>
+  <text x="122" y="338" text-anchor="middle" font-size="10.5" fill="#5b6b7d">Beide schwarzen Kabel treffen</text>
+  <text x="122" y="350" text-anchor="middle" font-size="10.5" fill="#5b6b7d">sich dort (Wago-Klemme).</text>
 
   <!-- ============ MOSFET ============ -->
-  <rect x="330" y="110" width="280" height="250" rx="9" fill="#eef4fb" stroke="#3b5573" stroke-width="2.5"/>
-  <text x="470" y="136" text-anchor="middle" font-size="15" font-weight="bold" fill="#16232f">MOSFET-Modul D4184</text>
+  <rect x="330" y="110" width="280" height="262" rx="9" fill="#eef4fb" stroke="#3b5573" stroke-width="2.5"/>
+  <text x="470" y="134" text-anchor="middle" font-size="15" font-weight="bold" fill="#16232f">MOSFET-Modul D4184</text>
 
-  <text x="346" y="160" font-size="11" font-weight="bold" fill="#5b6b7d">STEUERSEITE (winzige Ströme)</text>
-  <rect x="346" y="168" width="70" height="24" rx="4" fill="#fffbeb" stroke="#d99400"/>
-  <text x="381" y="185" text-anchor="middle" font-size="12" fill="#92400e">SIG</text>
-  <rect x="422" y="168" width="70" height="24" rx="4" fill="#f1f5f9" stroke="#334155"/>
-  <text x="457" y="185" text-anchor="middle" font-size="12" fill="#16232f">GND</text>
-  <rect x="498" y="168" width="96" height="24" rx="4" fill="#fdf2f8" stroke="#a3477b"/>
-  <text x="546" y="185" text-anchor="middle" font-size="11" fill="#a3477b">VCC (falls da)</text>
-  <text x="346" y="210" font-size="11" font-style="italic" fill="#5b6b7d">Heißt je nach Modul SIG, PWM oder TRIG</text>
+  <text x="344" y="152" font-size="11" font-weight="bold" fill="#5b6b7d">STEUERSEITE — 2 Anschlüsse</text>
+  <rect x="344" y="158" width="104" height="26" rx="4" fill="#fffbeb" stroke="#d99400"/>
+  <text x="396" y="176" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">PWM</text>
+  <rect x="344" y="192" width="104" height="26" rx="4" fill="#f1f5f9" stroke="#334155"/>
+  <text x="396" y="210" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">GND</text>
+  <text x="458" y="172" font-size="11" font-style="italic" fill="#5b6b7d">Kein VCC —</text>
+  <text x="458" y="188" font-size="11" font-style="italic" fill="#5b6b7d">wird hier nicht</text>
+  <text x="458" y="204" font-size="11" font-style="italic" fill="#5b6b7d">gebraucht.</text>
 
-  <line x1="346" y1="224" x2="594" y2="224" stroke="#b9c7d6" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <line x1="344" y1="234" x2="596" y2="234" stroke="#b9c7d6" stroke-width="1.5" stroke-dasharray="5 4"/>
 
-  <text x="346" y="248" font-size="11" font-weight="bold" fill="#5b6b7d">LASTSEITE (Schraubklemmen)</text>
-  <rect x="346" y="258" width="80" height="26" rx="4" fill="#ffffff" stroke="#8fa3bb"/>
-  <text x="386" y="276" text-anchor="middle" font-size="12" fill="#2b3440">rein</text>
-  <rect x="514" y="258" width="80" height="26" rx="4" fill="#ffffff" stroke="#8fa3bb"/>
-  <text x="554" y="276" text-anchor="middle" font-size="12" fill="#2b3440">raus</text>
+  <text x="344" y="250" font-size="11" font-weight="bold" fill="#5b6b7d">LASTSEITE — 3 Schraubklemmen</text>
 
-  <rect x="346" y="288" width="52" height="26" rx="4" fill="#fef2f2" stroke="#d1332e"/>
-  <text x="372" y="306" text-anchor="middle" font-size="12" font-weight="bold" fill="#a02320">VIN+</text>
-  <rect x="346" y="320" width="52" height="26" rx="4" fill="#f1f5f9" stroke="#334155"/>
-  <text x="372" y="338" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">VIN−</text>
+  <rect x="522" y="254" width="74" height="26" rx="4" fill="#fef2f2" stroke="#d1332e"/>
+  <text x="559" y="273" text-anchor="middle" font-size="13" font-weight="bold" fill="#a02320">+</text>
+  <rect x="522" y="288" width="74" height="26" rx="4" fill="#f1f5f9" stroke="#334155"/>
+  <text x="559" y="306" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">LOAD</text>
+  <rect x="522" y="322" width="74" height="26" rx="4" fill="#f1f5f9" stroke="#334155"/>
+  <text x="559" y="341" text-anchor="middle" font-size="13" font-weight="bold" fill="#16232f">−</text>
 
-  <rect x="542" y="288" width="52" height="26" rx="4" fill="#fef2f2" stroke="#d1332e"/>
-  <text x="568" y="306" text-anchor="middle" font-size="12" font-weight="bold" fill="#a02320">OUT+</text>
-  <rect x="542" y="320" width="52" height="26" rx="4" fill="#f1f5f9" stroke="#334155"/>
-  <text x="568" y="338" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">OUT−</text>
+  <rect x="358" y="262" width="130" height="68" rx="6" fill="#16232f"/>
+  <text x="423" y="286" text-anchor="middle" font-size="12" font-weight="bold" fill="#dbe7de">FET</text>
+  <text x="423" y="304" text-anchor="middle" font-size="9.5" fill="#8fa3bb">schaltet nur die</text>
+  <text x="423" y="318" text-anchor="middle" font-size="9.5" fill="#8fa3bb">Minus-Leitung</text>
 
-  <rect x="418" y="288" width="104" height="58" rx="6" fill="#16232f"/>
-  <text x="470" y="312" text-anchor="middle" font-size="12" font-weight="bold" fill="#dbe7de">FET</text>
-  <text x="470" y="331" text-anchor="middle" font-size="10" fill="#8fa3bb">der Schalter</text>
+  <!-- Hinweis direkt unter dem Modul -->
+  <text x="330" y="392" font-size="12" font-weight="bold" fill="#a02320">In die +-Klemme kommen ZWEI Adern: 5 V vom XIAO</text>
+  <text x="330" y="408" font-size="12" font-weight="bold" fill="#a02320">und der Plus der LEDs. Ein „OUT+“ gibt es nicht.</text>
 
   <!-- ============ LEDs ============ -->
   <g>
@@ -107,26 +115,28 @@
     <circle cx="775" cy="392" r="7" fill="#8a5ba8"/>
   </g>
 
-  <text x="846" y="460" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">alle vier parallel</text>
-  <text x="846" y="478" text-anchor="middle" font-size="11.5" fill="#5b6b7d">alle Plus zusammen,</text>
-  <text x="846" y="494" text-anchor="middle" font-size="11.5" fill="#5b6b7d">alle Minus zusammen</text>
+  <text x="846" y="462" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">alle vier parallel</text>
+  <text x="846" y="480" text-anchor="middle" font-size="11.5" fill="#5b6b7d">alle Plus zusammen an +,</text>
+  <text x="846" y="496" text-anchor="middle" font-size="11.5" fill="#5b6b7d">alle Minus zusammen an LOAD</text>
 
   <!-- ============ Erklärkästen ============ -->
-  <rect x="24" y="400" width="600" height="88" rx="9" fill="#fff9ec" stroke="#c9a227" stroke-width="2"/>
-  <text x="42" y="426" font-size="15" font-weight="bold" fill="#16232f">Warum nicht die LEDs direkt an den Pin?</text>
-  <text x="42" y="450" font-size="13" fill="#2b3440">Ein Pin des XIAO darf nur wenige Milliampere liefern — vier LED-Module ziehen rund 80 mA.</text>
-  <text x="42" y="472" font-size="13" fill="#2b3440">Der MOSFET ist der Muskel: Ein winziges Signal schaltet den großen Strom. Wie ein Lichtschalter.</text>
+  <rect x="24" y="444" width="576" height="88" rx="9" fill="#fff9ec" stroke="#c9a227" stroke-width="2"/>
+  <text x="42" y="470" font-size="15" font-weight="bold" fill="#16232f">Warum nicht die LEDs direkt an den Pin?</text>
+  <text x="42" y="494" font-size="13" fill="#2b3440">Ein Pin des XIAO darf nur wenige Milliampere liefern — vier LED-Module ziehen rund 80 mA.</text>
+  <text x="42" y="516" font-size="13" fill="#2b3440">Der MOSFET ist der Muskel: Ein winziges Signal schaltet den großen Strom. Wie ein Lichtschalter.</text>
 
-  <rect x="24" y="502" width="600" height="98" rx="9" fill="#f3f7f4" stroke="#2f7d4f" stroke-width="2"/>
-  <text x="42" y="528" font-size="15" font-weight="bold" fill="#16232f">Und was ist Dimmen (PWM)?</text>
-  <text x="42" y="552" font-size="13" fill="#2b3440">Der XIAO schaltet die LEDs 20 000-mal pro Sekunde ein und aus. Sind sie nur 30 % der Zeit an,</text>
-  <text x="42" y="574" font-size="13" fill="#2b3440">leuchten sie mit 30 % — ganz ohne Bauteil, das warm wird. Einstellbar als IR_HELLIGKEIT.</text>
-  <text x="42" y="594" font-size="12" font-style="italic" fill="#5b6b7d">So schnell, weil es sonst als Pfeifen in der Tonaufnahme landen würde.</text>
+  <rect x="24" y="542" width="576" height="112" rx="9" fill="#f3f7f4" stroke="#2f7d4f" stroke-width="2"/>
+  <text x="42" y="568" font-size="15" font-weight="bold" fill="#16232f">Und was ist Dimmen (PWM)?</text>
+  <text x="42" y="592" font-size="13" fill="#2b3440">Der XIAO schaltet die LEDs 1 000-mal pro Sekunde ein und aus. Sind sie nur 30 % der Zeit an,</text>
+  <text x="42" y="614" font-size="13" fill="#2b3440">leuchten sie mit 30 % — ganz ohne Bauteil, das warm wird. Einstellbar als IR_HELLIGKEIT.</text>
+  <text x="42" y="638" font-size="12" font-style="italic" fill="#5b6b7d">Nicht schneller, weil der Optokoppler auf diesem Modul bei 20 kHz nicht mehr mitkäme.</text>
 
-  <rect x="648" y="502" width="288" height="98" rx="9" fill="#fef2f2" stroke="#d1332e" stroke-width="2"/>
-  <text x="666" y="528" font-size="14" font-weight="bold" fill="#a02320">Beim Kaufen aufpassen</text>
-  <text x="666" y="552" font-size="12.5" fill="#2b3440">Auf dem Chip muss <tspan font-weight="bold">D4184</tspan> oder</text>
-  <text x="666" y="572" font-size="12.5" fill="#2b3440"><tspan font-weight="bold">AOD4184</tspan> stehen. Ein IRF520</text>
-  <text x="666" y="592" font-size="12.5" fill="#2b3440">schaltet bei 3,3 V nicht durch.</text>
+  <rect x="620" y="524" width="316" height="130" rx="9" fill="#fef2f2" stroke="#d1332e" stroke-width="2"/>
+  <text x="638" y="548" font-size="14" font-weight="bold" fill="#a02320">Zwei Bauformen — zähl nach</text>
+  <text x="638" y="570" font-size="12" fill="#2b3440"><tspan font-weight="bold">A „HW-532“</tspan>, 23 × 17 mm: 2 + 3 Anschlüsse,</text>
+  <text x="638" y="586" font-size="12" fill="#2b3440">mit Optokoppler. So ist es hier gezeichnet.</text>
+  <text x="638" y="608" font-size="12" fill="#2b3440"><tspan font-weight="bold">B „XY-MOS“</tspan>, ca. 50 × 25 mm: 3 + 4 Anschlüsse,</text>
+  <text x="638" y="624" font-size="12" fill="#2b3440">VIN+ / VIN− und OUT+ / OUT−.</text>
+  <text x="638" y="644" font-size="11.5" font-style="italic" fill="#a02320">Auf dem Chip muss D4184 stehen — kein IRF520.</text>
 
 </svg>
