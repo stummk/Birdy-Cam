@@ -11,11 +11,13 @@
 static volatile uint32_t istUnterbrochenSeit = 0;   // millis(), 0 = frei
 static volatile uint32_t letzteDauerMs       = 0;   // fertig gemessen
 static volatile bool     neuesEreignis       = false;
+static volatile uint32_t letzterWechsel      = 0;   // für die Entprellung
 
 static bool     aktiv          = false;
 static uint32_t vogelDrinSeit  = 0;                 // millis(), 0 = keiner drin
 static uint32_t durchfluege    = 0;
 static uint32_t ignoriert      = 0;
+static uint32_t verpasst       = 0;                 // verlorene Ausflüge
 
 // ---------------------------------------------------------------------------
 //  Der Interrupt. Er muss SEHR kurz sein — deshalb rechnet er nur die
@@ -23,10 +25,17 @@ static uint32_t ignoriert      = 0;
 //  IRAM_ATTR heißt: "leg diesen Code in den schnellen Speicher."
 // ---------------------------------------------------------------------------
 static void IRAM_ATTR lichtschrankeISR() {
+  uint32_t jetzt = millis();
+
+  // Entprellen. Die einfachen Module schalten am Umschaltpunkt gern mehrfach
+  // hintereinander — jeder dieser Zappler löst den Interrupt erneut aus. Wir
+  // nehmen deshalb nur den ERSTEN Wechsel und sind danach kurz taub.
+  // Ohne das wird aus einem Durchflug ein Dutzend Ereignisse.
+  if (jetzt - letzterWechsel < LICHTSCHRANKE_ENTPRELL_MS) return;
+  letzterWechsel = jetzt;
+
   bool gebrochen = (digitalRead(PIN_LICHTSCHRANKE) == LOW);
   if (LICHTSCHRANKE_INVERTIERT) gebrochen = !gebrochen;
-
-  uint32_t jetzt = millis();
 
   if (gebrochen) {
     if (istUnterbrochenSeit == 0) istUnterbrochenSeit = jetzt;
@@ -88,7 +97,39 @@ uint32_t lichtschrankeIgnoriert()   { return ignoriert; }
 
 // ---------------------------------------------------------------------------
 bool lichtschrankePruefen() {
-  if (!aktiv || !neuesEreignis) return false;
+  if (!aktiv) return false;
+
+  // Hängengebliebene Unterbrechung aufräumen. Prellt das Modul heftig, kann
+  // die abschließende Flanke ausgerechnet in die Entprellzeit fallen und
+  // verlorengehen — dann stünde istUnterbrochenSeit für immer, und der
+  // nächste echte Durchflug käme als absurd lange Unterbrechung an.
+  // Ist der Strahl längst wieder frei, verwerfen wir die Messung.
+  uint32_t seit = istUnterbrochenSeit;
+  if (seit != 0 && millis() - seit > MAX_UNTERBRECHUNG_MS && strahlIstFrei()) {
+    istUnterbrochenSeit = 0;
+    ignoriert++;
+  }
+
+  // Notbremse für "Vogel drin". Ohne sie würde ein einziger verlorener
+  // Ausflug die Zählung dauerhaft vertauschen: Jeder folgende Einflug käme
+  // als Ausflug an, jeder Ausflug als Einflug.
+  //
+  // Die Aufenthaltsdauer wird dabei absichtlich NICHT mitgezählt — wir
+  // wissen ja gerade nicht, wann der Vogel weg war. Eine erfundene Zahl
+  // wäre schlimmer als eine fehlende. Der Besuch selbst bleibt gezählt,
+  // der hat schließlich stattgefunden.
+  if (VOGEL_MAX_DRIN_MINUTEN > 0 && vogelDrinSeit != 0 &&
+      millis() - vogelDrinSeit > (uint32_t)VOGEL_MAX_DRIN_MINUTEN * 60000UL) {
+    vogelDrinSeit = 0;
+    verpasst++;
+    Serial.printf("[Licht] Seit %u Minuten \"drin\" ohne Ausflug — den habe "
+                  "ich verpasst.\n", (unsigned)VOGEL_MAX_DRIN_MINUTEN);
+    Serial.printf("[Licht] Zaehlung zurueckgesetzt (%u. Mal). Haeuft sich "
+                  "das, ist die\n", verpasst);
+    Serial.println("[Licht] Lichtschranke dejustiert — Sketch 7 wiederholen.");
+  }
+
+  if (!neuesEreignis) return false;
 
   neuesEreignis = false;
   uint32_t dauer = letzteDauerMs;

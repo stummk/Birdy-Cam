@@ -298,10 +298,37 @@
 #define LICHTSCHRANKE_AN      false
 
 // Kürzere Unterbrechungen sind kein Vogel (Insekt, Zittern).
-#define MIN_UNTERBRECHUNG_MS  30
+// 60 ms statt 30: Die einfachen Gabellichtschranken zittern am Umschaltpunkt
+// mehr, als man denkt. Ein Vogel im Einflugloch braucht immer länger.
+#define MIN_UNTERBRECHUNG_MS  60
 
 // Längere auch nicht (Blatt im Loch, Verschmutzung).
 #define MAX_UNTERBRECHUNG_MS  2000
+
+// Entprellung: So lange nach einem Signalwechsel werden weitere Wechsel
+// ignoriert. Billige Module "prellen" am Umschaltpunkt, das heißt sie
+// schalten in wenigen Millisekunden mehrfach hin und her. Ohne diesen Filter
+// zählt die Kamera aus einem Durchflug drei — oder gar keinen, weil jede
+// Einzelunterbrechung unter MIN_UNTERBRECHUNG_MS bleibt.
+// Größer = ruhiger, aber sehr schnelle Vögel gehen verloren. 30 ist erprobt.
+#define LICHTSCHRANKE_ENTPRELL_MS  30
+
+// Notbremse für "Vogel drin". Geht ausgerechnet die AUSFLUG-Unterbrechung
+// verloren, bleibt die Kamera für immer der Meinung, es sitze jemand im
+// Kasten — und schlimmer: Ab dann ist die Zählung vertauscht, weil jeder
+// weitere Einflug als Ausflug gewertet wird. Nach dieser Zeit setzt die
+// Kamera deshalb zurück und fängt wieder sauber mit "Einflug" an.
+//
+// ⚠️ Der Wert muss LÄNGER sein als der längste echte Aufenthalt, sonst
+//    macht die Notbremse genau den Schaden, den sie verhindern soll.
+//    Und ein brütendes Weibchen sitzt die ganze Nacht auf den Eiern.
+//    Deshalb ab Werk 12 Stunden — das ist lang, aber sicher.
+//
+//    720 = 12 Stunden (Werkseinstellung, überlebt eine Brutnacht)
+//    120 = 2 Stunden. Nur, wenn dich ausschließlich Tagesbesuche
+//          interessieren und der Kasten nachts leer ist.
+//      0 = aus. Dann bleibt ein verpasster Ausflug für immer stehen.
+#define VOGEL_MAX_DRIN_MINUTEN  720
 
 // Manche Module liefern LOW bei freiem Strahl, andere HIGH.
 // Wenn der Zähler ohne Vögel hochläuft: hier umstellen.

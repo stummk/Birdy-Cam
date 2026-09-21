@@ -230,6 +230,31 @@ Zeit dafür, es lohnt sich.
 6. Zum Schluss in `config.h` **`LICHTSCHRANKE_AN true`** setzen — sonst bleibt sie trotz
    Einbau stumm.
 
+> **Zählt er einen Durchflug mehrfach?** Dann prellt dein Modul — es schaltet am
+> Umschaltpunkt in wenigen Millisekunden mehrmals hin und her. Der Sketch fängt das mit
+> `ENTPRELL_MS` ab (ab Werk 30 ms): So lange nach einem Wechsel ist er taub. Zählt er
+> immer noch doppelt, erhöhe auf 50. Gehen dafür echte Durchflüge verloren, geh auf 20.
+>
+> Die Zahlen oben im Sketch heißen in `config.h` genauso, nur mit dem Zusatz
+> `LICHTSCHRANKE_` bzw. `_MS`: `MIN_UNTERBRECHUNG_MS` (60), `MAX_UNTERBRECHUNG_MS` (2000)
+> und `LICHTSCHRANKE_ENTPRELL_MS` (30). **Was du hier erprobst, trägst du dort ein.**
+
+> **Und wenn ein Ausflug trotzdem verlorengeht?** Dann wäre ab da alles vertauscht: Jeder
+> Einflug würde als Ausflug gezählt, jeder Ausflug als Einflug — und die Website zeigte
+> dauerhaft „Vogel drin“. Dagegen gibt es `VOGEL_MAX_DRIN_MINUTEN`: Sitzt scheinbar länger
+> als diese Zeit jemand im Kasten, setzt die Kamera zurück und fängt wieder sauber mit
+> „Einflug“ an. Die Aufenthaltsdauer dieses einen Besuchs fällt dabei unter den Tisch —
+> sie ist ja unbekannt, und eine erfundene Zahl wäre schlimmer als eine fehlende.
+>
+> ⚠️ **Der Wert muss länger sein als der längste echte Aufenthalt**, sonst richtet die
+> Notbremse genau den Schaden an, den sie verhindern soll. Ein brütendes Weibchen sitzt
+> die ganze Nacht auf den Eiern — deshalb sind ab Werk **720 Minuten (12 Stunden)**
+> eingestellt. Nur wenn dich ausschließlich Tagesbesuche interessieren und der Kasten
+> nachts leer ist, kannst du auf 120 heruntergehen. `0` schaltet die Notbremse ab.
+>
+> Im Sketch heißt dieselbe Zahl `MAX_DRIN_MINUTEN`. Zum Ausprobieren am Schreibtisch
+> stellst du sie auf `1` — dann siehst du die Rückstellung nach einer Minute.
+
 > **Alles genau andersherum?** Zeigt der Monitor `UNTERBROCHEN`, wenn nichts im Weg ist, und
 > `frei`, wenn du den Finger reinhältst — dann liefert dein Modul das Signal umgekehrt. Im
 > Sketch `INVERTIERT` auf `true` stellen (und später auch `LICHTSCHRANKE_INVERTIERT` in
@@ -415,6 +440,9 @@ Fehler, den du jetzt in fünf Minuten behebst, kostet dich sonst ein ganzes Jahr
 | Verbindung steht, Stream ruckelt | Empfang unter etwa −70 dBm | Repeater näher an den Kasten, oder `NETZ_EIGENES` benutzen |
 | Tonaufnahme ist fast lautlos | `TON_VERSTAERKUNG` zu niedrig | in `config.h` erhöhen (Werkswert 16) |
 | Tonaufnahme knackt und übersteuert | `TON_VERSTAERKUNG` zu hoch | in `config.h` auf 8 senken |
+| Ein Durchflug wird mehrfach gezählt | Lichtschranke prellt | `LICHTSCHRANKE_ENTPRELL_MS` erhöhen (30 → 50) |
+| Website zeigt dauerhaft „Vogel drin“ | Ein Ausflug ging verloren | Erledigt `VOGEL_MAX_DRIN_MINUTEN` nach 12 h von selbst. Passiert es oft: Lichtschranke neu justieren |
+| Ein- und Ausflug sind vertauscht | Folge eines verlorenen Ausflugs | Dasselbe — nach der Rückstellung stimmt es wieder |
 | „Kamera startet nicht“ | PSRAM steht auf „Disabled“ | Werkzeuge → PSRAM → **OPI PSRAM** |
 | „Mikrofon startet nicht“ | ESP32-Paket älter als Version 3.x | Boardverwalter → `esp32` aktualisieren |
 | Hochladen bricht ab | Board hängt | BOOT gedrückt halten, USB anstecken, loslassen |

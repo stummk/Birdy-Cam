@@ -17,14 +17,16 @@
 //  Wenn es genau umgekehrt ist (frei zeigt UNTERBROCHEN), dann unten
 //  INVERTIERT auf true stellen.
 //
-//  SCHRITT 7 — Die Lichtschranke (Optimiert gegen Sensor-Flackern)
+//  Die drei Zahlen unten heissen in config.h genauso (mit dem Zusatz
+//  LICHTSCHRANKE_ bzw. _MS). Was du hier erprobst, traegst du dort ein.
 // ============================================================================
 
 #define PIN_LICHTSCHRANKE   3       // = Pin D2
 #define INVERTIERT          false
-#define MIN_UNTERBRECHUNG   60     // Mindestdauer in ms für einen echten Durchflug
-#define MAX_UNTERBRECHUNG   2000    // Länger = blockiert (z.B. Blatt)
-#define DEBOUNCE_TIME       30      // Ignoriere Signalwechsel, die schneller als X ms sind
+#define MIN_UNTERBRECHUNG   60      // kürzer = Insekt oder Zittern, wird ignoriert
+#define MAX_UNTERBRECHUNG   2000    // länger  = Blatt im Loch
+#define ENTPRELL_MS         30      // so lange nach einem Wechsel: taub sein
+#define MAX_DRIN_MINUTEN    720     // Notbremse, falls ein Ausflug verlorengeht
 
 volatile uint32_t unterbrochenSeit = 0;
 volatile uint32_t letzteDauer      = 0;
@@ -37,11 +39,11 @@ uint32_t ignoriert     = 0;
 
 void IRAM_ATTR ereignis() {
   uint32_t jetzt = millis();
-  
-  // Software-Entprellung: Ignoriere den Wechsel, wenn der letzte zu kurz her ist
-  if (jetzt - letzterWechsel < DEBOUNCE_TIME) {
-    return; 
-  }
+
+  // Entprellen: Billige Module schalten am Umschaltpunkt mehrfach hin und
+  // her. Wir nehmen nur den ERSTEN Wechsel und sind danach kurz taub —
+  // sonst wird aus einem Durchflug ein Dutzend Ereignisse.
+  if (jetzt - letzterWechsel < ENTPRELL_MS) return;
   letzterWechsel = jetzt;
 
   bool gebrochen = (digitalRead(PIN_LICHTSCHRANKE) == LOW);
@@ -83,6 +85,27 @@ void loop() {
   if (frei != alterZustand) {
     alterZustand = frei;
     Serial.printf("   Strahl: %s\n", frei ? "frei" : "UNTERBROCHEN");
+  }
+
+  // --- Hängengebliebene Unterbrechung aufräumen ---
+  //  Prellt das Modul heftig, kann die abschliessende Flanke ausgerechnet in
+  //  die Entprellzeit fallen und verlorengehen. Dann stuende unterbrochenSeit
+  //  fuer immer. Ist der Strahl laengst wieder frei: verwerfen.
+  if (unterbrochenSeit != 0 && millis() - unterbrochenSeit > MAX_UNTERBRECHUNG
+      && strahlFrei()) {
+    unterbrochenSeit = 0;
+    ignoriert++;
+    Serial.println("Unterbrechung haengengeblieben — verworfen.");
+  }
+
+  // --- Notbremse: "Vogel drin" kann nicht ewig gelten ---
+  //  Geht die AUSFLUG-Unterbrechung verloren, waere ab da alles vertauscht:
+  //  jeder Einflug wuerde als Ausflug gezaehlt. Zum Ausprobieren am
+  //  Schreibtisch darfst du MAX_DRIN_MINUTEN ruhig auf 1 stellen.
+  if (MAX_DRIN_MINUTEN > 0 && vogelDrinSeit != 0 &&
+      millis() - vogelDrinSeit > (uint32_t)MAX_DRIN_MINUTEN * 60000UL) {
+    vogelDrinSeit = 0;
+    Serial.println("Ausflug verpasst - Zaehlung zurueckgesetzt.");
   }
 
   // --- Ausgewertetes Ereignis ---
