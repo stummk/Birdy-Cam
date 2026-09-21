@@ -64,6 +64,11 @@ bool lichtschrankeStart() {
 
 // ---------------------------------------------------------------------------
 bool strahlIstFrei() {
+  // Ohne eingeschaltete Lichtschranke hat der Pin nie ein pinMode() gesehen.
+  // Ihn trotzdem zu lesen liefert einen zufälligen Pegel — also gar nicht erst
+  // fragen und "frei" melden: Ohne Strahl unterbricht auch nichts.
+  if (!aktiv) return true;
+
   bool gebrochen = (digitalRead(PIN_LICHTSCHRANKE) == LOW);
   if (LICHTSCHRANKE_INVERTIERT) gebrochen = !gebrochen;
   return !gebrochen;
@@ -75,6 +80,8 @@ uint32_t vogelDrinSeitSekunden() {
   if (vogelDrinSeit == 0) return 0;
   return (millis() - vogelDrinSeit) / 1000;
 }
+
+bool lichtschrankeAktiv() { return aktiv; }
 
 uint32_t lichtschrankeDurchfluege() { return durchfluege; }
 uint32_t lichtschrankeIgnoriert()   { return ignoriert; }

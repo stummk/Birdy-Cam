@@ -208,8 +208,8 @@ async function status(){
     $('modus').textContent=s.nacht?'\u{1F319} Nacht':'☀️ Tag';
     $('betrieb').textContent=s.zuschauer
       ? '\u{1F4F9} Stream laeuft' : '\u{23FA} aufnahmebereit';
-    $('vogel').textContent=s.vogelDrin
-      ? '\u{1F423} Vogel ist drin ('+s.drinSeit+' s)' : 'Kasten leer';
+    $('vogel').textContent=!s.lsAktiv ? 'ohne Lichtschranke'
+      : (s.vogelDrin ? '\u{1F423} Vogel ist drin ('+s.drinSeit+' s)' : 'Kasten leer');
     $('uhr').textContent=s.fps.toFixed(1)+' Bilder/s';
 
     // ---- Akku -------------------------------------------------------------
@@ -282,8 +282,10 @@ async function status(){
       ['PSRAM frei / gesamt', sy.psramFreiKB+' / '+sy.psramGesamtKB+' KB'],
       ['Chip', sy.chip+' @ '+sy.takt+' MHz'],
       ['ESP-IDF', sy.sdkVersion],
-      ['Lichtschranke', s.strahlFrei?'Strahl frei':'Strahl unterbrochen'],
-      ['Durchfl&uuml;ge gez&auml;hlt', s.durchfluege],
+      ['Lichtschranke', !s.lsAktiv ? 'nicht eingebaut'
+        : (s.strahlFrei?'Strahl frei':'Strahl unterbrochen')],
+      ['Durchfl&uuml;ge gez&auml;hlt', s.lsAktiv ? s.durchfluege
+        : 'Besuche aus der Bilderkennung gesch&auml;tzt'],
       ['IR-Licht', s.nacht?'Nachtbetrieb':'aus (Tag)'],
       ['Mikrofon', s.tonLaeuft
         ?('l&auml;uft, '+s.tonRate+' Hz'+(s.tonImClip?', Clips mit Ton':'')) : 'aus'],
@@ -441,6 +443,7 @@ static void statusAusliefern() {
   j += ",\"vogelDrin\":"   + String(vogelIstDrin() ? "true" : "false");
   j += ",\"drinSeit\":"    + String(vogelDrinSeitSekunden());
   j += ",\"durchfluege\":" + String(lichtschrankeDurchfluege());
+  j += ",\"lsAktiv\":"     + String(lichtschrankeAktiv() ? "true" : "false");
   j += ",\"strahlFrei\":"  + String(strahlIstFrei() ? "true" : "false");
   j += ",\"zuschauer\":"   + String(webHatZuschauer() ? "true" : "false");
   j += ",\"verworfen\":"   + String(aviVerworfen());

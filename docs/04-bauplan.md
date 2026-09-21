@@ -165,6 +165,12 @@ Danach:
 
 Der Teil, der die Statistik ehrlich macht — und der einzige Eingriff an der Vorderwand.
 
+> **Dieses Kapitel darfst du überspringen.** Die Lichtschranke ist optional und in der
+> Firmware ab Werk abgeschaltet (`LICHTSCHRANKE_AN false`). Ohne sie zählt die
+> Bilderkennung — ungenauer, aber der Kasten funktioniert vollständig. Weil der Einbau
+> nur zwei kleine Bohrungen in der Vorderwand braucht, lässt er sich auch in einem
+> späteren Jahr nachholen, ohne etwas aufzutrennen.
+
 ![Die Lichtschranke im Einflugloch](bilder/lichtschranke.svg)
 
 **Vorgehen:**
@@ -320,7 +326,7 @@ Das war bei 5-Volt-Panels ganz anders und ist einer der Gründe für diese Bauwe
 | 1 | Deckel bohren, Acryl einkleben, trocknen lassen | Kleber wirklich hart? |
 | 2 | Kamera + LEDs im Deckel montieren | Sitzt alles fest? |
 | 3 | Mikrofonloch bohren, Moosgummi und Membran setzen | Beide Löcher zeigen aufeinander? |
-| 4 | Lichtschranke einsetzen, **justieren**, dann erst kleben | Löst ein Finger sicher aus? |
+| 4 | *(optional)* Lichtschranke einsetzen, **justieren**, dann erst kleben — und `LICHTSCHRANKE_AN true` setzen | Löst ein Finger sicher aus? |
 | 5 | Kabel durch **K**, Zugentlastung, Schlaufe für den Deckel | Kein Knick im Flachbandkabel? |
 | 6 | Box am Kasten befestigen, Verschraubungen setzen | Alle nach unten? |
 | 7 | Alles verbinden — Reihenfolge: **Akku, dann Panel, dann Board** | MPPT-Schalter auf 12 V? Schalter auf ON? |

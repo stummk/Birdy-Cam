@@ -35,6 +35,9 @@ bool vogelIstDrin();
 // Wie lange ist er schon drin? (Sekunden, 0 wenn keiner drin ist)
 uint32_t vogelDrinSeitSekunden();
 
+// Läuft die Lichtschranke überhaupt? (false, wenn LICHTSCHRANKE_AN aus ist)
+bool lichtschrankeAktiv();
+
 // Zähler für die Website
 uint32_t lichtschrankeDurchfluege();
 uint32_t lichtschrankeIgnoriert();

@@ -78,8 +78,13 @@ flackern.
 3. Notfalls **`BEWEGUNG_AN false`** — dann löst nur noch die Lichtschranke aus. Du
    verlierst Aufnahmen vom Füttern im Kasten, bekommst aber ausschließlich echte Anflüge.
 
-> **Die Besuchszahlen bleiben davon unberührt.** Die kommen von der Lichtschranke, und
-> Sonnenflecken interessieren die nicht. Genau dafür ist sie da.
+> **Die Besuchszahlen bleiben davon unberührt** — *sofern du die Lichtschranke eingebaut
+> und `LICHTSCHRANKE_AN true` gesetzt hast.* Die zählt selbst, und Sonnenflecken
+> interessieren sie nicht. Genau dafür ist sie da.
+>
+> **Ohne Lichtschranke** — das ist die Voreinstellung — kommen die Besuchszahlen aus den
+> Clips. Dann verfälschen Fehlauslöser sie mit, und `BEWEGUNG_AN false` würde das Zählen
+> ganz beenden. Schritt 3 ist in dem Fall keine Option.
 
 ### Der Besuchszähler läuft ohne Vögel hoch
 

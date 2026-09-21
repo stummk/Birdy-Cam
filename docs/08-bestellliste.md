@@ -179,8 +179,9 @@ Volle Anleitung in [Schaltplan 3.8](03-schaltplan.md#38-der-spannungssensor--dam
 
 ### 8.4b Zur Lichtschranke
 
-Sie zählt Ein- und Ausflüge exakt und liefert die Aufenthaltsdauer. **Die Firmware läuft
-auch ohne sie** — dann übernimmt die Bilderkennung das Auslösen (`LICHTSCHRANKE_AN false`).
+Sie zählt Ein- und Ausflüge exakt und liefert die Aufenthaltsdauer. **Die Firmware wird
+ohne sie ausgeliefert** — `LICHTSCHRANKE_AN` steht ab Werk auf `false`, und das Auslösen
+übernimmt die Bilderkennung. Eingebaut und justiert, stellst du den Wert auf `true`.
 
 **Warum sie hier als optional geführt wird:** Ein gut lieferbares Sender/Empfänger-Paar
 konnte ich nicht bestätigen. Der überall verfügbare Baustein ist ein **Reflex-Sensor**

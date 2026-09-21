@@ -251,7 +251,14 @@
 // Zählt Ein- und Ausflüge exakt — viel genauer als Bildvergleich, weil
 // Sonnenflecken und Blattschatten sie nicht interessieren.
 // Siehe Überblick 1.3.
-#define LICHTSCHRANKE_AN      true
+//
+// Ab Werk AUS: Die Lichtschranke ist optionales Zubehör, und ohne eingebautes
+// Modul würde ein offener Eingang nur Phantom-Besuche zählen. Hast du sie
+// eingebaut und nach Sketch 7 justiert, hier auf true stellen.
+//
+// Steht sie auf false, läuft alles weiter: Ausgelöst wird dann allein über die
+// Bilderkennung, und gezählt wird pro Clip statt pro Durchflug (birdycam.ino).
+#define LICHTSCHRANKE_AN      false
 
 // Kürzere Unterbrechungen sind kein Vogel (Insekt, Zittern).
 #define MIN_UNTERBRECHUNG_MS  30

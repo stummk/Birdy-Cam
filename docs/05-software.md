@@ -138,6 +138,10 @@ in die Hände klatschen. Wenn sich der Balken bewegt, funktioniert das Mikrofon.
 Der einzige Schritt, bei dem du wirklich etwas mit den Händen einstellen musst. Nimm dir
 Zeit dafür, es lohnt sich.
 
+> **Überspringbar.** Die Lichtschranke ist optionales Zubehör und in `config.h` ab Werk
+> abgeschaltet. Baust du sie (erstmal) nicht ein, lass diesen Schritt aus und
+> `LICHTSCHRANKE_AN` auf `false` — der Rest funktioniert unverändert.
+
 1. Sketch hochladen, Seriellen Monitor öffnen. Dort steht laufend **`frei`** oder
    **`UNTERBROCHEN`**.
 2. Sender und Empfänger so ausrichten, dass **`frei` stabil stehen bleibt** — es darf nicht
@@ -148,6 +152,8 @@ Zeit dafür, es lohnt sich.
    `EINFLUG` und `AUSFLUG` mit der Dauer dazwischen. Das ist genau das, was später auf der
    Website als „Aufenthaltsdauer“ steht.
 5. **Erst wenn das sauber klappt**, wird geklebt ([Bauplan 4.4](04-bauplan.md#44-die-lichtschranke-einbauen)).
+6. Zum Schluss in `config.h` **`LICHTSCHRANKE_AN true`** setzen — sonst bleibt sie trotz
+   Einbau stumm.
 
 > **Alles genau andersherum?** Zeigt der Monitor `UNTERBROCHEN`, wenn nichts im Weg ist, und
 > `frei`, wenn du den Finger reinhältst — dann liefert dein Modul das Signal umgekehrt. Im
@@ -172,17 +178,27 @@ Arduino IDE (Datei → Öffnen → `birdycam.ino`). Alle Dateien erscheinen oben
 > [`config.h`](../software/firmware/birdycam/config.h).
 > Alles andere kannst du in Ruhe lassen.
 
-### Die fünf Zeilen, die du eintragen musst
+### Die vier Zeilen, die du eintragen musst
 
 ```cpp
 #define NETZ_MODUS      NETZ_AUTO              // Router, eigenes WLAN, oder beides
 #define WLAN_NAME       "HierDeinWLANName"     // <- dein WLAN-Name
 #define WLAN_PASSWORT   "HierDeinPasswort"     // <- dein WLAN-Passwort
 #define BATT_KALIBRIERUNG  5.00                // <- dein Wert aus Schritt 5
-#define LICHTSCHRANKE_INVERTIERT  false        // <- ggf. aus Schritt 7
 ```
 
 Mehr ist nicht nötig. Alles andere hat sinnvolle Voreinstellungen.
+
+**Nur falls du die Lichtschranke eingebaut hast** — sie ist ab Werk abgeschaltet, weil
+sie optionales Zubehör ist:
+
+```cpp
+#define LICHTSCHRANKE_AN          true         // <- schaltet sie überhaupt erst ein
+#define LICHTSCHRANKE_INVERTIERT  false        // <- ggf. aus Schritt 7
+```
+
+Setz `LICHTSCHRANKE_AN` erst auf `true`, wenn das Modul angeschlossen **und** nach
+Schritt 7 justiert ist. Ein offener Eingang zählt sonst Phantom-Besuche.
 
 ### Netzwerk
 

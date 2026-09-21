@@ -193,7 +193,7 @@ datum;besuche;erster;letzter;drin_s;clips;fotos;audio;akku_min;akku_max;h00;…;
 | Spalte | Bedeutung |
 |---|---|
 | `datum` | Tag als `JJJJ-MM-TT` |
-| `besuche` | gezählte Einflüge (von der Lichtschranke) |
+| `besuche` | gezählte Einflüge (von der Lichtschranke). Ohne sie — das ist die Voreinstellung — wird stattdessen pro Clip gezählt, also geschätzt |
 | `erster` / `letzter` | erster und letzter Anflug als `HH:MM` |
 | `drin_s` | Aufenthaltsdauer aller Vögel zusammen, in Sekunden |
 | `clips` / `fotos` / `audio` | an diesem Tag entstandene Dateien |
@@ -249,7 +249,7 @@ keine Messung, also gibt es auch keine Null.
 | Verlaufskarte fehlt ganz | `TAGE_CSV_AN false` | in `config.h` einschalten |
 | Alle Akkuwerte 0.00 | Spannungssensor nicht angeschlossen | [Schaltplan 3.8](03-schaltplan.md#38-der-spannungssensor--damit-du-den-akkustand-siehst) |
 | `/tage.csv` bringt einen Fehler | Noch keine Stunde vergangen | eine Stunde warten |
-| Besuche immer 0, obwohl Clips entstehen | Lichtschranke zählt nicht | `LICHTSCHRANKE_INVERTIERT` prüfen |
+| Besuche immer 0, obwohl Clips entstehen | Lichtschranke zählt nicht | Steht `LICHTSCHRANKE_AN` überhaupt auf `true`? Ab Werk ist sie aus. Wenn ja: `LICHTSCHRANKE_INVERTIERT` prüfen |
 
 ---
 

@@ -134,6 +134,11 @@ und Gehen, die Bilderkennung merkt Bewegung *innerhalb* des Kastens — Küken f
 umbauen. Gezählt wird aber nur die Lichtschranke. Deshalb sind die Zahlen auf der Website
 belastbar.
 
+> **Sie ist optional, und die Firmware liefert sie abgeschaltet aus**
+> (`LICHTSCHRANKE_AN false`). Du kannst den Kasten ohne sie bauen und sie in einem
+> späteren Jahr nachrüsten — die Vorderwand bekommt dann zwei kleine Bohrungen, mehr
+> nicht. Bis dahin zählt die Bilderkennung, nur eben ungenauer.
+
 Einbau: [Bauplan 4.4](04-bauplan.md#44-die-lichtschranke-einbauen) ·
 Anschluss: [Schaltplan 3.7](03-schaltplan.md#37-die-lichtschranke-im-einflugloch)
 

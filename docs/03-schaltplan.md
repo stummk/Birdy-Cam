@@ -454,9 +454,15 @@ Eine reine Bilderkennung würde auch auf wandernde Sonnenflecken anspringen.
 Flugweg) steht im [Bauplan 4.4](04-bauplan.md#44-die-lichtschranke-einbauen). **Justiert**
 wird sie mit [Sketch 7](05-software.md#schritt-7--die-lichtschranke-justieren).
 
-> 💡 **Die Lichtschranke ist optional.** Ohne sie läuft alles weiter — dann löst nur die
-> Bilderkennung aus, und die Besuchszahlen fehlen. In `config.h`:
-> `LICHTSCHRANKE_AN false`.
+> 💡 **Die Lichtschranke ist optional — und ab Werk abgeschaltet.** In `config.h` steht
+> `LICHTSCHRANKE_AN false`. Ohne sie läuft alles weiter: Ausgelöst wird dann allein über
+> die Bilderkennung, und gezählt wird pro Clip statt pro Durchflug. Die Besuchszahlen
+> sind damit Schätzungen statt Messwerte.
+>
+> Wenn du sie später einbaust: Modul anschließen, mit
+> [Sketch 7](05-software.md#schritt-7--die-lichtschranke-justieren) justieren, dann
+> `LICHTSCHRANKE_AN true` setzen. Vorher nicht — ein offener Eingang zählt sonst
+> Phantom-Besuche.
 
 ---
 
