@@ -4,7 +4,7 @@
 //  Ziel: Beweisen, dass der Computer mit dem Board reden kann.
 //        Noch keine Kamera, noch keine SD-Karte. Nur: lebt es?
 //
-//  Board:      XIAO_ESP32S3
+//  Board:      ESP32S3 Dev Module  (nicht "XIAO_ESP32S3", siehe Doku 5.1)
 //  Hochladen:  Pfeil-Symbol oben links
 //  Danach:     Werkzeuge -> Serieller Monitor, Geschwindigkeit 115200
 //

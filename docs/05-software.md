@@ -16,6 +16,17 @@ fertige Firmware. Wenn eines nicht klappt, weißt du sofort, wo der Fehler steck
 Die **Arduino IDE** ist das Programm auf deinem Computer, mit dem du Programme auf das Board
 schiebst. Sie ist kostenlos und gibt es für Windows, Mac und Linux.
 
+![Das Hauptfenster der Arduino IDE mit geöffnetem Sketch](bilder/settings.png)
+
+So sieht sie aus, wenn ein Sketch geöffnet ist. Die drei Dinge, die du dauernd brauchst:
+der **Haken** links oben prüft das Programm, der **Pfeil** daneben lädt es aufs Board, und
+das Auswahlfeld in der Mitte zeigt **Board und Port**. Unten sitzt der Serielle Monitor.
+
+> 💡 Die Bilder hier zeigen die IDE auf **Englisch**, der Text nennt die deutschen
+> Menünamen. Das ist dieselbe Stelle: *File* = **Datei**, *Tools* = **Werkzeuge**,
+> *Preferences* = **Einstellungen**. Umstellen kannst du das unter
+> *File → Preferences → Language*.
+
 ### Installieren
 
 1. [Arduino IDE 2.x herunterladen](https://www.arduino.cc/en/software) und installieren.
@@ -35,18 +46,40 @@ https://espressif.github.io/arduino-esp32/package_esp32_index.json
    ⚠️ **Version 3.x oder neuer** — die Mikrofon-Bibliothek gibt es erst ab dort.
    Der Download ist groß, das dauert ein paar Minuten.
 
-### Die vier Einstellungen unter „Werkzeuge“
+### Die Einstellungen unter „Werkzeuge“
 
 | Einstellung | Wert |
 |---|---|
-| Board | **XIAO_ESP32S3** |
+| **Board** | **ESP32S3 Dev Module** ⚠️ *nicht* `XIAO_ESP32S3` |
 | Port | der COM-Port, der neu dazukommt, sobald du das Board ansteckst |
 | **PSRAM** | **OPI PSRAM** ⚠️ |
+| Flash Size | 8MB (64Mb) |
+| Partition Scheme | 8M with spiffs (3MB APP/1.5MB SPIFFS) |
+| USB CDC On Boot | Enabled |
 | Upload Speed | 921600 |
+
+Alles im selben Menü. So sieht es aufgeklappt aus:
+
+![Das Menü „Werkzeuge“ mit allen Board-Einstellungen](bilder/settings-1.png)
+
+Die Einträge tragen ihren aktuellen Wert gleich im Namen — `PSRAM: "OPI PSRAM"`,
+`Upload Speed: "921600"`, `Port: "COM7"`. Du kannst also auf einen Blick kontrollieren, ob
+alles stimmt, ohne jedes Untermenü zu öffnen. Alle hier nicht genannten Zeilen lässt du, wie
+sie sind.
+
+> ⚠️ **Nimm „ESP32S3 Dev Module“, auch wenn in der Boardliste `XIAO_ESP32S3` steht.**
+> Mit dem XIAO-Eintrag wurde das Board in unserem Test nicht erkannt — es kam kein Port
+> zustande. Das Dev Module ist der allgemeine Eintrag für denselben Chip; dafür stellst du
+> PSRAM, Flash und Partition einmal von Hand ein, so wie oben in der Tabelle.
 
 > ⚠️ **PSRAM ist die Einstellung, an der die meisten scheitern.** Steht sie auf „Disabled“,
 > startet die Kamera nie — und die Fehlermeldung sagt dir nicht, warum. Wenn später „Kamera
 > startet nicht“ kommt: **zuerst hier nachsehen.**
+
+> **Warum 8 MB und nicht die Vorgabe?** Das Dev Module startet mit „4MB (32Mb)“ und einer
+> App-Partition von 1,2 MB — im Bild oben siehst du genau das. Für die Lern-Sketches reicht
+> es, für die fertige Firmware mit Kamera, WLAN und Website wird es eng („Sketch too big“).
+> Dein XIAO hat 8 MB Flash, also stell sie gleich richtig ein und du hast später Ruhe.
 
 ### Das Board wird nicht gefunden?
 

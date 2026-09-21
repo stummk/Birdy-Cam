@@ -3,8 +3,11 @@
 //        Nistkasten-Kamera mit Nachtsicht, Livestream und Website
 // ============================================================================
 //
-//  Board in der Arduino IDE:  "XIAO_ESP32S3"
+//  Board in der Arduino IDE:  "ESP32S3 Dev Module"  (nicht "XIAO_ESP32S3" -
+//                             damit wird das Board nicht erkannt)
 //  Wichtig unter Werkzeuge:   PSRAM = "OPI PSRAM"  <- sonst geht die Kamera nicht!
+//                             Flash Size = "8MB (64Mb)", Partition Scheme =
+//                             "8M with spiffs (3MB APP/1.5MB SPIFFS)"
 //
 //  Alle Einstellungen stehen in config.h — dort trägst du dein WLAN ein.
 //
