@@ -12,6 +12,12 @@
 //       -> daraus ergibt sich die GESANG_SCHWELLE für config.h!
 //     - im Seriellen Monitor "r" eingeben und Enter -> 5 Sekunden Aufnahme
 //     - Karte in den Computer stecken und test.wav anhören
+//
+//  ⚠️ Das Mikrofon auf dem XIAO ist SEHR leise. Eine rohe Aufnahme klingt
+//     wie nichts. Deshalb wird für die WAV-Datei verstärkt (VERSTAERKUNG
+//     unten). Die angezeigte Zahl bleibt absichtlich UNVERSTÄRKT — nur so
+//     passt sie zu GESANG_SCHWELLE in config.h, denn die Gesangserkennung
+//     in der Firmware rechnet ebenfalls mit den rohen Werten.
 // ============================================================================
 
 #include <ESP_I2S.h>
@@ -24,6 +30,15 @@
 #define MIC_DATA      41     // fest verbaut
 #define ABTASTRATE    16000  // 16000 Messungen pro Sekunde
 #define BLOCK         512
+
+// Verstärkung für die WAV-Datei. 1 = roh (viel zu leise), 16 ist erprobt.
+// Knackt es in der Aufnahme, ist der Wert zu hoch -> 8 probieren.
+// Denselben Wert traegst du spaeter in config.h bei TON_VERSTAERKUNG ein.
+#define VERSTAERKUNG  16
+
+// Bei welchem Lautstaerkewert der Balken voll ausschlaegt. Nur Optik —
+// an der angezeigten Zahl aendert das nichts.
+#define BALKEN_VOLL   1500
 
 I2SClass I2S;
 int16_t  block[BLOCK];
@@ -44,8 +59,23 @@ uint16_t lautstaerke(const int16_t* p, size_t n) {
   return (uint16_t)min<uint64_t>(65535, sqrt((double)(summe / (n - 1))));
 }
 
+// ---------------------------------------------------------------------------
+//  Lauter machen. Was über die Grenze geht, wird abgeschnitten ("geclippt")
+//  statt umzuklappen — umklappen würde aus einem lauten Ton ein Krachen
+//  machen, das viel schlimmer klingt als abgeschnittene Spitzen.
+// ---------------------------------------------------------------------------
+void verstaerken(int16_t* p, size_t n) {
+  if (VERSTAERKUNG <= 1) return;
+  for (size_t i = 0; i < n; i++) {
+    int32_t v = (int32_t)p[i] * VERSTAERKUNG;
+    if (v >  32767) v =  32767;
+    if (v < -32768) v = -32768;
+    p[i] = (int16_t)v;
+  }
+}
+
 void balken(uint16_t wert) {
-  int laenge = map(min<uint16_t>(wert, 6000), 0, 6000, 0, 40);
+  int laenge = map(min<uint16_t>(wert, BALKEN_VOLL), 0, BALKEN_VOLL, 0, 40);
   Serial.print("[");
   for (int i = 0; i < 40; i++) Serial.print(i < laenge ? '#' : ' ');
   Serial.printf("] %5u\n", wert);
@@ -80,19 +110,13 @@ void aufnehmen() {
   memcpy(k + 36,"data", 4);   *(uint32_t*)(k + 40) = datenBytes;
   f.write(k, 44);
 
-   uint32_t geschrieben = 0;
+  uint32_t geschrieben = 0;
   while (geschrieben < datenBytes) {
     size_t bytes = I2S.readBytes((char*)block, BLOCK * sizeof(int16_t));
     if (bytes == 0) continue;
 
-    // --- VERSTÄRKUNG FÜR DIE SD-KARTE ---
-    size_t samples = bytes / sizeof(int16_t);
-    for (size_t i = 0; i < samples; i++) {
-      int32_t verstärkt = (int32_t)block[i] << 4; // Experimentiere mit << 3, << 4 oder << 5
-      if (verstärkt > 32767) verstärkt = 32767;
-      if (verstärkt < -32768) verstärkt = -32768;
-      block[i] = (int16_t)verstärkt;
-    }
+    // Nur die Datei wird verstaerkt — die Anzeige unten bleibt roh.
+    verstaerken(block, bytes / sizeof(int16_t));
 
     f.write((uint8_t*)block, bytes);
     geschrieben += bytes;
@@ -126,10 +150,14 @@ void setup() {
 
   Serial.println("Pfeife, klatsche, rede - und schau dem Balken zu.");
   Serial.println("Tippe 'r' + Enter fuer eine 5-Sekunden-Aufnahme.\n");
-  Serial.println("MERKE DIR ZWEI ZAHLEN:");
+  Serial.println("MERKE DIR ZWEI ZAHLEN (die angezeigte Zahl ist ROH,");
+  Serial.println("also unverstaerkt - genau so braucht sie config.h):");
   Serial.println("  - der Wert bei Stille           (z. B. 200)");
-  Serial.println("  - der Wert beim Pfeifen         (z. B. 4000)");
+  Serial.println("  - der Wert beim Pfeifen         (z. B. 1200)");
   Serial.println("Die GESANG_SCHWELLE in config.h liegt gut in der Mitte.\n");
+  Serial.printf ("Die Aufnahme wird %dx verstaerkt - derselbe Wert gehoert\n",
+                 VERSTAERKUNG);
+  Serial.println("spaeter in config.h zu TON_VERSTAERKUNG.\n");
 }
 
 void loop() {
@@ -140,22 +168,12 @@ void loop() {
 
   size_t bytes = I2S.readBytes((char*)block, BLOCK * sizeof(int16_t));
   if (bytes > 0) {
-    size_t samples = bytes / sizeof(int16_t);
-    
-    // --- VERSTÄRKUNG FÜR DEN BALKEN ---
-    for (size_t i = 0; i < samples; i++) {
-      // Verschiebt die Bits um 4 Stellen nach links (entspricht Multiplikation mit 16)
-      // Ein int32_t verhindert den sofortigen Überlauf beim Berechnen
-      int32_t verstärkt = (int32_t)block[i] << 4; 
-      // Begrenzen, damit es nicht zu hässlichem digitalen Rauschen (Überlauf) kommt
-      if (verstärkt > 32767) verstärkt = 32767;
-      if (verstärkt < -32768) verstärkt = -32768;
-      block[i] = (int16_t)verstärkt;
-    }
-
-    balken(lautstaerke(block, samples));
+    // Bewusst NICHT verstaerken: Der angezeigte Wert soll der rohe sein,
+    // sonst passt er nicht zu GESANG_SCHWELLE in config.h. Damit der Balken
+    // trotzdem sichtbar zappelt, ist stattdessen sein Vollausschlag klein
+    // gewaehlt (BALKEN_VOLL).
+    balken(lautstaerke(block, bytes / sizeof(int16_t)));
   }
 
   delay(100);
 }
-

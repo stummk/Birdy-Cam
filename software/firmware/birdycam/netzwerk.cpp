@@ -2,6 +2,7 @@
 #include "config.h"
 
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include <ESPmDNS.h>
 #include <DNSServer.h>
 #include <time.h>
@@ -23,17 +24,76 @@ static const IPAddress AP_IP(192, 168, 4, 1);
 static const IPAddress AP_MASKE(255, 255, 255, 0);
 
 // ---------------------------------------------------------------------------
+//  Funkeinstellungen, die für BEIDE Betriebsarten gelten.
+//  Muss nach WiFi.mode() aufgerufen werden — vorher gibt es das Funkmodul
+//  aus Sicht des Systems noch gar nicht.
+// ---------------------------------------------------------------------------
+static void funkEinstellen() {
+  // Kanäle 12 und 13 freischalten. Ohne das sieht die Kamera einen Router,
+  // der auf 12 oder 13 funkt, überhaupt nicht — siehe config.h.
+  esp_wifi_set_country_code(WLAN_LAND, true);
+
+  // Volle Sendeleistung. Steht meist schon auf Maximum, aber verlassen
+  // wollen wir uns darauf nicht.
+  WiFi.setTxPower(WLAN_SENDELEISTUNG);
+
+  // Modem-Sleep. Ab Werk aus, weil die Verbindung sonst bei schwachem
+  // Empfang unzuverlässig wird.
+  WiFi.setSleep(WLAN_STROMSPAREN);
+}
+
+// ---------------------------------------------------------------------------
+//  Wenn der Router nicht antwortet: zeigen, was überhaupt zu hören ist.
+//  Das beantwortet die eigentliche Frage — stimmt der Name nicht, das
+//  Passwort nicht, oder kommt das Signal einfach nicht an?
+// ---------------------------------------------------------------------------
+static void umgebungZeigen() {
+  Serial.println("[Netz] Schaue nach, welche WLANs zu hoeren sind...");
+  int n = WiFi.scanNetworks();
+  if (n <= 0) {
+    Serial.println("[Netz] KEIN EINZIGES WLAN zu hoeren.");
+    Serial.println("[Netz] Das deutet fast immer auf die Antenne hin:");
+    Serial.println("[Netz] Steckt das Antennenplaettchen auf dem u.FL-Stecker?");
+    return;
+  }
+
+  bool gefunden = false;
+  for (int i = 0; i < n; i++) {
+    bool unser = (WiFi.SSID(i) == WLAN_NAME);
+    if (unser) gefunden = true;
+    Serial.printf("[Netz]   %-24s %4d dBm  Kanal %2d%s\n",
+                  WiFi.SSID(i).c_str(), WiFi.RSSI(i), WiFi.channel(i),
+                  unser ? "   <-- das ist deiner" : "");
+  }
+
+  if (!gefunden) {
+    Serial.printf("[Netz] \"%s\" war nicht dabei. Entweder stimmt der Name\n",
+                  WLAN_NAME);
+    Serial.println("[Netz] nicht, oder der Router funkt nur auf 5 GHz (der");
+    Serial.println("[Netz] ESP32 kann ausschliesslich 2,4 GHz), oder er ist");
+    Serial.println("[Netz] schlicht zu weit weg.");
+  } else {
+    Serial.println("[Netz] Der Router ist zu hoeren — dann passt das Passwort");
+    Serial.println("[Netz] nicht. Ab etwa -80 dBm wird es ausserdem wacklig.");
+  }
+  WiFi.scanDelete();
+}
+
+// ---------------------------------------------------------------------------
 //  Router-Betrieb
 // ---------------------------------------------------------------------------
 static bool routerVerbinden(uint16_t timeoutS) {
   Serial.printf("[Netz] Verbinde mit Router \"%s\"", WLAN_NAME);
 
   WiFi.mode(WIFI_STA);
-  // Modem-Sleep: Das WLAN darf zwischen zwei Funkkontakten dösen.
-  // Spart deutlich Strom und ist der Grund, warum Routerbetrieb
-  // sparsamer ist als ein eigenes WLAN.
-  WiFi.setSleep(true);
+  funkEinstellen();
   WiFi.setHostname(GERAETE_NAME);
+
+  // Auch ältere Router mitnehmen. Ab Werk verlangt der ESP32 mindestens
+  // WPA2 und lässt einen WPA/TKIP-Router einfach links liegen.
+  WiFi.setMinSecurity(WIFI_AUTH_WPA_PSK);
+  WiFi.setAutoReconnect(true);
+
   WiFi.begin(WLAN_NAME, WLAN_PASSWORT);
 
   uint32_t start = millis();
@@ -45,13 +105,26 @@ static bool routerVerbinden(uint16_t timeoutS) {
 
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("[Netz] Router nicht erreichbar.");
+    umgebungZeigen();
     return false;
   }
 
   routerVerbunden = true;
   eigenesWlanAn = false;
+  int32_t rssi = WiFi.RSSI();
   Serial.printf("[Netz] Verbunden. IP: %s  (%d dBm)\n",
-                WiFi.localIP().toString().c_str(), WiFi.RSSI());
+                WiFi.localIP().toString().c_str(), rssi);
+
+  // Der Empfang entscheidet darüber, ob der Livestream läuft oder ruckelt.
+  // Deshalb sagen wir gleich, was die Zahl bedeutet.
+  if (rssi < -80) {
+    Serial.println("[Netz] ACHTUNG: Das ist sehr schwach. Livestream wird");
+    Serial.println("[Netz] stocken oder abbrechen. Antenne aufgesteckt?");
+    Serial.println("[Netz] Sonst hilft nur ein Repeater naeher am Kasten.");
+  } else if (rssi < -70) {
+    Serial.println("[Netz] Das ist grenzwertig — fuer Bilder reicht es,");
+    Serial.println("[Netz] fuer fluessigen Livestream oft nicht.");
+  }
   return true;
 }
 
@@ -71,6 +144,7 @@ static bool eigenesWlanStarten() {
   }
 
   WiFi.mode(WIFI_AP);
+  funkEinstellen();
   WiFi.softAPConfig(AP_IP, AP_IP, AP_MASKE);
 
   bool ok = WiFi.softAP(AP_NAME, offen ? nullptr : pw, AP_KANAL,

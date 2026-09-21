@@ -63,6 +63,43 @@
 //       Nachteil: Nachts kommt man nicht dran, ohne zu warten.
 #define AP_NACHTS_AUS   false
 
+// --- Funkeinstellungen (gelten fuer beide Betriebsarten) --------------------
+//
+// ⚠️ ZUERST DIE ANTENNE PRÜFEN. Der XIAO bringt seine WLAN-Antenne nicht fest
+//    verbaut mit: Sie liegt als kleines Plättchen mit Kabel in der Packung und
+//    muss auf den winzigen u.FL-Stecker oben links auf der Platine gedrückt
+//    werden. Ohne sie ist die Reichweite erbärmlich — das ist mit Abstand die
+//    häufigste Ursache für "WLAN zu schwach". Keine Software-Einstellung kann
+//    das ausgleichen. Siehe Bauplan 4.5 (Regel 7) und Software 5.2.
+
+// Funk-Land. Wichtig: Im Auslieferungszustand kennt der ESP32 nur die Kanäle
+// 1-11. Viele Router in Deutschland funken aber auf 12 oder 13 — dann ist das
+// WLAN für die Kamera schlicht unsichtbar, obwohl das Handy daneben vier
+// Balken zeigt. Mit "DE" sind die Kanäle 1-13 erlaubt.
+#define WLAN_LAND       "DE"
+
+// Sendeleistung in dBm. 19.5 ist das Maximum des Chips und die richtige Wahl
+// für einen Nistkasten im Garten. Kleinere Werte sparen ein bisschen Strom,
+// kosten aber sofort Reichweite — nur verkleinern, wenn der Router direkt
+// neben dem Kasten steht.
+#define WLAN_SENDELEISTUNG  WIFI_POWER_19_5dBm
+
+// Stromsparmodus des Funkmoduls ("Modem-Sleep"): Das WLAN döst zwischen zwei
+// Funkkontakten. Das spart rund 0,1 W, macht die Kamera aber träge und bei
+// schwachem Empfang unzuverlässig — Livestream und Website ruckeln oder
+// brechen ab.
+//
+//   false = immer wach. Stabil. Empfohlen, solange der Akku mitspielt.
+//   true  = sparsam. Nur sinnvoll bei starkem Empfang und knappem Strom.
+#define WLAN_STROMSPAREN    false
+
+// --- Bluetooth ------------------------------------------------------------
+// Bluetooth bleibt aus. Hier gibt es bewusst KEINEN Schalter: Der Nistkasten
+// spricht ausschließlich über WLAN. birdycam.ino schaltet den BLE-Teil beim
+// Start ausdrücklich ab und gibt seinen Speicher frei (rund 60 KB, die der
+// Kamera zugutekommen). Danach lässt er sich bis zum Neustart nicht mehr
+// einschalten — genau so ist es gewollt.
+
 // Name, unter dem die Kamera erreichbar ist: http://birdycam.local
 // Im eigenen WLAN geht immer auch die feste Adresse http://192.168.4.1
 #define GERAETE_NAME    "birdycam"
@@ -336,11 +373,13 @@
 // dumpf (dann fehlt das Feine an Meisengesang).
 #define TON_ABTASTRATE        16000
 
-// Lautstärke-Verstärkung 1-8 für Clip und Stream. Im Kasten ist es leise,
-// deshalb ist 2 ein guter Anfang. Zu hoch = die Spitzen werden abgeschnitten
-// und es knackt. Die Gesangserkennung unten arbeitet weiter mit den
-// unverstärkten Werten — an GESANG_SCHWELLE ändert sich also nichts.
-#define TON_VERSTAERKUNG      2
+// Lautstärke-Verstärkung 1-32 für Clip und Stream. Das PDM-Mikrofon auf dem
+// XIAO liefert sehr leise Werte — ohne kräftige Verstärkung hört man auf der
+// Aufnahme fast nichts. 16 ist in Sketch 6 erprobt und ein guter Startwert.
+// Zu hoch = die Spitzen werden abgeschnitten und es knackt; dann 8 nehmen.
+// Die Gesangserkennung unten arbeitet weiter mit den unverstärkten Werten —
+// an GESANG_SCHWELLE ändert sich also nichts.
+#define TON_VERSTAERKUNG      16
 
 // So viele Millisekunden Ton VOR dem Auslöser landen mit im Clip.
 // Sinnvoll ist etwa so viel, wie der Bild-Vorlauf lang ist (~2,4 s bei UXGA).

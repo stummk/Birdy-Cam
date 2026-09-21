@@ -38,6 +38,10 @@
 #include <esp_camera.h>
 #include <time.h>
 
+#if CONFIG_BT_ENABLED
+#include <esp_bt.h>
+#endif
+
 // ---- Diese zwei Werte liest auch die Website (siehe web.cpp) ---------------
 bool  istNacht    = false;
 float aktuelleFps = 0.0f;
@@ -275,6 +279,35 @@ static void aufnahmeBeenden() {
   letzterClipEnde = millis();
 }
 
+// ---------------------------------------------------------------------------
+//  Bluetooth bleibt aus. Immer.
+//
+//  Der Nistkasten spricht ausschließlich über WLAN. Bluetooth wird von dieser
+//  Firmware nirgends benutzt — wir schalten es trotzdem ausdrücklich ab,
+//  statt uns darauf zu verlassen, dass es niemand anwirft. Das hat zwei
+//  handfeste Gründe:
+//
+//    1. Der Funkteil gibt rund 60 KB Arbeitsspeicher frei, den die Kamera
+//       gut gebrauchen kann.
+//    2. Bluetooth und WLAN teilen sich beim ESP32 dieselbe Antenne. Ein
+//       nebenher laufender BLE-Stack kostet Strom und stört den Livestream.
+//
+//  esp_bt_controller_mem_release() ist endgültig: Nach diesem Aufruf lässt
+//  sich Bluetooth bis zum nächsten Neustart nicht mehr einschalten. Genau
+//  das wollen wir.
+// ---------------------------------------------------------------------------
+static void bluetoothAbschalten() {
+#if CONFIG_BT_ENABLED
+  esp_bt_controller_disable();
+  if (esp_bt_controller_mem_release(ESP_BT_MODE_BLE) == ESP_OK)
+    Serial.println("[System] Bluetooth aus, Speicher freigegeben.");
+  else
+    Serial.println("[System] Bluetooth aus.");
+#else
+  Serial.println("[System] Bluetooth ist schon im Board-Paket abgeschaltet.");
+#endif
+}
+
 // ============================================================================
 //  SETUP
 // ============================================================================
@@ -282,6 +315,8 @@ void setup() {
   Serial.begin(115200);
   delay(600);
   Serial.println("\n\n=====  BirdyCam startet  =====");
+
+  bluetoothAbschalten();          // vor allem anderen, solange RAM frei ist
 
   if (!psramFound()) {
     Serial.println("!! KEIN PSRAM !!  In der Arduino IDE unter Werkzeuge");

@@ -48,6 +48,7 @@ Arbeite die Liste **von oben nach unten** ab. Der erste Punkt ist der häufigste
 
 | Prüfen | Wie |
 |---|---|
+| **Antenne ab?** | Das Plättchen am u.FL-Sockel des XIAO löst sich leicht, wenn beim Warten am Kabel gezogen wurde. Ohne Antenne ist die Kamera praktisch funkstumm |
 | **Akku leer?** | Nach mehreren Regentagen legt sich die Kamera schlafen. Bei Sonne kommt sie von selbst zurück — erst mal einen sonnigen Tag abwarten |
 | **Router neu gestartet?** | Die Kamera verbindet sich selbst wieder. Bis zu 15 Sekunden warten |
 | **`.local` geht nicht** | Die IP-Adresse direkt versuchen. Sie steht im Router unter „Netzwerk“ oder „Geräte“ |
@@ -57,6 +58,18 @@ Arbeite die Liste **von oben nach unten** ab. Der erste Punkt ist der häufigste
 > **Und wenn wochenlang nichts geht:** Nicht den Kasten öffnen. Die Elektronikbox sitzt
 > **außen** — genau dafür. Box öffnen, USB-Kabel an den Computer, Seriellen Monitor
 > aufmachen und lesen, was das Board sagt.
+
+Beim Start sagt die Kamera im Seriellen Monitor selbst, wie gut der Empfang ist —
+`[Netz] Verbunden. IP: … (-58 dBm)`. Kommt sie gar nicht durch, **listet sie alle WLANs
+auf, die sie hört**, mit Stärke und Kanal. Das unterscheidet „Passwort falsch“ von
+„Signal kommt nicht an“:
+
+| Zahl | Bedeutung |
+|---|---|
+| −30 bis −60 dBm | ausgezeichnet, Livestream läuft flüssig |
+| −60 bis −70 dBm | brauchbar |
+| −70 bis −80 dBm | Bilder ja, flüssiger Livestream meist nicht |
+| unter −80 dBm | zu wenig. Antenne prüfen, sonst Repeater |
 
 ### Es entstehen keine Clips
 

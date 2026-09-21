@@ -225,7 +225,7 @@ Ein Akku über 45 °C altert schnell.
    └──────────────────────────────────────────┘
 ```
 
-**Sechs Regeln für die Box:**
+**Sieben Regeln für die Box:**
 
 1. **Der USB-C-Anschluss des XIAO muss erreichbar bleiben.** Dort steckt das Kabel vom
    Laderegler, und dort hängst du im Notfall den Computer an.
@@ -236,6 +236,12 @@ Ein Akku über 45 °C altert schnell.
 4. **Silikagel-Beutel** in eine Ecke legen. Nimmt Restfeuchte auf.
 5. **Kabelverschraubungen nach unten**, nie nach oben. Wasser läuft nach unten ab.
 6. **Tropfschlaufe:** Jedes Kabel vor dem Eintritt einen Bogen nach unten machen lassen.
+7. **Die WLAN-Antenne des XIAO flach an die Innenseite des Deckels kleben** — mit einem
+   Streifen doppelseitigem Klebeband, möglichst weit weg von Akku und Laderegler. Metall
+   und Akku direkt davor schlucken das Signal. Das dünne Kabel dabei **nicht knicken** und
+   nicht straff ziehen: Der u.FL-Stecker ist winzig und reißt sonst beim nächsten Öffnen
+   der Box ab. Ohne Antenne ist die Kamera praktisch funkstumm
+   ([Software 5.2](05-software.md#52-die-sieben-lern-sketches)).
 
 ```
    richtig:              falsch:

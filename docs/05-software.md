@@ -118,6 +118,19 @@ Ein „Sketch“ ist einfach ein Arduino-Programm. Alle sieben liegen in
 | **6** | [`step6_mikrofon`](../software/firmware/steps/step6_mikrofon/step6_mikrofon.ino) | Lautstärkebalken, Tonaufnahme | nichts (Mikro ist drauf) | 25 min |
 | **7** | [`step7_lichtschranke`](../software/firmware/steps/step7_lichtschranke/step7_lichtschranke.ino) | Einflug und Ausflug mit Dauer | Lichtschranke | 30 min |
 
+> ### 📡 Bevor du mit Schritt 3 anfängst: die Antenne
+>
+> Der XIAO hat **keine brauchbare Antenne an Bord**. In der Packung liegt ein kleines
+> Plättchen mit dünnem Kabel — das muss auf den winzigen **u.FL-Stecker** oben links auf
+> der Platine. Ohne Antenne reicht das Funksignal kaum durch eine Wand, und **keine
+> Einstellung in der Software kann das ausgleichen.**
+>
+> **So steckt man ihn auf, ohne ihn abzureißen:** eine Seite des Steckers in den Sockel
+> einhaken, dann die andere Seite hineindrücken, bis es klickt. Nie flach von oben
+> draufdrücken — dann bricht der Sockel. Abziehen genauso: eine Seite anheben.
+>
+> Das ist mit Abstand die häufigste Ursache für „WLAN zu schwach“.
+
 **Ganz oben in jeder Datei** steht, was vorher zu verkabeln ist. **Ganz unten** steht eine
 Fehlertabelle für genau diesen Schritt. Die Verkabelung selbst erklärt
 [Kapitel 3](03-schaltplan.md).
@@ -131,9 +144,28 @@ Fehlertabelle für genau diesen Schritt. Die Verkabelung selbst erklärt
 **Merk dir diesen Wert.** Er entscheidet später über die Bildqualität: Unter etwa 0,8 MB/s
 wird es eng, ab 1,0 MB/s ist alles gut.
 
-**Schritt 3 — das erste Bild.** Das Board macht ein eigenes kleines WLAN oder hängt sich an
-deinen Router, und du rufst auf dem Handy eine Adresse auf. Der Moment, in dem das Projekt
-plötzlich echt wird.
+**Schritt 3 — das erste Bild.** Das Board hängt sich an deinen Router, und du rufst auf dem
+Handy eine Adresse auf. Der Moment, in dem das Projekt plötzlich echt wird.
+
+Klappt die Verbindung nicht, gibt der Sketch nach 20 Sekunden auf und **listet alle WLANs
+auf, die er hört** — mit Empfangsstärke und Kanal. Damit siehst du sofort, welcher der drei
+Fälle vorliegt:
+
+| Was im Monitor steht | Was es bedeutet |
+|---|---|
+| gar kein WLAN in der Liste | Die Antenne steckt nicht (siehe Kasten oben) |
+| dein WLAN ist dabei | Der Name stimmt — dann passt das **Passwort** nicht |
+| dein WLAN fehlt, andere sind da | Name falsch geschrieben, Router nur auf 5 GHz, oder zu weit weg |
+
+Die Zahl dahinter ist die Empfangsstärke in dBm. **−30 ist ausgezeichnet, −70 geht gerade
+so, ab −80 wird aus dem Livestream nichts mehr.** Sie ist negativ — −60 ist also besser
+als −75.
+
+> 💡 **Der Livestream verlangt deutlich mehr als eine Website.** Dass das Handy am selben
+> Ort vier Balken zeigt, heißt wenig: Es hat eine viel größere Antenne. Reicht der Empfang
+> am Kastenstandort nicht, hilft nur ein Repeater in der Nähe — oder du betreibst die
+> Kamera mit ihrem **eigenen WLAN** (`NETZ_EIGENES` in `config.h`) und gehst zum Schauen
+> in den Garten.
 
 **Schritt 4 — unsichtbares Licht.** Die IR-LEDs leuchten, aber du siehst nichts. Dann hältst
 du die **Frontkamera deines Handys** davor und siehst ein schwaches violett-weißes Glimmen.
@@ -161,6 +193,16 @@ Viele Handysensoren sehen Infrarot, unsere Augen nicht.
 
 **Schritt 6 — Ton.** Ein Lautstärkebalken im Seriellen Monitor. Reden, pfeifen,
 in die Hände klatschen. Wenn sich der Balken bewegt, funktioniert das Mikrofon.
+
+Das Mikrofon auf dem XIAO ist **sehr leise** — eine unverstärkte Aufnahme klingt nach
+nichts. Der Sketch verstärkt die WAV-Datei deshalb um den Faktor `VERSTAERKUNG` (ab Werk
+**16**). Knackt es in der Aufnahme, ist der Wert zu hoch; dann 8 nehmen. Denselben Wert
+trägst du später in `config.h` bei **`TON_VERSTAERKUNG`** ein.
+
+> ⚠️ **Die angezeigte Zahl ist absichtlich die unverstärkte.** Nur so passt sie zu
+> `GESANG_SCHWELLE` in `config.h` — die Gesangserkennung in der Firmware rechnet ebenfalls
+> mit den rohen Werten. Damit der Balken trotzdem sichtbar zappelt, ist nur sein
+> Vollausschlag kleiner gewählt.
 
 **Schritt 7 — die Lichtschranke justieren** (siehe unten).
 
@@ -367,6 +409,12 @@ Fehler, den du jetzt in fünf Minuten behebst, kostet dich sonst ein ganzes Jahr
 | Problem | Ursache | Lösung |
 |---|---|---|
 | Board erscheint nicht als Port | Ladekabel ohne Datenadern | anderes USB-Kabel |
+| **WLAN zu schwach / keine Verbindung** | **Antenne steckt nicht auf dem u.FL-Sockel** | Antennenplättchen aufstecken — siehe Kasten in [5.2](#52-die-sieben-lern-sketches) |
+| Router wird nicht gefunden, andere WLANs schon | Router funkt auf Kanal 12 oder 13; der ESP32 kennt ab Werk nur 1–11 | Erledigt die Firmware selbst (`WLAN_LAND "DE"`). Im Sketch 3 ebenso |
+| Router wird gar nicht gefunden | Router funkt nur auf 5 GHz | Der ESP32 kann **ausschließlich 2,4 GHz** — im Router das 2,4-GHz-Netz einschalten |
+| Verbindung steht, Stream ruckelt | Empfang unter etwa −70 dBm | Repeater näher an den Kasten, oder `NETZ_EIGENES` benutzen |
+| Tonaufnahme ist fast lautlos | `TON_VERSTAERKUNG` zu niedrig | in `config.h` erhöhen (Werkswert 16) |
+| Tonaufnahme knackt und übersteuert | `TON_VERSTAERKUNG` zu hoch | in `config.h` auf 8 senken |
 | „Kamera startet nicht“ | PSRAM steht auf „Disabled“ | Werkzeuge → PSRAM → **OPI PSRAM** |
 | „Mikrofon startet nicht“ | ESP32-Paket älter als Version 3.x | Boardverwalter → `esp32` aktualisieren |
 | Hochladen bricht ab | Board hängt | BOOT gedrückt halten, USB anstecken, loslassen |

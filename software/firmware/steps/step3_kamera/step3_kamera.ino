@@ -7,8 +7,14 @@
 //  Vorher:
 //     1. USB-Kabel ABZIEHEN
 //     2. Kameramodul an die Flachbandbuchse (siehe Schaltplan 3.9)
-//     3. USB-Kabel wieder anstecken
-//     4. Unten WLAN-Name und Passwort eintragen
+//     3. ANTENNE aufstecken! Das kleine Plättchen mit dem dünnen Kabel aus
+//        der XIAO-Packung gehört auf den winzigen u.FL-Stecker oben links
+//        auf der Platine. Ohne Antenne ist die Reichweite erbärmlich, und
+//        keine Einstellung in diesem Sketch kann das ausgleichen.
+//        Aufsetzen: eine Seite einhaken, dann die andere Seite hineindrücken
+//        — niemals flach draufdrücken, dann geht der Stecker kaputt.
+//     4. USB-Kabel wieder anstecken
+//     5. Unten WLAN-Name und Passwort eintragen
 //
 //  ⚠️ Werkzeuge -> PSRAM -> "OPI PSRAM"  — sonst startet die Kamera nicht!
 //
@@ -16,6 +22,7 @@
 // ============================================================================
 
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include <esp_camera.h>
 
 // <<< HIER EINTRAGEN >>>
@@ -39,6 +46,43 @@ const char* WLAN_PASSWORT = "CHANGEME";
 #define PCLK_GPIO_NUM  13
 
 WiFiServer server(80);
+
+// ---------------------------------------------------------------------------
+//  Wenn es nicht klappt: zeigen, was ueberhaupt zu hoeren ist. Das
+//  unterscheidet die drei Faelle, die sonst gleich aussehen — falscher Name,
+//  falsches Passwort, zu schwaches Signal.
+// ---------------------------------------------------------------------------
+void umgebungZeigen() {
+  Serial.println("\nIch hoere mich mal um...");
+  int n = WiFi.scanNetworks();
+
+  if (n <= 0) {
+    Serial.println("KEIN EINZIGES WLAN zu hoeren!");
+    Serial.println("Das ist fast immer die Antenne: Steckt sie auf dem");
+    Serial.println("u.FL-Stecker oben links auf der Platine?");
+    return;
+  }
+
+  bool gefunden = false;
+  for (int i = 0; i < n; i++) {
+    bool unser = (WiFi.SSID(i) == WLAN_NAME);
+    if (unser) gefunden = true;
+    Serial.printf("  %-24s %4d dBm  Kanal %2d%s\n",
+                  WiFi.SSID(i).c_str(), WiFi.RSSI(i), WiFi.channel(i),
+                  unser ? "   <-- das ist deiner" : "");
+  }
+  Serial.println("  (-30 ist super, -70 geht so, ab -80 wird es nichts)");
+
+  if (gefunden) {
+    Serial.println("\nDein WLAN ist da - dann stimmt das PASSWORT nicht.");
+  } else {
+    Serial.printf("\n\"%s\" war nicht dabei. Moegliche Gruende:\n", WLAN_NAME);
+    Serial.println("  - Name falsch geschrieben (Gross-/Kleinschreibung!)");
+    Serial.println("  - Router funkt nur auf 5 GHz - der ESP32 kann nur 2,4");
+    Serial.println("  - zu weit weg");
+  }
+  WiFi.scanDelete();
+}
 
 void setup() {
   Serial.begin(115200);
@@ -81,25 +125,60 @@ void setup() {
   }
   Serial.println("Kamera laeuft!");
 
- // ---- WLAN MIT WPA3 SUPPORT STARTEN -------------------------------------
+  // ---- WLAN --------------------------------------------------------------
   WiFi.disconnect(true);
   delay(150);
-  
   WiFi.mode(WIFI_STA);
   delay(100);
 
-  // Wichtig: Erlaubt dem ESP32, sich auch mit WPA3/WPA2-Mixed Hotspots zu verbinden
-  WiFi.setMinSecurity(WIFI_AUTH_WPA2_PSK); 
+  // Kanaele 12 und 13 freischalten. Ab Werk kennt der ESP32 nur 1-11 — ein
+  // Router auf Kanal 12 oder 13 ist fuer ihn dann schlicht unsichtbar,
+  // obwohl das Handy danebenliegend vier Balken zeigt. In Deutschland sind
+  // 12 und 13 erlaubt und werden von Routern auch benutzt.
+  esp_wifi_set_country_code("DE", true);
+
+  // VOLLE Sendeleistung — 19.5 dBm ist das Maximum des Chips.
+  // (Hier stand einmal WIFI_POWER_15dBm. Das ist eine Drosselung und kostet
+  //  sofort Reichweite. Fuer einen Nistkasten im Garten: nicht drosseln.)
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
+
+  // Nicht schlafen legen. Spart sonst ein bisschen Strom, macht den Stream
+  // aber ruckelig und die Verbindung bei schwachem Empfang wacklig.
+  WiFi.setSleep(false);
+
+  // Auch aeltere Router mitnehmen: Ab Werk verlangt der ESP32 mindestens
+  // WPA2 und ignoriert einen WPA/TKIP-Router einfach.
+  WiFi.setMinSecurity(WIFI_AUTH_WPA_PSK);
 
   WiFi.begin(WLAN_NAME, WLAN_PASSWORT);
-  WiFi.setTxPower(WIFI_POWER_15dBm); // Drosselung für den XIAO S3
 
-  Serial.print("Verbinde mit Hotspot");
-  while (WiFi.status() != WL_CONNECTED) { 
-    delay(500); 
-    Serial.print("."); 
+  Serial.printf("Verbinde mit \"%s\"", WLAN_NAME);
+  uint32_t start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - start < 20000) {
+    delay(500);
+    Serial.print(".");
   }
-  Serial.println("\nErfolgreich verbunden!");
+  Serial.println();
+
+  // Nicht ewig Punkte malen: Nach 20 Sekunden sagen wir, WAS los ist.
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Keine Verbindung.");
+    umgebungZeigen();
+    Serial.println("\nNeustart in 10 Sekunden.");
+    delay(10000);
+    ESP.restart();
+  }
+
+  int32_t rssi = WiFi.RSSI();
+  Serial.printf("Verbunden! Empfang: %d dBm\n", rssi);
+  if (rssi < -80) {
+    Serial.println("ACHTUNG: sehr schwach. Der Stream wird abbrechen.");
+    Serial.println("  1. Antenne aufgesteckt?");
+    Serial.println("  2. Zum Ausprobieren naeher an den Router.");
+  } else if (rssi < -70) {
+    Serial.println("Grenzwertig - fuer ein Standbild reicht es, fuer");
+    Serial.println("fluessigen Stream oft nicht.");
+  }
 
   server.begin();
 
