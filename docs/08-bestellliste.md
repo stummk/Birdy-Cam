@@ -96,7 +96,7 @@ Diese Teile kommen oft aus Asien und brauchen **2–4 Wochen**. Deshalb als Erst
 | ☐ | 4 | **[IR-LED-Module 940 nm](https://www.amazon.de/s?k=IR+LED+Modul+940nm+Arduino)** | ⚠️ **940 nm**, nicht 850 nm (das glimmt sichtbar rot) | 7 € |
 | ☐ | 1 | **[MOSFET-Modul Logic Level](https://www.amazon.de/s?k=MOSFET+Modul+D4184+PWM)** (D4184 / AOD4184) | ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch. Kommt meist im Mehrfachpack. Zwei Bauformen im Umlauf — am besten **von beiden eine** mitbestellen, siehe [8.4c](#84c-zum-mosfet-modul) | 8 € |
 | ☐ | 1 | [Spannungssensor-Modul 0–25 V](https://www.amazon.de/s?k=Spannungssensor+Modul+25V+Arduino) | Kommt meist im 5er-Pack | 6 € |
-| ☐ | 1 | **[JST-PH-2.0-Y-Kabel](https://www.amazon.de/s?k=JST+PH+2.0+Y+Kabel+1+auf+2)** (1 Buchse → 2 Stecker) | Damit Laderegler und Spannungssensor gleichzeitig am Akku hängen. Meist 5er-Pack | 6 € |
+| ☐ | 1 | **[JST-PH-2.0-Pigtail-Set](https://www.amazon.de/s?k=JST+PH+2.0+Stecker+Buchse+Kabel+Set)** (Stecker **und** Buchse mit Kabel) | Du brauchst je eins von beiden — verteilt wird in der Schraubklemme des Sensors. ⚠️ **Nicht** nach einem Y-Kabel suchen, siehe [8.3c](#83c-warum-kein-y-kabel). Meist 10+ Paare im Set | 6 € |
 | ☐ | 1 | [Dupont-Steckkabel-Set](https://www.amazon.de/s?k=Dupont+Kabel+Set+female+female) (F-F und F-M) | 10–20 cm Länge reicht | 6 € |
 | ☐ | 1 | [Acrylglas 3 mm, ~10 × 10 cm](https://www.amazon.de/s?k=Acrylglas+3mm+Platte) | ⚠️ **Kein Glas** — Acryl lässt Infrarot durch | 6 € |
 | ☐ | 1 | [Silikagel-Beutel](https://www.amazon.de/s?k=Silikagel+Beutel+Trockenmittel) | Gegen beschlagene Linse | 5 € |
@@ -134,6 +134,37 @@ nur ein paar Zehntelvolt.
 > Aufkleber. Der muss **unter 24 V** liegen. Bei einem 12-V-Panel steht dort typisch 18–22 V
 > — das passt bequem. Ein **24-V-Panel** wäre zu knapp, ein größeres Hausdachmodul erst
 > recht.
+
+### 8.3c Warum kein Y-Kabel
+
+Laderegler und Spannungssensor wollen beide an denselben Akku. Naheliegend wäre ein
+Y-Kabel — **es gibt aber keins.** JST-**PH 2.0**-Splitter werden praktisch nicht verkauft.
+Was im Modellbau als „JST-Y-Kabel“ oder „Parallel-Adapter“ auftaucht, ist fast immer der
+dickere **JST-RCY/BEC** mit 2,5 mm Raster. Der passt nicht in die `BAT`-Buchse des
+Ladereglers. Lange danach zu suchen lohnt nicht.
+
+Stattdessen nimmst du zwei **Pigtails** — kurze Kabel mit Stecker bzw. Buchse an einem
+Ende, blanke Adern am anderen — und benutzt die **Schraubklemme des Sensors als
+Verteiler**. In jede Klemme passen zwei Adern:
+
+```
+   🔋 Akku ──► [Buchsen-Pigtail] ──► Sensor-Schraubklemme ──► [Stecker-Pigtail] ──► Laderegler BAT
+```
+
+Volle Anleitung in [Schaltplan 3.8](03-schaltplan.md#38-der-spannungssensor--damit-du-den-akkustand-siehst).
+
+**Zwei Wege, das zu kaufen:**
+
+| | |
+|---|---|
+| **Pigtail-Set** (empfohlen) | Stecker- und Buchsenkabel gemischt, meist 10+ Paare. Nichts zu schneiden |
+| **Verlängerungskabel** Stecker→Buchse | In der Mitte durchschneiden — das ergibt genau dieselben zwei Pigtails. Oft **AWG24** statt AWG26, und dickere Adern halten in der Schraubklemme besser. Gibt es z. B. bei [BerryBase](https://www.berrybase.de/en/extension-cable-2-pin-jst-ph-2.0mm-male-female-awg24-50cm) |
+
+> ⚠️ **Beim Auspacken durchmessen:** Rot ist bei JST-PH 2.0 *meistens* Plus, garantiert
+> ist es nicht. Prüfe, dass Stecker- und Buchsen-Pigtail **Rot auf demselben Pin** haben —
+> sonst verpolst du den Akku, sobald du beide zusammenschraubst. Die Messung dauert zwei
+> Minuten und steht Schritt für Schritt in
+> [Schaltplan 3.8](03-schaltplan.md#durchtesten-mit-dem-multimeter--vier-messungen).
 
 ---
 
@@ -205,7 +236,7 @@ Suchbegriffe:
 | ☐ | Akkuschrauber + Holzbohrer 3/5/6/12 mm | 40 € | Löcher im Deckel und in der Wand |
 | ☐ | Kleiner Schlitzschraubendreher | 3 € | Schraubklemmen |
 | ☐ | Seitenschneider, Abisolierzange | 15 € | Kabel |
-| ☐ | Multimeter | 20 € | Akku kalibrieren (Sketch 5), Fehlersuche |
+| ☐ | Multimeter | 20 € | Pigtails auf Verpolung prüfen ([Schaltplan 3.8](03-schaltplan.md#durchtesten-mit-dem-multimeter--vier-messungen)), Akku kalibrieren (Sketch 5), Fehlersuche |
 | ☐ | Lötkolben-Set | 25 € | **nur** falls das Board ohne Pins kommt |
 
 Das **Multimeter** ist die sinnvollste Investition davon — es macht die Kalibrierung in
@@ -285,7 +316,8 @@ Bitte **vor** dem Einbau prüfen, nicht danach.
 - [ ] Laderegler: **MPPT-SET-Schalter** auf der Rückseite gefunden? Auf **12V** stellen
 - [ ] Laderegler: **Akkuschalter** gefunden? Muss später auf **ON**
 - [ ] Akku: Schutzschaltung vorhanden, JST-PH-2.0-Stecker passt in die Buchse
-- [ ] Y-Kabel: passt an Akku **und** Laderegler
+- [ ] Pigtails: Buchse nimmt den **Akkustecker** auf, Stecker passt in die **`BAT`-Buchse** des Ladereglers
+- [ ] Pigtails: liegt bei beiden **Rot auf demselben Pin**? Mit dem Durchgangsprüfer nachmessen, sonst verpolst du den Akku — Anleitung in [Schaltplan 3.8](03-schaltplan.md#durchtesten-mit-dem-multimeter--vier-messungen)
 - [ ] microSD: höchstens 32 GB, als **FAT32** formatiert
 - [ ] USB-Kabel A→C ist ein **Datenkabel**, kein reines Ladekabel
 

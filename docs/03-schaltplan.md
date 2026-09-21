@@ -54,8 +54,8 @@ Neun Verbindungen, das ist alles. Hier stehen sie noch einmal als Liste zum Abha
 |---|---|---|---|---|
 | **1** | Solarpanel, rote Ader | Laderegler `SOLAR IN` **+** | die 2 Adern des Panelkabels | schrauben |
 | | Solarpanel, schwarze Ader | Laderegler `SOLAR IN` **−** | | |
-| **2** | Akku | Laderegler `BAT` | der weiße Stecker am Akku | einstecken |
-| **3** | Akku | Spannungssensor | Y-Kabel (siehe [3.8](#38-der-spannungssensor--damit-du-den-akkustand-siehst)) | einstecken |
+| **2** | Akku | Spannungssensor, Schraubklemme | Buchsen-Pigtail JST-PH 2.0 — der Sensor ist der Verteiler ([3.8](#38-der-spannungssensor--damit-du-den-akkustand-siehst)) | stecken + schrauben |
+| **3** | Spannungssensor, **dieselben** Klemmen | Laderegler `BAT` | Stecker-Pigtail JST-PH 2.0. ⚠️ Vorher Polarität durchmessen | schrauben + einstecken |
 | **4** | Laderegler `USB-A OUT` | XIAO `USB-C` | ein normales USB-Kabel | einstecken |
 | **5** | Spannungssensor `S` | XIAO `D1` | gelbes Steckkabel | stecken |
 | | Spannungssensor `−` | XIAO `GND` | schwarzes Steckkabel | |
@@ -117,6 +117,11 @@ Er heißt **MPPT-SET** und hat fünf Stellungen: 6V, 9V, 12V, 18V, 24V. Unser Pa
 **② Den Akku einstecken.**
 Der Akku hat einen kleinen weißen Stecker (JST-PH 2.0). Er passt **nur in einer Richtung**
 in die Buchse `BAT`. Wenn er nicht will, drehe ihn um — aber drücke nie mit Gewalt.
+
+> Zum Ausprobieren steckst du ihn hier direkt ein. Beim endgültigen Aufbau sitzt der
+> **Spannungssensor dazwischen** — er ist gleichzeitig der Verteiler, damit er und der
+> Laderegler beide am Akku hängen. Wie das geht, steht in
+> [3.8](#38-der-spannungssensor--damit-du-den-akkustand-siehst).
 
 **③ Den Schalter neben der Akkubuchse auf `ON` schieben.**
 Das ist der Hauptschalter für den Akku. Steht er auf `OFF`, passiert gar nichts, und man
@@ -467,35 +472,182 @@ Die Software rechnet dann wieder mal fünf.
                         teilt durch 5
 ```
 
-### Der Anschluss
+### Braucht man ihn überhaupt? Der Laderegler kann doch schon alles
 
-Das Modul hat eine **Schraubklemme** (dort kommt die zu messende Spannung rein) und drei
-**Steckstifte** (dort geht das Ergebnis raus):
+Für die **Sicherheit** des Akkus braucht man ihn nicht — der Laderegler schützt ihn von
+sich aus und trennt bei 2,9 V. Was der Laderegler nicht kann: die Zahl herausgeben. Er
+hat keinen Datenausgang, nur Lämpchen. Und der XIAO hängt an den geregelten **5 Volt**;
+die bleiben 5 Volt, egal wie voll der Akku ist. Von dort ist der Ladezustand
+prinzipiell nicht messbar. Deshalb die eigene Messleitung direkt an die Zelle.
 
-| Am Modul | Wohin |
+Der Sensor bringt damit drei Dinge:
+
+| | mit Sensor | ohne |
+|---|---|---|
+| Akkustand auf der Website | ✅ | ❌ |
+| Lade-Trend („die Sonne lädt gerade“) | ✅ | ❌ |
+| Abschaltung | **weich bei 3,40 V**, Statistik wird vorher gesichert | **hart bei 2,9 V** durch den Laderegler |
+
+Die dritte Zeile ist der eigentliche Grund. Die Notbremse des Ladereglers kappt den Strom
+irgendwann — womöglich mitten im Schreiben einer Videodatei. Das kostet im besten Fall
+das laufende Video, im schlechteren das Dateisystem der Karte. Und 3,40 V ist für einen
+LiPo deutlich schonender als 2,9 V.
+
+### Der Anschluss — der Sensor ist selbst der Verteiler
+
+Laderegler **und** Sensor wollen an denselben Akku. Naheliegend wäre ein Y-Kabel —
+**such keins.** JST-**PH 2.0**-Splitter gibt es praktisch nicht zu kaufen. Was im
+Modellbau als „JST-Y-Kabel“ verkauft wird, ist fast immer der dickere **JST-RCY/BEC** mit
+2,5 mm Raster, und der passt nicht in die Akkubuchse des Ladereglers.
+
+Man braucht auch keins. Das Sensormodul hat eine **Schraubklemme**, und in jede Klemme
+passen **zwei Adern**. Damit wird der Sensor selbst zum Verteiler:
+
+```
+   🔋 Akku ──► [Buchsen-Pigtail] ──► Sensor-Schraubklemme ──► [Stecker-Pigtail] ──► Laderegler BAT
+                                             │  + und −
+                                             └──► Teiler ──► S ──► XIAO D1
+```
+
+Ein **Pigtail** ist ein kurzes Kabel mit JST-PH-2.0-Stecker bzw. -Buchse an einem Ende
+und blanken Adern am anderen. Du brauchst je eins von beiden — die gibt es überall im Set
+(E8b). Alternativ ein **Verlängerungskabel** Stecker→Buchse kaufen und in der Mitte
+durchschneiden; das ergibt genau dieselben zwei Pigtails, und deren AWG24 greift in der
+Schraubklemme sogar besser als das übliche dünne AWG26.
+
+| Am Modul | Was hineinkommt |
 |---|---|
-| Schraubklemme `+` | Akku **Plus** |
-| Schraubklemme `−` | Akku **Minus** |
+| Schraubklemme `+` | **beide roten** Adern — Buchsen-Pigtail (vom Akku) *und* Stecker-Pigtail (zum Laderegler) |
+| Schraubklemme `−` | **beide schwarzen** Adern, genauso |
 | Stift `S` | XIAO `D1` |
 | Stift `−` | XIAO `GND` |
 | Stift `+` | bleibt frei |
 
-### Und wie kommt man an den Akku dran, wenn der doch im Laderegler steckt?
+> ⚠️ **Nicht der Farbe vertrauen, sondern dem Pin.** Rot ist bei JST-PH 2.0 *meistens*
+> Plus, garantiert ist es nicht — und die beiden Pigtails kommen womöglich aus
+> verschiedenen Tüten. Welche Ader wirklich wohin gehört, klärst du in zwei Minuten mit
+> dem Multimeter: [Messung 1 und 2](#durchtesten-mit-dem-multimeter--vier-messungen).
+> Erst danach anschrauben.
 
-Mit einem **JST-PH-2.0-Y-Kabel** (kostet 2–3 €, gibt es im 5er-Pack). Das ist ein Kabel mit
-einer Buchse und zwei Steckern:
+Der Strom für die ganze Kamera fließt jetzt durch diese Klemme hindurch. Das ist kein
+Problem — es sind rund 600 mA aus dem Akku, die Klemme kann 10 A. Aber sie gehört beim
+Einbau in die Box einmal nachgezogen: Löst sich die Schraube, ist die Kamera aus.
+
+> 💡 **Die dünne Ader rutscht wieder aus der Klemme?** Das abisolierte Ende **doppelt
+> zurückfalten**, dann hält es.
+
+### Durchtesten mit dem Multimeter — vier Messungen
+
+Hier lohnt sich das Multimeter wirklich. Ein verpolter Akku ist der eine Fehler in diesem
+Projekt, der etwas kosten kann, und man sieht ihn den Steckern nicht an. Die vier
+Messungen dauern zusammen zehn Minuten.
+
+Du brauchst zwei Einstellungen am Gerät:
+
+| Stellung | Symbol | Wofür |
+|---|---|---|
+| **Gleichspannung**, Bereich 20 V | `V⎓` oder `DCV` | Messung 1 und 4 |
+| **Durchgangsprüfer** / Widerstand | `•)))` bzw. `Ω` | Messung 2 und 3 |
+
+> ⚠️ **Die eine Regel bei allen Messungen:** Lass die beiden Prüfspitzen nie gleichzeitig
+> die rote und die schwarze Ader berühren, solange der Akku dranhängt. Ein 5000-mAh-LiPo
+> liefert kurzgeschlossen genug Strom, um Kabel zum Glühen zu bringen. Deshalb messen wir
+> unten auch an den **blanken Aderenden** und nicht in den winzigen Steckern herum.
+
+---
+
+**Messung 1 — welche Ader ist wirklich Plus?** *(Akku + Buchsen-Pigtail)*
+
+Steck nur das **Buchsen-Pigtail** auf den Akku, sonst nichts. Der Stecker passt ohnehin
+nur in einer Richtung. Jetzt hast du zwei blanke Aderenden, weit genug auseinander.
+
+- `V⎓`, **rote** Prüfspitze an die **rote** Ader, schwarze an die schwarze.
+- Zwischen **3,0 und 4,2 V** mit **Pluszeichen** → alles normal, Rot ist Plus.
+- Dieselbe Zahl mit **Minuszeichen** davor → die Farben lügen. Bei diesem Pigtail ist
+  **Schwarz** der Pluspol. Kommt selten vor, aber es kommt vor. Kleb dir einen Zettel dran.
+- **0 V** → der Akku ist tiefentladen oder seine Schutzschaltung hat abgeschaltet. Erst
+  über die USB-Buchse des Ladereglers aufwecken, dann weitermessen.
+
+Merk dir, **welche Farbe Plus ist**. Alles Weitere hängt daran.
+
+---
+
+**Messung 2 — haben beide Pigtails dieselbe Belegung?** *(ohne Akku!)*
+
+Das ist die Messung, die den Verpoler verhindert. Buchsen- und Steckerteil kommen
+womöglich aus verschiedenen Tüten, und ob der Hersteller Rot auf denselben Pin gelegt
+hat, weiß man nicht.
+
+**Akku abziehen.** Dann die beiden Pigtails **ineinanderstecken** — sie passen zusammen.
+Jetzt Durchgangsprüfer:
 
 ```
-   🔋 Akku ──► [ Y-Kabel ] ──┬──► Laderegler BAT
-                             └──► Spannungssensor (Schraubklemme)
+   [Buchsen-Pigtail] ═══ ineinandergesteckt ═══ [Stecker-Pigtail]
+        rot ●─────────────── piept? ───────────────● rot
 ```
 
-So bekommen beide dieselbe Spannung, und du musst nichts anlöten oder aufschneiden.
+- Rot ↔ Rot **piept** und Schwarz ↔ Rot **piept nicht** → die Pigtails passen zusammen.
+  Rot kommt später an `+`, Schwarz an `−`.
+- Rot ↔ **Schwarz** piept → die Belegung ist gedreht. Kein Grund, etwas zurückzuschicken:
+  Du schraubst dann eben die **rote** Ader der Buchse und die **schwarze** Ader des
+  Steckers in dieselbe Klemme. Entscheidend ist nicht die Farbe, sondern der Pin.
 
-> **Kein Y-Kabel da?** Dann lass den Sensor einfach weg und setze in `config.h`
-> `AKKU_MESSEN false`. Alles läuft weiter — auf der Website fehlt dann nur die
-> Akkuanzeige. Die vier Lämpchen am Laderegler zeigen den Akkustand trotzdem, nur eben
-> erst, wenn man die Box öffnet.
+---
+
+**Messung 3 — sitzt alles richtig in der Klemme?** *(verschraubt, aber noch ohne Akku)*
+
+Jetzt beide Pigtails am Sensor anschrauben — nach Messung 1 und 2 weißt du, was wohin
+gehört. Akku bleibt draußen. Dann prüfst du die Klemme selbst:
+
+| Messen zwischen | Stellung | Soll |
+|---|---|---|
+| beiden Adern in der **`+`**-Klemme | `•)))` | **piept** — die Klemme leitet durch |
+| beiden Adern in der **`−`**-Klemme | `•)))` | **piept** |
+| Klemme **`+`** ↔ Klemme **`−`** | `Ω` | **rund 37 kΩ** |
+| Stift **`S`** ↔ Klemme **`−`** | `Ω` | **rund 7,5 kΩ** |
+
+Die 37 kΩ sind der Teiler selbst — 30 kΩ plus 7,5 kΩ in Reihe. Diese Zahl ist doppelt
+wertvoll: Sie beweist, dass das Modul heil ist **und** dass zwischen Plus und Minus kein
+Kurzschluss liegt. Piept es hier statt zu messen, ist irgendwo ein Kurzer — dann auf
+keinen Fall den Akku anstecken.
+
+Zum Schluss an jeder der vier Adern einmal ziehen. Rutscht eine heraus, hätte sie das
+später in der Box auch getan.
+
+---
+
+**Messung 4 — stimmt der Teiler?** *(Akku dran, aber `S` noch nicht am XIAO)*
+
+Jetzt darf der Akku rein, und der Schalter am Laderegler auf `ON`. Der Laderegler ist
+dabei dein zweiter Zeuge: Leuchtet 🔴 **Battery Warning**, sofort wieder abziehen — dann
+stimmt trotz allem die Polarität nicht.
+
+Zwei Werte ablesen, beide mit `V⎓`:
+
+| Messen zwischen | Soll |
+|---|---|
+| Klemme `+` ↔ Klemme `−` | die echte Akkuspannung, **3,0–4,2 V** |
+| Stift `S` ↔ Stift `−` | **ein Fünftel davon**, also 0,6–0,84 V |
+
+> ⛔ **Das ist die Sicherung für den XIAO.** Am Stift `S` dürfen **niemals mehr als
+> 3,3 Volt** anliegen. Miss das, **bevor** du `S` an `D1` steckst. Steht dort die volle
+> Akkuspannung, ist der Teiler überbrückt oder das Modul defekt — dann würdest du den
+> Eingang des XIAO zerstören.
+
+Und wenn du schon misst: **Teile die beiden Zahlen durcheinander.** Genau das ist der
+Kalibrierfaktor, den du gleich brauchst — `echte Spannung ÷ Spannung am S-Stift`. Bei
+3,92 V und 0,784 V also 5,00. Den Wert trägst du in [Sketch 5](05-software.md#52-die-sieben-lern-sketches)
+bei `FAKTOR` und danach in `config.h` bei `BATT_KALIBRIERUNG` ein. Damit ist Schritt 5
+der Software schon halb erledigt.
+
+Erst jetzt kommen `S` an `D1` und `−` an `GND`.
+
+> **Sensor ganz weglassen?** Geht. Dann kommt der Akkustecker wie gehabt direkt in den
+> Laderegler, und in `config.h` setzt du `AKKU_MESSEN false`. Alles läuft weiter, auf der
+> Website fehlt nur die Akkuanzeige. ⚠️ Es gibt dann allerdings **gar keine
+> Software-Abschaltung mehr** — du verlässt dich allein auf die 2,9 V des Ladereglers.
+> Die vier Lämpchen am Laderegler zeigen den Akkustand weiterhin, nur eben erst, wenn man
+> die Box öffnet.
 
 **Vor dem Einbau muss der Sensor einmal kalibriert werden** — das dauert fünf Minuten und
 steht in [Sketch 5](05-software.md#52-die-sieben-lern-sketches).

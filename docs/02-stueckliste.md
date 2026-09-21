@@ -25,7 +25,7 @@
 | **E6** | **Solarpanel HPLive 15 W / 12 V** | Der Tank-Nachfüller. 15 W sind an Sonnentagen großzügig — genau darum geht es: An **trüben** Tagen zählt jedes Watt. ⚠️ Auf dem Aufkleber muss `Voc` **unter 24 V** stehen (bei 12-V-Panels üblich: 18–22 V) | ~30 € |
 | **E7** | **LiPo-Akku 1S, 5000 mAh**, mit Schutzschaltung + JST-PH-2.0-Stecker | Überbrückt Nacht und Regentage. ⚠️ **Mit Schutzschaltung** ist Pflicht. Für doppelte Reserve: 10 000 mAh, +12 € | 14 € |
 | **E8** | Spannungssensor-Modul 0–25 V | Damit die Website den Akkustand zeigt. Kommt meist im 5er-Pack | 2 € |
-| **E8b** | **JST-PH-2.0-Y-Kabel** (1 Buchse → 2 Stecker) | Damit Laderegler **und** Spannungssensor gleichzeitig am Akku hängen, ohne zu löten. Gibt es im 5er-Pack. [Warum](03-schaltplan.md#38-der-spannungssensor--damit-du-den-akkustand-siehst) | 3 € |
+| **E8b** | **JST-PH-2.0-Pigtails**, je 1× mit Stecker und 1× mit Buchse | Damit Laderegler **und** Spannungssensor gleichzeitig am Akku hängen, ohne zu löten — verteilt wird in der Schraubklemme des Sensors. ⚠️ **Kein Y-Kabel suchen:** JST-**PH 2.0**-Splitter gibt es praktisch nicht, die „JST-Y-Kabel“ aus dem Modellbau sind der dickere RCY-Stecker und passen nicht. Gibt es im Set. [Wie es geht](03-schaltplan.md#38-der-spannungssensor--damit-du-den-akkustand-siehst) | 3 € |
 | **E9** | **4 × IR-LED-Modul 940 nm** | Das unsichtbare Nachtlicht. ⚠️ **940 nm**, nicht 850 nm — letzteres glimmt für Menschen sichtbar rot | 7 € |
 | **E10** | **MOSFET-Modul, Logic Level** (D4184 / AOD4184) | Der elektronische Lichtschalter für die LEDs. ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch. Es gibt zwei Bauformen — [welche du hast und was das ändert](03-schaltplan.md#zuerst-welche-bauform-hast-du-zähl-die-anschlüsse) | 4 € |
 | **E11** | **IR-Lichtschranke** mit Digitalausgang, 3,3 V | Zählt Ein- und Ausflüge exakt. Optional, aber das schönste Bauteil im Projekt ([1.3](01-ueberblick.md#13-die-lichtschranke--die-beste-idee-im-ganzen-plan)) | 3 € |
@@ -161,7 +161,7 @@ und das Kameramodul ohne IR-Filter. Diese drei erfüllen die eigentlichen Anford
 | Heißklebepistole | Kamera, LEDs, Lichtschranke fixieren und abdichten | ✅ ja |
 | Laubsäge oder Cutter | Acrylglas zuschneiden | ✅ ja |
 | Handy | IR-Test, Livebild beim Justieren | ✅ ja ⭐ |
-| Multimeter | Akku kalibrieren, Panel prüfen | empfohlen |
+| Multimeter | Pigtails auf Verpolung prüfen ([3.8](03-schaltplan.md#durchtesten-mit-dem-multimeter--vier-messungen)), Akku kalibrieren, Panel prüfen | ✅ ja, wenn du den Spannungssensor einbaust |
 | Lötkolben | **nur** falls das Board ohne angelötete Pins kommt | meist nein |
 
 ---

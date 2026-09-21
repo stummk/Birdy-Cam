@@ -121,6 +121,11 @@ Viele Handysensoren sehen Infrarot, unsere Augen nicht.
 4. Diesen Faktor im Sketch bei `FAKTOR` eintragen, neu hochladen, prüfen.
 5. Denselben Wert später in `config.h` bei `BATT_KALIBRIERUNG` eintragen.
 
+> 💡 **Den Faktor hast du vielleicht schon.** Wenn du den Sensor nach
+> [Schaltplan 3.8](03-schaltplan.md#durchtesten-mit-dem-multimeter--vier-messungen)
+> mit dem Multimeter durchgetestet hast, ist er dort in Messung 4 schon herausgekommen.
+> Dann dient dieser Sketch nur noch der Gegenprobe.
+
 **Schritt 6 — Ton.** Ein Lautstärkebalken im Seriellen Monitor. Reden, pfeifen,
 in die Hände klatschen. Wenn sich der Balken bewegt, funktioniert das Mikrofon.
 
