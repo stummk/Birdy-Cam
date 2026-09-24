@@ -47,7 +47,7 @@ BewegungErgebnis bewegungPruefen(camera_fb_t* bild) {
 
   // Schritt 1+2: JPEG auspacken und dabei auf 1/8 verkleinern.
   // Das macht die Kamera-Bibliothek für uns und ist überraschend schnell.
-  if (!jpg2rgb565(bild->buf, bild->len, rgbPuffer, JPG_SCALE_8)) {
+  if (!jpg2rgb565(bild->buf, bild->len, rgbPuffer, JPG_SCALE_8X)) {
     return erg;   // kaputtes JPEG — einfach überspringen
   }
 
