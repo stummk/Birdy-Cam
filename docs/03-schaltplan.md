@@ -324,6 +324,11 @@ sich alles, was es braucht, von der Lastseite.
 > heißt „Low-Side“). Der Plus der LEDs geht direkt mit an die `+`-Klemme, zusammen mit dem
 > roten Kabel vom XIAO. **Zwei Adern in einer Schraubklemme** — das ist so gewollt. Beide
 > Adern vorher verdrillen, dann hält es.
+>
+> **Magst du keine zwei Adern in einer Schraube?** Dann setz eine **3-fach-Klemme** in die
+> Elektronikbox: XIAO `5V`, eine Ader zur `+`-Klemme, und die Litze in den Deckel. Die
+> Schraubklemme hält dann nur noch eine einzige Ader. Elektrisch ist beides dasselbe — die
+> `+`-Klemme *ist* der Verteilerpunkt, ob mit oder ohne Klemme davor.
 
 ### Variante B — das große Modul mit 3 + 4 Anschlüssen
 
@@ -348,6 +353,16 @@ sich alles, was es braucht, von der Lastseite.
 zusammen, alle Minus-Anschlüsse zusammen. Nicht hintereinander, sondern nebeneinander —
 wie vier Lampen an einer Steckdosenleiste.
 
+> 💡 **Zwischen XIAO und MOSFET kommt nichts weiter dazwischen.** Kein Vorwiderstand, kein
+> Pull-up, nichts: `D0` → `PWM` bzw. `SIG`, `GND` → `GND`, fertig. Der Steuereingang des
+> Moduls bringt seinen Widerstand schon auf der Platine mit und zieht nur ein bis drei
+> Milliampere — das liefert ein Pin des XIAO mühelos. **Vorwiderstände braucht
+> ausschließlich die LED-Seite.**
+>
+> Das Einzige, was auf der Steuerseite schiefgehen kann, ist eine vergessene Masse: Bei
+> **Variante A** sind Steuer- und Lastseite galvanisch getrennt und brauchen **jede ihr
+> eigenes** schwarzes Kabel zum XIAO ([3.5](#vier-kabel-wollen-an-gnd--es-gibt-aber-nur-einen-gnd-pin)).
+
 > ⚠️ **Variante A und die 5 Volt — bitte einmal lesen, bevor du bestellst**
 >
 > Das kleine Modul stellt die Steuerspannung für den MOS-Chip aus der **Lastspannung** her,
@@ -364,6 +379,182 @@ wie vier Lampen an einer Steckdosenleiste.
 > **Bleiben die LEDs dunkel oder glimmen sie nur:** nimm **Variante B**. Die treibt das
 > Gate direkt aus dem 3,3-V-Signal und ist von der Lastspannung unabhängig. Die beiden
 > Module kosten zusammen keine 10 €, und du hast ohnehin meist ein Mehrfachpack.
+
+### Nackte LEDs statt Module? Dann brauchst du vier Vorwiderstände
+
+Die Stückliste sieht **LED-Module** vor (`E9`) — kleine Platinen, auf denen der
+Vorwiderstand schon sitzt. Wer stattdessen **nackte 5-mm-LEDs** nimmt, muss diesen
+Widerstand selbst dazubauen. Sonst schmort es, und zwar wörtlich.
+
+**Warum das so ist:** Eine LED sucht sich ihren Strom nicht selbst aus. Sie hat eine feste
+**Flussspannung** — bei 940 nm rund 1,2 bis 1,5 V — und alles, was darüber hinaus anliegt,
+muss irgendein anderes Bauteil im Kreis verbraten. Hängt sie ohne Widerstand an 5 V,
+bleiben 3,7 V übrig, für die niemand zuständig ist. Dann fließt so viel Strom, wie Litzen,
+Klemmen und MOSFET-Kanal gerade durchlassen: statt 20 mA schnell ein **Ampere**. Die LED
+leuchtet dabei — hell sogar —, und der MOSFET wird heiß, weil er als einziges Bauteil mit
+nennenswertem Widerstand die Leistung übernimmt.
+
+> ⚠️ **Das PWM-Dimmen rettet hier nichts.** Es verkürzt nur die Einschaltzeit, der
+> **Spitzenstrom** bleibt derselbe. Und [Sketch 4](../software/firmware/steps/step4_irlicht/step4_irlicht.ino)
+> fährt in Test 1 absichtlich volle 255.
+
+**Die Rechnung** ist eine Zeile — Ohmsches Gesetz, mehr steckt nicht dahinter:
+
+```
+R = (5 V − 1,3 V) ÷ 0,020 A ≈ 185 Ω
+     │      │         └── der Strom, den du haben willst
+     │      └── Flussspannung der LED
+     └── deine Versorgung
+```
+
+| Widerstand | Strom je LED | Alle vier zusammen | Bauform |
+|---|---|---|---|
+| **180 Ω** ⭐ | ~20 mA | **82 mA** — genau der Wert, mit dem dieses Kapitel rechnet | ¼ W reicht (0,08 W) |
+| 220 Ω | ~17 mA | 67 mA | ¼ W |
+| 82 Ω — falls das Nachtbild zu dunkel bleibt | ~45 mA | 180 mA | ½ W nehmen (0,17 W) |
+
+Unter etwa 68 Ω solltest du ohne Datenblatt deiner LEDs nicht gehen.
+
+> 🔑 **Die Regel, an der alles hängt: ein eigener Widerstand pro LED.** Nicht einer für
+> alle vier zusammen. Parallelgeschaltete LEDs teilen sich den Strom nämlich *nicht*
+> gerecht: Die mit der niedrigsten Flussspannung zieht am meisten, wird dadurch wärmer —
+> und weil die Flussspannung mit steigender Temperatur *sinkt*, zieht sie daraufhin noch
+> mehr. Das schaukelt sich auf, bis eine LED stirbt. Vier Widerstände zwingen jeden Zweig
+> auf seinen eigenen Strom.
+
+**Und wie ohne Löten?** Genau wie der Rest des Projekts — mit Klemmen. Sechs Stück sind
+es. Das Bild zeigt den ganzen Weg, vom Pin am XIAO bis zur letzten LED:
+
+![Vier IR-LEDs mit Vorwiderstand — der ganze Weg vom XIAO bis zur LED](bilder/ir-leds-vorwiderstand.svg)
+
+> 🔑 **Die eine Regel, aus der sich der ganze Aufbau ergibt: Eine Klemme ist ein Knoten.**
+> Alles, was in **derselben** Klemme steckt, ist miteinander verbunden — egal in welchem
+> Steckplatz. Daraus folgt beides, was im Bild auf den ersten Blick umständlich aussieht:
+>
+> 1. Die **zwei Beinchen eines Widerstands** gehören in **verschiedene** Klemmen. Stecken
+>    beide in derselben, ist er überbrückt und wirkungslos — und der MOSFET wieder heiß.
+> 2. Die **LED-Anode** darf **nicht** mit in den Plus-Verteiler. Dort liegen die vollen
+>    5 V, die LED hinge also wieder ohne Widerstand daran.
+>
+> Deshalb bekommt jede LED ihre eigene kleine 2-fach-Klemme: Dort treffen sich genau zwei
+> Dinge — ein Widerstandsbeinchen und ein langes LED-Bein. Sonst nichts.
+
+**Was du dafür brauchst:**
+
+| Anzahl | Klemme | Was hineinkommt |
+|---|---|---|
+| **1** | WAGO 221, **5-fach** | *Plus-Verteiler:* eine Ader von `MOSFET +`, dazu die vier Widerstandsbeinchen |
+| **4** | WAGO 221, **2-fach** | je eine pro LED: das andere Widerstandsbeinchen + das **lange** LED-Bein |
+| **1** | WAGO 221, **5-fach** | *Minus-Sammler:* die vier **kurzen** LED-Beine, dazu eine Ader zu `MOSFET LOAD` |
+| *(1)* | WAGO 221, **3-fach** | *optional, oben in der Box:* XIAO `5V`, Ader zur `+`-Klemme, Litze in den Deckel — falls du keine zwei Adern in einer Schraubklemme magst |
+
+Das sind die üblichen Größen aus jedem 221er-Set.
+
+- **Langes Bein = Plus (Anode).** Das kurze Bein hat zusätzlich eine abgeflachte Stelle am
+  Rand des Kunststoffkragens — das ist Minus. Bei Modulen steht es aufgedruckt, bei nackten
+  LEDs musst du hinsehen. Verpolt leuchtet die LED einfach nicht; kaputt geht dabei nichts.
+- **Der Widerstand selbst hat keine Richtung.** Beide Beinchen sind gleichwertig, du kannst
+  ihn drehen, wie du willst. Die Farbringe haben zwar eine Leserichtung (der Goldring steht
+  rechts), aber das ist nur zum **Ablesen** des Werts da, nicht zum Einbauen.
+- ⚠️ Nimm **Hebelklemmen (WAGO 221)**. Ein Widerstandsbeinchen hat etwa 0,2 mm² — das hält
+  dort sauber. In den steckbaren 773/2273, die für 0,5–2,5 mm² gedacht sind, rutscht es
+  wieder heraus.
+- **Kürz die Beinchen auf etwa 10 mm**, bevor du sie einklemmst. Lange, biegsame Drähtchen
+  brechen mit der Zeit an der Klemme ab — und kompakt muss es im Deckel ohnehin werden.
+- **Alles davon gehört mit in den Deckel**, direkt neben die LEDs — nicht nach oben in die
+  Elektronikbox. Dann gehen weiterhin nur **zwei** Litzen durch Loch `K`, so wie es der
+  [Bauplan 4.3](04-bauplan.md#die-ir-leds-setzen) vorsieht: eine vom Plus-Verteiler zu
+  `MOSFET +`, eine vom Minus-Sammler zu `MOSFET LOAD`. Säßen die Widerstände oben, müsstest
+  du vier Plus-Leitungen plus eine Masse durchs Loch fädeln.
+
+Wird das Modul **trotz** Vorwiderständen warm, ist es nicht mehr die Last — dann geht es
+weiter bei [7.3 „Das MOSFET-Modul wird heiß“](07-wartung-und-fehlersuche.md#das-mosfet-modul-wird-heiß).
+
+### Dein LED-Modul hat drei Pins statt zwei
+
+Viele fertige IR-LED-Module haben eine **dreipolige** Stiftleiste. Das sieht nach „mehr“
+aus, ist aber kein Problem: **Einen der drei Pins lässt du einfach frei.** Man muss nur
+wissen, welchen — und das findest du in zwei Minuten selbst heraus.
+
+**Warum überhaupt drei?** Weil diese Platinen gar nicht als Lampe gedacht sind, sondern als
+**Fernbedienungs-Sender**. Dort kommt das Signal direkt aus einem Controller-Pin, und die
+Stiftleiste folgt dem üblichen Dreier-Raster der ganzen Modulfamilie (`VCC` · `GND` · `S`).
+Bei den meisten Exemplaren ist einer der drei Pins gar nicht angeschlossen oder hat eine
+Sonderaufgabe.
+
+> 💡 **„38 kHz“ auf dem Etikett kannst du ignorieren.** Das ist keine Eigenschaft der
+> Platine, sondern die Frequenz, mit der man so eine LED ansteuert, wenn man eine
+> Fernbedienung nachbaut. Wir benutzen sie als Lampe. Die 1 000 Hz aus `IR_PWM_FREQUENZ`
+> bleiben genau richtig.
+
+> ⚠️ **Der wichtigste Satz dieses Abschnitts: „Modul“ heißt nicht automatisch
+> „Vorwiderstand drauf“.** Beim weit verbreiteten **KY-005** ist je nach Revision einer
+> bestückt — oder es sind nur zwei leere Lötpads da. Ohne Widerstand ist so ein Modul
+> elektrisch **exakt eine nackte LED**, mit allem, was
+> [einen Abschnitt weiter oben](#nackte-leds-statt-module-dann-brauchst-du-vier-vorwiderstände)
+> dazu steht. Darum wird jetzt gemessen, bevor irgendetwas angeschlossen wird.
+
+**Die Messung — ein Modul, ein Multimeter, zwei Minuten**
+
+Nimm **ein** Modul in die Hand, nichts angeschlossen. Ich nenne die Pins hier `A`, `B`, `C`
+(links, Mitte, rechts) — auf die Aufdrucke ist bei diesen Platinen kein Verlass.
+
+**① Multimeter auf Diodentest** (Symbol `⏛` oder `▷|`). Tippe alle drei Paare durch, in
+beide Richtungen. Genau **ein** Paar zeigt einen Wert von etwa **1,0 bis 1,3 V** — das ist
+die LED.
+
+| Prüfspitze | Der Pin darunter ist |
+|---|---|
+| **rot** | die **Anode** — Plus |
+| **schwarz** | die **Kathode** — Minus |
+
+**② Multimeter auf `Ω`**, zwischen dem **übrig gebliebenen** Pin und der Kathode aus ①:
+
+| Anzeige | Was das bedeutet | Dein Minus-Anschluss ist |
+|---|---|---|
+| **100 – 1000 Ω** | Ein Vorwiderstand ist da, und er liegt im Pfad dieses Pins | der **dritte Pin** → Fall A |
+| **0 Ω, piept** | Der Pin liegt auf derselben Masse, kein Widerstand dazwischen | die **Kathode** → Fall B |
+| **∞ oder „OL“** | Der Pin ist gar nicht angeschlossen | die **Kathode** → Fall B |
+
+> 🔑 **Warum diese zweite Messung nicht übersprungen werden darf:** Beim KY-005 sitzt der
+> Platz für den Widerstand zwischen dem **mittleren** Pin und der Masse. Der äußere
+> Minus-Pin geht direkt auf die Masse und **überbrückt ihn**. Klemmst du dort an, hast du
+> den Vorwiderstand wegverdrahtet, ohne es zu merken — und bist genau bei dem Fehler aus
+> dem Abschnitt davor.
+
+**Fall A — Vorwiderstand vorhanden**
+
+```
+   XIAO 5V   ────  MOSFET +      ←── Anode aller vier Module
+   XIAO GND  ────  MOSFET −
+                   MOSFET LOAD   ←── dritter Pin aller vier Module
+
+   Der direkte Kathoden-Pin bleibt frei — er würde den Widerstand überbrücken.
+```
+
+**Fall B — kein Vorwiderstand**
+
+Das Modul ist elektrisch eine nackte LED, also wird es auch so verkabelt: **180 Ω in jeden
+der vier Plus-Zweige**, genau nach dem Bild
+[einen Abschnitt weiter oben](#nackte-leds-statt-module-dann-brauchst-du-vier-vorwiderstände).
+Anode ans Widerstandsende, Kathode an `LOAD`, der dritte Pin bleibt frei.
+
+**Fall C — kein Pin-Paar zeigt einen sauberen Diodenwert**
+
+Dann sitzt ein **Transistor** auf der Platine, und `VCC` · `GND` · `IN` sind wörtlich
+gemeint. So ein Modul hat den Schalter schon eingebaut und gehört deshalb **nicht** auf die
+Lastseite des MOSFETs:
+
+| Modul | XIAO |
+|---|---|
+| `VCC` | `5V` |
+| `GND` | `GND` |
+| `IN` — alle vier parallel | **`D0`** |
+
+**Der MOSFET entfällt in diesem Fall komplett.** Ein Steuereingang zieht nur Mikroampere,
+vier davon sind für einen ESP32-Pin (der bis 40 mA darf) kein Thema. Das Dimmen
+funktioniert unverändert, denn das PWM-Signal kommt ja weiterhin aus `D0` — an der Software
+ändert sich keine Zeile.
 
 ### Dimmen ohne Dimmer — das ist ein netter Trick
 
@@ -762,6 +953,8 @@ Bevor du in der Software suchst, arbeite diese Liste ab. Fast immer steckt es hi
 | **Bild ist da, aber verrauscht/gestreift** | Flachband zu lang, oder `XCLK_MHZ` auf 10 stellen |
 | **IR-LEDs bleiben dunkel** | MOSFET ist ein `IRF520` statt `D4184`. Oder `PWM` steckt nicht auf `D0`. Oder die LEDs sind verpolt. Oder bei der kleinen **Variante A** hängt der LED-Plus nicht mit an der `+`-Klemme — dieses Modul hat kein `OUT+` ([3.6](#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds)) |
 | **IR-LEDs glimmen nur schwach**, obwohl `IR_HELLIGKEIT` hoch steht | Die kleine **Variante A** bekommt an 5 V nur die halbe Gate-Spannung ab. Erst `IR_PWM_FREQUENZ` prüfen (muss ≤ 1000 sein), sonst auf **Variante B** wechseln — [3.6](#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds) |
+| **LED-Modul mit drei Pins bleibt dunkel** | Der falsche der drei Pins ist angeklemmt. Welcher welcher ist, misst du in zwei Minuten aus — [3.6](#dein-led-modul-hat-drei-pins-statt-zwei) |
+| **Das MOSFET-Modul wird heiß oder riecht verschmort** | ⚠️ Sofort stromlos machen. Fast immer: **nackte LEDs ohne Vorwiderstand** ([oben](#nackte-leds-statt-module-dann-brauchst-du-vier-vorwiderstände)). Sonst ein Kurzschluss auf der Lastseite oder ein `IRF520` auf dem Chip. Die ganze Liste steht in [7.3](07-wartung-und-fehlersuche.md#das-mosfet-modul-wird-heiß) |
 | **Akkuanzeige zeigt 0,00 V** | Spannungssensor nicht angeschlossen, oder `S` steckt nicht auf `D1`, oder das schwarze Kabel zu `GND` fehlt |
 | **Akkuanzeige zeigt Unsinn** | Sensor ist nicht kalibriert → [Sketch 5](05-software.md#52-die-sieben-lern-sketches) |
 | **Vogelzähler läuft ohne Vögel hoch** | Lichtschranke schaut nicht genau geradeaus, oder Sonne blendet den Empfänger. Sonst `LICHTSCHRANKE_INVERTIERT` umstellen |

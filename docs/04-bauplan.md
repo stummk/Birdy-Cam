@@ -151,6 +151,21 @@ Kabel kommt, und damit sich Kondenswasser nicht auf dem Sensor niederschlägt.
    ([Schaltplan 3.6](03-schaltplan.md#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds)) —
    und die zwei Litzen durch Loch **K** nach oben führen.
 
+> ⚠️ **Nur wenn du nackte 5-mm-LEDs verbaust** (oder Module ohne bestückten Vorwiderstand,
+> etwa den KY-005): Dann gehört in **jeden** der vier Plus-Zweige ein eigener
+> **Vorwiderstand**, 180 oder 220 Ω. Ohne ihn schmort das MOSFET-Modul, während die LEDs
+> munter weiterleuchten. Rechnung, Bild und Klemmenliste stehen in
+> [Schaltplan 3.6](03-schaltplan.md#nackte-leds-statt-module-dann-brauchst-du-vier-vorwiderstände).
+>
+> **Für den Deckel heißt das:** Vier Widerstände und **sechs** Klemmen kommen mit hier
+> hinein — ein 5-fach-Verteiler für Plus, vier 2-fach-Klemmen (je Widerstand + LED) und ein
+> 5-fach-Sammler für Minus. Nach oben durch Loch **K** gehen trotzdem nur die gewohnten
+> zwei Litzen.
+>
+> Bau das **fertig und probiere es aus, bevor du die LEDs einklebst** — danach kommst du an
+> die Beinchen nicht mehr heran. Wenn alles leuchtet: die Klemmen mit einem Tupfer
+> Heißkleber gegen die Deckelunterseite fixieren, damit nichts wackelt.
+
 ### Die Kabeldurchführung K
 
 Loch **K** ist der einzige Weg für Kamerakabel, IR-Litzen und Lichtschranken-Kabel.

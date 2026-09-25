@@ -26,7 +26,7 @@
 | **E7** | **LiPo-Akku 1S, 5000 mAh**, mit Schutzschaltung + JST-PH-2.0-Stecker | Überbrückt Nacht und Regentage. ⚠️ **Mit Schutzschaltung** ist Pflicht. Für doppelte Reserve: 10 000 mAh, +12 € | 14 € |
 | **E8** | Spannungssensor-Modul 0–25 V | Damit die Website den Akkustand zeigt. Kommt meist im 5er-Pack | 2 € |
 | **E8b** | **JST-PH-2.0-Pigtails**, je 1× mit Stecker und 1× mit Buchse | Damit Laderegler **und** Spannungssensor gleichzeitig am Akku hängen, ohne zu löten — verteilt wird in der Schraubklemme des Sensors. ⚠️ **Kein Y-Kabel suchen:** JST-**PH 2.0**-Splitter gibt es praktisch nicht, die „JST-Y-Kabel“ aus dem Modellbau sind der dickere RCY-Stecker und passen nicht. Gibt es im Set. [Wie es geht](03-schaltplan.md#38-der-spannungssensor--damit-du-den-akkustand-siehst) | 3 € |
-| **E9** | **4 × IR-LED-Modul 940 nm** | Das unsichtbare Nachtlicht. ⚠️ **940 nm**, nicht 850 nm — letzteres glimmt für Menschen sichtbar rot | 7 € |
+| **E9** | **4 × IR-LED-Modul 940 nm** | Das unsichtbare Nachtlicht. ⚠️ **940 nm**, nicht 850 nm — letzteres glimmt für Menschen sichtbar rot. ⚠️ **Fertige Module**, keine nackten LEDs — der Vorwiderstand sitzt auf der Platine ([2.2 ④](#22-die-teile-bei-denen-man-aufpassen-muss)) | 7 € |
 | **E10** | **MOSFET-Modul, Logic Level** (D4184 / AOD4184) | Der elektronische Lichtschalter für die LEDs. ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch. Es gibt zwei Bauformen — [welche du hast und was das ändert](03-schaltplan.md#zuerst-welche-bauform-hast-du-zähl-die-anschlüsse) | 4 € |
 | **E11** | **IR-Lichtschranke** mit Digitalausgang, 3,3 V | Zählt Ein- und Ausflüge exakt. Optional, in der Firmware **ab Werk abgeschaltet** — aber das schönste Bauteil im Projekt, und jederzeit nachrüstbar ([1.3](01-ueberblick.md#13-die-lichtschranke--die-beste-idee-im-ganzen-plan)) | 3 € |
 | **E12** | Dupont-Steckkabel-Set (F-F und F-M) | Alle Steckverbindungen. 10–20 cm Länge reicht | 5 € |
@@ -87,9 +87,9 @@ Der Klardeckel `1554FCL` passt auf die Baugrößen F, FL und G — nicht vergess
 
 ---
 
-## 2.2 Die drei Teile, bei denen man aufpassen muss
+## 2.2 Die Teile, bei denen man aufpassen muss
 
-Wenn du dir nur drei Dinge aus diesem Kapitel merkst, dann diese.
+Wenn du dir nur vier Dinge aus diesem Kapitel merkst, dann diese.
 
 ### ① Das Kameramodul muss **ohne** IR-Filter sein
 
@@ -131,6 +131,32 @@ bequem. Nur wenn dort mehr steht (etwa bei einem 24-V-Panel), gehört ein andere
 > 💡 **Das ist der Vorteil des Waveshare-Ladereglers:** Er nimmt alles zwischen 6 und
 > 24 Volt und rechnet selbst herunter. Du musst bei der Panelauswahl also nicht auf
 > Zehntelvolt achten — nur nach oben ist eine Grenze.
+
+### ④ Die IR-LEDs müssen **Module** sein
+
+`E9` heißt **IR-LED-Modul**, und das ist wörtlich gemeint: eine kleine Platine, auf der der
+**Vorwiderstand schon sitzt**. Nur deshalb kommt das Wort „Vorwiderstand“ in dieser
+Anleitung sonst nirgends vor.
+
+Nimmst du stattdessen **nackte 5-mm-LEDs** aus der Bastelkiste — die es für ein Zehntel des
+Geldes gibt —, fehlt genau dieses Bauteil. Und eine LED begrenzt ihren Strom nicht selbst:
+Direkt an 5 V fließt statt der geplanten 20 mA schnell ein **Ampere**. Das MOSFET-Modul
+wird dann heiß und riecht verschmort, und die LEDs nehmen Schaden.
+
+> ⚠️ **Das Tückische daran: Die LEDs leuchten dabei munter weiter** — heller sogar als
+> sonst. Am Licht merkst du den Fehler also nicht. Du merkst ihn am warmen MOSFET.
+
+Das ist **kein** Grund, keine nackten LEDs zu nehmen. Es sind vier Widerstände mehr, sie
+kosten zusammen ein paar Cent, und in den 5-mm-Bohrungen des Deckels sitzen nackte LEDs
+sogar bequemer als die Platinen. Die Rechnung und die lötfreie Verdrahtung stehen in
+[Schaltplan 3.6](03-schaltplan.md#nackte-leds-statt-module-dann-brauchst-du-vier-vorwiderstände).
+
+**Und noch eine Zahl, über die man stolpert: zwei Pins oder drei?** Am einfachsten sind
+Module mit **zwei** Anschlüssen (`+` und `−`) — die kommen genau so an den MOSFET, wie es
+in [3.6](03-schaltplan.md#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds) steht. Module
+mit **drei** Pins gehen aber genauso; einer der drei bleibt dann frei. Welcher, misst du in
+zwei Minuten aus:
+[3.6 „Dein LED-Modul hat drei Pins statt zwei“](03-schaltplan.md#dein-led-modul-hat-drei-pins-statt-zwei).
 
 ---
 

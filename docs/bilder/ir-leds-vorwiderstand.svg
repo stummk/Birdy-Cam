@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1140 840" width="1140" height="840" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+
+  <rect x="0" y="0" width="1140" height="840" fill="#ffffff"/>
+  <rect x="1" y="1" width="1138" height="838" fill="none" stroke="#d5dbe4" stroke-width="2" rx="6"/>
+
+  <text x="570" y="34" text-anchor="middle" font-size="21" font-weight="bold" fill="#16232f">Vier IR-LEDs mit Vorwiderstand — der ganze Weg vom XIAO bis zur LED</text>
+  <text x="570" y="56" text-anchor="middle" font-size="12.5" fill="#5b6b7d">Gezeichnet mit Variante A („HW-532“). Vorwiderstände sind nur bei nackten LEDs und bei Modulen ohne bestückten Widerstand nötig — sonst alles identisch.</text>
+
+  <!-- ===================== Zonen ===================== -->
+  <rect x="20" y="76" width="435" height="524" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="34" y="94" font-size="12" font-weight="bold" fill="#64748b">ELEKTRONIKBOX — außen an der Wand</text>
+
+  <rect x="470" y="76" width="642" height="524" rx="10" fill="#fdfbf7" stroke="#94a3b8" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="484" y="94" font-size="12" font-weight="bold" fill="#64748b">NISTKASTENDECKEL — innen, über dem Nest</text>
+
+  <line x1="462" y1="76" x2="462" y2="600" stroke="#b08968" stroke-width="5"/>
+  <text x="462" y="620" text-anchor="middle" font-size="12" font-weight="bold" fill="#8a5a33">Loch K — hier gehen genau zwei Litzen durch</text>
+
+  <!-- ===================== Leitungen ===================== -->
+  <!-- 5V: XIAO -> oben herum -> Sammelpunkt vor der +-Klemme -->
+  <path d="M 194 165 L 212 165 L 212 108 L 446 108 L 446 285" fill="none" stroke="#d1332e" stroke-width="4"/>
+  <!-- Sammelpunkt -> +-Klemme -->
+  <path d="M 410 285 L 446 285" fill="none" stroke="#d1332e" stroke-width="4"/>
+  <!-- Sammelpunkt -> durch Loch K -> Plus-Verteiler -->
+  <path d="M 446 285 L 495 285" fill="none" stroke="#d1332e" stroke-width="4"/>
+
+  <!-- D0 -> PWM -->
+  <path d="M 194 199 L 240 199" fill="none" stroke="#d99400" stroke-width="4"/>
+  <!-- XIAO GND -> Sammelpunkt -->
+  <path d="M 194 233 L 206 233 L 206 470" fill="none" stroke="#2b3440" stroke-width="4"/>
+  <!-- MOSFET GND (Steuerseite) -> Sammelpunkt -->
+  <path d="M 240 233 L 226 233 L 226 470" fill="none" stroke="#2b3440" stroke-width="4"/>
+  <!-- MOSFET − (Lastseite) -> Sammelpunkt -->
+  <path d="M 410 385 L 418 385 L 418 492 L 300 492" fill="none" stroke="#2b3440" stroke-width="4"/>
+  <!-- LOAD -> durch Loch K -> Minus-Sammler -->
+  <path d="M 410 335 L 432 335 L 432 449 L 840 449" fill="none" stroke="#2b3440" stroke-width="4"/>
+
+  <!-- Verteiler -> Widerstaende -->
+  <path d="M 585 165 L 612 165" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 585 230 L 612 230" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 585 295 L 612 295" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 585 360 L 612 360" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <!-- Widerstand -> 2-fach-Klemme -->
+  <path d="M 688 165 L 710 165" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 688 230 L 710 230" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 688 295 L 710 295" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 688 360 L 710 360" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <!-- 2-fach-Klemme -> LED -->
+  <path d="M 810 165 L 840 165" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 810 230 L 840 230" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 810 295 L 840 295" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <path d="M 810 360 L 840 360" fill="none" stroke="#d1332e" stroke-width="3.5"/>
+  <!-- LED-Kathoden -> Minus-Sammler -->
+  <path d="M 1020 165 L 1084 165 L 1084 420" fill="none" stroke="#2b3440" stroke-width="3.5"/>
+  <path d="M 1020 230 L 1068 230 L 1068 420" fill="none" stroke="#2b3440" stroke-width="3.5"/>
+  <path d="M 1020 295 L 1052 295 L 1052 420" fill="none" stroke="#2b3440" stroke-width="3.5"/>
+  <path d="M 1020 360 L 1036 360 L 1036 420" fill="none" stroke="#2b3440" stroke-width="3.5"/>
+
+  <!-- ===================== XIAO ===================== -->
+  <rect x="44" y="130" width="150" height="200" rx="9" fill="#eaf6ef" stroke="#2f7d4f" stroke-width="2.5"/>
+  <text x="119" y="124" text-anchor="middle" font-size="14" font-weight="bold" fill="#16232f">XIAO ESP32-S3</text>
+
+  <rect x="60" y="152" width="134" height="26" rx="4" fill="#fef2f2" stroke="#d1332e" stroke-width="2"/>
+  <text x="127" y="170" text-anchor="middle" font-size="12" font-weight="bold" fill="#a02320">5V</text>
+  <rect x="60" y="186" width="134" height="26" rx="4" fill="#fffbeb" stroke="#d99400" stroke-width="2"/>
+  <text x="127" y="204" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">D0 — Signal</text>
+  <rect x="60" y="220" width="134" height="26" rx="4" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <text x="127" y="238" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">GND</text>
+
+  <text x="60" y="272" font-size="11" fill="#5b6b7d">Nur diese drei Pins</text>
+  <text x="60" y="288" font-size="11" fill="#5b6b7d">gehören zum IR-Licht.</text>
+  <text x="60" y="312" font-size="11" font-style="italic" fill="#5b6b7d">Strom kommt per USB-C</text>
+  <text x="60" y="326" font-size="11" font-style="italic" fill="#5b6b7d">vom Laderegler.</text>
+
+  <!-- ===================== MOSFET ===================== -->
+  <rect x="234" y="130" width="176" height="290" rx="9" fill="#eef4fb" stroke="#3b5573" stroke-width="2.5"/>
+  <text x="322" y="154" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#16232f">MOSFET-Modul D4184</text>
+
+  <rect x="240" y="186" width="86" height="26" rx="4" fill="#fffbeb" stroke="#d99400" stroke-width="2"/>
+  <text x="283" y="204" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">PWM</text>
+  <rect x="240" y="220" width="86" height="26" rx="4" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <text x="283" y="238" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">GND</text>
+  <text x="332" y="196" font-size="10" font-style="italic" fill="#5b6b7d">Steuerseite —</text>
+  <text x="332" y="209" font-size="10" font-style="italic" fill="#5b6b7d">kein Widerstand</text>
+  <text x="332" y="222" font-size="10" font-style="italic" fill="#5b6b7d">nötig, kein VCC</text>
+
+  <line x1="240" y1="260" x2="404" y2="260" stroke="#b9c7d6" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+  <rect x="324" y="272" width="86" height="26" rx="4" fill="#fef2f2" stroke="#d1332e" stroke-width="2"/>
+  <text x="367" y="291" text-anchor="middle" font-size="13" font-weight="bold" fill="#a02320">+</text>
+  <rect x="324" y="322" width="86" height="26" rx="4" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <text x="367" y="340" text-anchor="middle" font-size="12" font-weight="bold" fill="#16232f">LOAD</text>
+  <rect x="324" y="372" width="86" height="26" rx="4" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <text x="367" y="391" text-anchor="middle" font-size="13" font-weight="bold" fill="#16232f">−</text>
+
+  <rect x="244" y="285" width="70" height="72" rx="6" fill="#16232f"/>
+  <text x="279" y="310" text-anchor="middle" font-size="11" font-weight="bold" fill="#dbe7de">FET</text>
+  <text x="279" y="328" text-anchor="middle" font-size="9" fill="#8fa3bb">schaltet nur</text>
+  <text x="279" y="341" text-anchor="middle" font-size="9" fill="#8fa3bb">die Minus-</text>
+  <text x="279" y="354" text-anchor="middle" font-size="9" fill="#8fa3bb">Leitung</text>
+
+  <!-- Sammelpunkt 5V -->
+  <circle cx="446" cy="285" r="7" fill="#d1332e"/>
+  <circle cx="446" cy="257" r="11" fill="#a02320"/>
+  <text x="446" y="262" text-anchor="middle" font-size="13" font-weight="bold" fill="#ffffff">1</text>
+
+  <!-- ===================== GND-Sammelpunkt ===================== -->
+  <rect x="150" y="470" width="150" height="44" rx="7" fill="#fff4e8" stroke="#d97706" stroke-width="2.5"/>
+  <text x="225" y="489" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">GND-Sammelpunkt</text>
+  <text x="225" y="505" text-anchor="middle" font-size="10.5" fill="#5b6b7d">WAGO — alle schwarzen Adern</text>
+  <text x="44" y="538" font-size="10.5" font-style="italic" fill="#5b6b7d">Hier hängen auch Lichtschranke und Spannungssensor:</text>
+  <text x="44" y="553" font-size="10.5" font-style="italic" fill="#5b6b7d">Der XIAO hat nur einen GND-Pin, es wollen aber vier Adern hin.</text>
+  <text x="44" y="574" font-size="10.5" font-style="italic" fill="#a02320">Variante A braucht zwei eigene GND-Adern — Steuer- und Lastseite</text>
+  <text x="44" y="589" font-size="10.5" font-style="italic" fill="#a02320">sind im Modul galvanisch getrennt.</text>
+
+  <!-- ===================== Plus-Verteiler ===================== -->
+  <rect x="495" y="140" width="90" height="250" rx="9" fill="#fff4e8" stroke="#d97706" stroke-width="2.5"/>
+  <text x="540" y="130" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#16232f">WAGO 5-fach</text>
+  <text x="540" y="408" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">Plus-Verteiler</text>
+  <text x="540" y="424" text-anchor="middle" font-size="10.5" fill="#5b6b7d">1 Ader rein, 4 raus</text>
+  <circle cx="495" cy="285" r="5.5" fill="#d1332e"/>
+  <circle cx="585" cy="165" r="5.5" fill="#d1332e"/>
+  <circle cx="585" cy="230" r="5.5" fill="#d1332e"/>
+  <circle cx="585" cy="295" r="5.5" fill="#d1332e"/>
+  <circle cx="585" cy="360" r="5.5" fill="#d1332e"/>
+
+  <!-- ===================== Widerstaende ===================== -->
+  <g stroke="#8a6d3b" stroke-width="1.5">
+    <rect x="618" y="153" width="64" height="24" rx="7" fill="#e8d5b7"/>
+    <rect x="618" y="218" width="64" height="24" rx="7" fill="#e8d5b7"/>
+    <rect x="618" y="283" width="64" height="24" rx="7" fill="#e8d5b7"/>
+    <rect x="618" y="348" width="64" height="24" rx="7" fill="#e8d5b7"/>
+  </g>
+  <g fill="#c0392b">
+    <rect x="627" y="154" width="5" height="22"/><rect x="636" y="154" width="5" height="22"/>
+    <rect x="627" y="219" width="5" height="22"/><rect x="636" y="219" width="5" height="22"/>
+    <rect x="627" y="284" width="5" height="22"/><rect x="636" y="284" width="5" height="22"/>
+    <rect x="627" y="349" width="5" height="22"/><rect x="636" y="349" width="5" height="22"/>
+  </g>
+  <g fill="#7b4a12">
+    <rect x="645" y="154" width="5" height="22"/><rect x="645" y="219" width="5" height="22"/>
+    <rect x="645" y="284" width="5" height="22"/><rect x="645" y="349" width="5" height="22"/>
+  </g>
+  <g fill="#c9a227">
+    <rect x="670" y="154" width="5" height="22"/><rect x="670" y="219" width="5" height="22"/>
+    <rect x="670" y="284" width="5" height="22"/><rect x="670" y="349" width="5" height="22"/>
+  </g>
+  <g text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16232f">
+    <text x="650" y="147">220 Ω</text>
+    <text x="650" y="212">220 Ω</text>
+    <text x="650" y="277">220 Ω</text>
+    <text x="650" y="342">220 Ω</text>
+  </g>
+  <text x="650" y="408" text-anchor="middle" font-size="10.5" font-style="italic" fill="#5b6b7d">keine Richtung —</text>
+  <text x="650" y="422" text-anchor="middle" font-size="10.5" font-style="italic" fill="#5b6b7d">drehen ist egal</text>
+
+  <!-- ===================== 2-fach-Klemmen ===================== -->
+  <g fill="#fff4e8" stroke="#d97706" stroke-width="2.5">
+    <rect x="710" y="145" width="100" height="40" rx="7"/>
+    <rect x="710" y="210" width="100" height="40" rx="7"/>
+    <rect x="710" y="275" width="100" height="40" rx="7"/>
+    <rect x="710" y="340" width="100" height="40" rx="7"/>
+  </g>
+  <g text-anchor="middle" font-size="11.5" font-weight="bold" fill="#92400e">
+    <text x="760" y="169">WAGO 2-fach</text>
+    <text x="760" y="234">WAGO 2-fach</text>
+    <text x="760" y="299">WAGO 2-fach</text>
+    <text x="760" y="364">WAGO 2-fach</text>
+  </g>
+  <text x="760" y="130" text-anchor="middle" font-size="10.5" font-style="italic" fill="#5b6b7d">nur Widerstand + LED</text>
+
+  <!-- ===================== LEDs ===================== -->
+  <g>
+    <rect x="840" y="138" width="180" height="54" rx="8" fill="#f7f2fb" stroke="#8a5ba8" stroke-width="2.5"/>
+    <text x="930" y="160" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#16232f">IR-LED 940 nm</text>
+    <text x="930" y="179" text-anchor="middle" font-size="10.5" fill="#6b5a80">links vorn</text>
+
+    <rect x="840" y="203" width="180" height="54" rx="8" fill="#f7f2fb" stroke="#8a5ba8" stroke-width="2.5"/>
+    <text x="930" y="225" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#16232f">IR-LED 940 nm</text>
+    <text x="930" y="244" text-anchor="middle" font-size="10.5" fill="#6b5a80">rechts vorn</text>
+
+    <rect x="840" y="268" width="180" height="54" rx="8" fill="#f7f2fb" stroke="#8a5ba8" stroke-width="2.5"/>
+    <text x="930" y="290" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#16232f">IR-LED 940 nm</text>
+    <text x="930" y="309" text-anchor="middle" font-size="10.5" fill="#6b5a80">links hinten</text>
+
+    <rect x="840" y="333" width="180" height="54" rx="8" fill="#f7f2fb" stroke="#8a5ba8" stroke-width="2.5"/>
+    <text x="930" y="355" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#16232f">IR-LED 940 nm</text>
+    <text x="930" y="374" text-anchor="middle" font-size="10.5" fill="#6b5a80">rechts hinten</text>
+  </g>
+  <g fill="#d1332e"><circle cx="840" cy="165" r="5.5"/><circle cx="840" cy="230" r="5.5"/><circle cx="840" cy="295" r="5.5"/><circle cx="840" cy="360" r="5.5"/></g>
+  <g fill="#2b3440"><circle cx="1020" cy="165" r="5.5"/><circle cx="1020" cy="230" r="5.5"/><circle cx="1020" cy="295" r="5.5"/><circle cx="1020" cy="360" r="5.5"/></g>
+  <text x="844" y="130" font-size="10.5" font-weight="bold" fill="#a02320">langes Bein +</text>
+  <text x="1016" y="130" text-anchor="end" font-size="10.5" font-weight="bold" fill="#16232f">kurzes Bein −</text>
+
+  <!-- ===================== Minus-Sammler ===================== -->
+  <rect x="840" y="420" width="260" height="58" rx="9" fill="#fff4e8" stroke="#d97706" stroke-width="2.5"/>
+  <text x="970" y="444" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#16232f">WAGO 5-fach — Minus-Sammler</text>
+  <text x="970" y="463" text-anchor="middle" font-size="10.5" fill="#5b6b7d">vier kurze Beine + eine Ader zu LOAD</text>
+  <circle cx="840" cy="449" r="5.5" fill="#2b3440"/>
+
+  <text x="495" y="512" font-size="11.5" font-style="italic" fill="#5b6b7d">Alle sechs Klemmen, die vier Widerstände und die vier LEDs sitzen im Deckel.</text>
+  <text x="495" y="530" font-size="11.5" font-style="italic" fill="#5b6b7d">Nach oben gehen nur zwei Litzen: eine rote zur +-Klemme, eine schwarze zu LOAD.</text>
+  <text x="495" y="556" font-size="11.5" font-style="italic" fill="#a02320">Erst fertig aufbauen und ausprobieren — dann erst die LEDs einkleben.</text>
+
+  <!-- ===================== Erklaerkaesten ===================== -->
+  <rect x="24" y="636" width="530" height="180" rx="9" fill="#fff9ec" stroke="#c9a227" stroke-width="2"/>
+  <text x="42" y="662" font-size="15" font-weight="bold" fill="#16232f">Eine Klemme ist ein Knoten</text>
+  <text x="42" y="686" font-size="12.5" fill="#2b3440">Alles, was in <tspan font-weight="bold">derselben</tspan> Klemme steckt, ist miteinander verbunden —</text>
+  <text x="42" y="705" font-size="12.5" fill="#2b3440">egal in welchem Steckplatz. Daraus folgen die zwei Regeln im Bild:</text>
+  <text x="42" y="733" font-size="12.5" fill="#2b3440"><tspan font-weight="bold" fill="#a02320">1.</tspan> Die zwei Beinchen eines Widerstands gehören in <tspan font-weight="bold">verschiedene</tspan></text>
+  <text x="58" y="751" font-size="12.5" fill="#2b3440">Klemmen. In derselben wäre er überbrückt und wirkungslos.</text>
+  <text x="42" y="777" font-size="12.5" fill="#2b3440"><tspan font-weight="bold" fill="#a02320">2.</tspan> Die LED-Anode darf <tspan font-weight="bold">nicht</tspan> mit in den Plus-Verteiler. Dort liegen</text>
+  <text x="58" y="795" font-size="12.5" fill="#2b3440">die vollen 5 V — die LED hinge wieder ohne Widerstand dran.</text>
+
+  <rect x="574" y="636" width="542" height="180" rx="9" fill="#f3f7f4" stroke="#2f7d4f" stroke-width="2"/>
+  <circle cx="601" cy="657" r="11" fill="#a02320"/>
+  <text x="601" y="662" text-anchor="middle" font-size="13" font-weight="bold" fill="#ffffff">1</text>
+  <text x="620" y="662" font-size="15" font-weight="bold" fill="#16232f">Die +-Klemme bekommt zwei Adern — das ist Absicht</text>
+  <text x="592" y="686" font-size="12.5" fill="#2b3440">Variante A hat kein „OUT+“. Die <tspan font-weight="bold">+</tspan>-Schraubklemme ist selbst der Verteiler:</text>
+  <text x="592" y="705" font-size="12.5" fill="#2b3440">Dort treffen sich die 5-V-Ader vom XIAO und die Litze in den Deckel.</text>
+  <text x="592" y="723" font-size="12.5" fill="#2b3440">Beide vorher verdrillen, dann hält die Schraube sauber.</text>
+  <text x="592" y="751" font-size="12.5" fill="#2b3440"><tspan font-weight="bold">Lieber eine Klemme mehr?</tspan> Geht auch: eine <tspan font-weight="bold">3-fach-WAGO</tspan> in die Box —</text>
+  <text x="592" y="769" font-size="12.5" fill="#2b3440">XIAO 5V, Ader zur +-Klemme, Litze nach unten. Dann hält die</text>
+  <text x="592" y="787" font-size="12.5" fill="#2b3440">Schraubklemme nur noch eine einzige Ader. Elektrisch identisch.</text>
+  <text x="592" y="806" font-size="11.5" font-style="italic" fill="#5b6b7d">Variante B ist einfacher: Dort gehen die LEDs an OUT+ / OUT−, die 5 V an VIN+.</text>
+
+</svg>

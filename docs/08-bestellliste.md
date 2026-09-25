@@ -16,7 +16,7 @@ Nach **Shop sortiert**, damit du Versandkosten sparst. Am Ende steht eine
 
 > 🧪 **Baust du [Variante B](04-bauplan.md#410-variante-b--alles-im-kasten-kamera-hinter-dem-klardeckel)**
 > — alles im Kasten, Kamera hinter dem Klardeckel? Dann **zuerst
-> [8.4d](#84d-variante-b--was-sich-an-der-bestellung-ändert) lesen.** Zwei Positionen unten
+> [8.4e](#84e-variante-b--was-sich-an-der-bestellung-ändert) lesen.** Zwei Positionen unten
 > fallen weg, eine wird ausgetauscht, fünf kommen dazu, und der Akku bekommt ein Maximalmaß.
 
 ---
@@ -98,7 +98,7 @@ Diese Teile kommen oft aus Asien und brauchen **2–4 Wochen**. Deshalb als Erst
 |---|---|---|---|---|
 | ☐ | 1 | **[Solarpanel HPLive 15 W / 12 V](https://www.amazon.de/s?k=HPLive+Solarpanel+15W+12V)** | ⚠️ Auf dem Aufkleber muss `Voc` / „Leerlaufspannung“ **unter 24 V** stehen. Bei 12-V-Panels üblich: 18–22 V. Siehe [8.3b](#83b-zum-solarpanel) | ~30 € |
 | ☐ | 1 | **[microSD 32 GB High Endurance](https://www.amazon.de/s?k=microSD+32GB+High+Endurance)** | **Höchstens 32 GB** (Grenze des Boards) und **„High Endurance“** / „Dashcam“ | 12 € |
-| ☐ | 4 | **[IR-LED-Module 940 nm](https://www.amazon.de/s?k=IR+LED+Modul+940nm+Arduino)** | ⚠️ **940 nm**, nicht 850 nm (das glimmt sichtbar rot) | 7 € |
+| ☐ | 4 | **[IR-LED-Module 940 nm](https://www.amazon.de/s?k=IR+LED+Modul+940nm+Arduino)** | ⚠️ **940 nm**, nicht 850 nm (das glimmt sichtbar rot). ⚠️ **Module** mit Vorwiderstand auf der Platine — nackte LEDs brauchen vier Widerstände dazu, siehe [8.4d](#84d-zu-den-ir-leds) | 7 € |
 | ☐ | 1 | **[MOSFET-Modul Logic Level](https://www.amazon.de/s?k=MOSFET+Modul+D4184+PWM)** (D4184 / AOD4184) | ⚠️ **Kein IRF520!** Der schaltet bei 3,3 V nicht durch. Kommt meist im Mehrfachpack. Zwei Bauformen im Umlauf — am besten **von beiden eine** mitbestellen, siehe [8.4c](#84c-zum-mosfet-modul) | 8 € |
 | ☐ | 1 | [Spannungssensor-Modul 0–25 V](https://www.amazon.de/s?k=Spannungssensor+Modul+25V+Arduino) | Kommt meist im 5er-Pack | 6 € |
 | ☐ | 1 | **[JST-PH-2.0-Pigtail-Set](https://www.amazon.de/s?k=JST+PH+2.0+Stecker+Buchse+Kabel+Set)** (Stecker **und** Buchse mit Kabel) | Du brauchst je eins von beiden — verteilt wird in der Schraubklemme des Sensors. ⚠️ **Nicht** nach einem Y-Kabel suchen, siehe [8.3c](#83c-warum-kein-y-kabel). Meist 10+ Paare im Set | 6 € |
@@ -234,7 +234,48 @@ Suchbegriffe:
 
 ---
 
-## 8.4d Variante B — was sich an der Bestellung ändert
+### 8.4d Zu den IR-LEDs
+
+Hier gibt es drei Dinge zu prüfen, und nur eines davon steht zuverlässig in den
+Artikeldaten. Der Reihe nach:
+
+| Worauf achten | Warum | Was tun, wenn es nicht dasteht |
+|---|---|---|
+| ⭐ **940 nm** | 850-nm-LEDs glimmen für Menschen **sichtbar dunkelrot** — nachts vier rote Punkte über dem Nest | Beim Händler nachfragen. Viele Angebote für IR-Sender nennen die Wellenlänge gar nicht |
+| **Vorwiderstand** | Ohne ihn zieht die LED an 5 V statt 20 mA schnell ein **Ampere** und das MOSFET-Modul schmort | Einfach vier Widerstände mitbestellen (unten) — dann ist es egal, was auf der Platine sitzt |
+| **Nennstrom** | Manche Sendermodule sind mit **30–60 mA** je Stück angegeben, also 120–240 mA für vier statt der 80 mA, mit denen die Anleitung rechnet | Unkritisch für MOSFET und 5-V-Zweig, aber nachts am Akku spürbar. Erste Woche den Akkustand beobachten |
+
+> ⚠️ **„Modul“ heißt nicht automatisch „Vorwiderstand drauf“.** Beim verbreiteten
+> **KY-005** ist je nach Revision einer bestückt — oder es sind nur zwei leere Lötpads da.
+> Ohne Widerstand ist so ein Modul elektrisch exakt eine nackte LED. Wie du es in zwei
+> Minuten ausmisst, steht in
+> [Schaltplan 3.6](03-schaltplan.md#dein-led-modul-hat-drei-pins-statt-zwei).
+
+**Zwei Pins oder drei?** Zwei (`+` / `−`) ist am bequemsten — such nach „IR LED Platine
+940nm 5V“ oder „Infrarot Illuminator Board“, das sind als Beleuchtung gebaute Platinen.
+Dreipolige Sendermodule funktionieren genauso gut, einer der drei Pins bleibt dann frei.
+
+**Und die günstigste Variante: nackte LEDs.** In den 5-mm-Bohrungen des Deckels sitzen sie
+sogar bequemer als die Platinen, und du weißt genau, welcher Strom fließt. Dann gehören
+**vier Widerstände** mit in den Warenkorb:
+
+| | |
+|---|---|
+| **180 Ω, ¼ W**, 4 Stück | ergibt ~20 mA je LED — genau der Strom, mit dem die Anleitung rechnet. **200 Ω** aus einem Sortiment tun es genauso (18,5 mA) |
+| **WAGO 221**, 2-fach, 4 Stück | je eine pro LED-Zweig. Die steckbaren 773/2273 halten ein Widerstandsbeinchen **nicht** |
+
+Ohne Vorwiderstand zieht eine LED an 5 V statt 20 mA schnell ein **Ampere** — das
+MOSFET-Modul wird heiß und riecht verschmort, während die LEDs munter weiterleuchten. Die
+Rechnung steht in
+[Schaltplan 3.6](03-schaltplan.md#nackte-leds-statt-module-dann-brauchst-du-vier-vorwiderstände).
+
+Suchbegriffe:
+[Widerstandssortiment ¼ W](https://www.amazon.de/s?k=Widerstand+Sortiment+1%2F4W+Metallschicht) ·
+[WAGO 221 Set](https://www.amazon.de/s?k=WAGO+221+Set)
+
+---
+
+## 8.4e Variante B — was sich an der Bestellung ändert
 
 Nur für [4.10 Variante B](04-bauplan.md#410-variante-b--alles-im-kasten-kamera-hinter-dem-klardeckel)
 (alles im Kasten, Kamera hinter dem Klardeckel). Wer Variante A baut, überspringt das hier.
@@ -328,7 +369,7 @@ Die Reihenfolge ist nicht beliebig — sie entscheidet, ob du wartest:
              ▶ Akku
 ```
 
-> 🧪 **In [Variante B](#84d-variante-b--was-sich-an-der-bestellung-ändert)** entfallen in
+> 🧪 **In [Variante B](#84e-variante-b--was-sich-an-der-bestellung-ändert)** entfallen in
 > Woche 1 das FPC-Kabel und in Woche 2 das Acrylglas. Das **Hammond-Gehäuse samt Klardeckel**
 > ist dafür oft Lagerware beim Distributor statt Sofortversand — in Woche 1 mitbestellen,
 > nicht erst in Woche 2.
@@ -348,7 +389,7 @@ Die Reihenfolge ist nicht beliebig — sie entscheidet, ob du wartest:
 | C — Amazon (Panel, Karte, Module, Kleinteile) | 95 € |
 | D — Akku, Gehäuse, Verschraubungen | 30 € |
 | **Bauteile gesamt** | **≈ 187 €** |
-| *Aufschlag für [Variante B](#84d-variante-b--was-sich-an-der-bestellung-ändert)* | *+ ≈ 12 €* |
+| *Aufschlag für [Variante B](#84e-variante-b--was-sich-an-der-bestellung-ändert)* | *+ ≈ 12 €* |
 | Versand (4–5 Shops) | 12–25 € |
 | **Realistisch an der Kasse** | **≈ 200–210 €** |
 | *mit Sparliste [8.6](#86-sparliste)* | *≈ 160 €* |
@@ -367,6 +408,7 @@ Bitte **vor** dem Einbau prüfen, nicht danach.
       laufen lassen (IR-LEDs an), dann in [Sketch 3](05-software.md#52-die-sieben-lern-sketches)
       im **abgedunkelten** Raum ins Bild schauen. Sieht man etwas → der Filter ist weg ✅
 - [ ] IR-LEDs: mit der **Handy-Frontkamera** prüfen, ob sie leuchten
+- [ ] IR-LEDs: wirklich **Module** (kleine Platine mit Bauteilen drauf)? Nackte 5-mm-LEDs brauchen **vier Vorwiderstände**, sonst schmort das MOSFET-Modul ([8.4d](#84d-zu-den-ir-leds))
 - [ ] MOSFET-Modul: steht **D4184** oder **AOD4184** auf dem Chip? (Nicht IRF520)
 - [ ] MOSFET-Modul: Anschlüsse zählen — 2 + 3 ist Variante A, 3 + 4 ist Variante B ([8.4c](#84c-zum-mosfet-modul))
 - [ ] **Solarpanel: `Voc` auf dem Aufkleber unter 24 V?**
@@ -382,7 +424,7 @@ Bitte **vor** dem Einbau prüfen, nicht danach.
 > blind — und das merkst du sonst erst, wenn alles im Kasten verklebt ist und der Kasten
 > bis September nicht mehr geöffnet werden darf.
 
-**Nur für [Variante B](#84d-variante-b--was-sich-an-der-bestellung-ändert):**
+**Nur für [Variante B](#84e-variante-b--was-sich-an-der-bestellung-ändert):**
 
 - [ ] ⭐ **Klardeckel `1554FCL` wirklich dabei?** Liegt ein grauer Deckel im Karton, wurde er
       vergessen — nachbestellen, bevor du weiterbaust

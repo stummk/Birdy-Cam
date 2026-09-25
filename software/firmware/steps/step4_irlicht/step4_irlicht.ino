@@ -37,6 +37,13 @@
 //     LED Minus  -> MOSFET OUT-
 //
 //  Alle vier LEDs parallel: alle Plus zusammen, alle Minus zusammen.
+//
+//  ⚠️ NACKTE LEDs STATT MODULE? DANN ERST VIER VORWIDERSTAENDE EINBAUEN.
+//     Die Module E9 haben den Widerstand auf der Platine. Eine nackte LED
+//     direkt an 5 V zieht statt 20 mA schnell ein Ampere: Das MOSFET-Modul
+//     wird heiss und riecht verschmort - und die LEDs leuchten dabei munter
+//     weiter, du merkst es also nicht am Licht. 180 Ohm je LED, ein eigener
+//     Widerstand pro Zweig. Rechnung in Schaltplan 3.6.
 //  ---------------------------------------------------------------------
 //
 //  🔍 DAS EXPERIMENT:
@@ -122,6 +129,11 @@ void loop() {
   Serial.println("  TEST 1 hell, aber TEST 2 dimmt kaum/ruckelig");
   Serial.println("     -> PWM_FREQUENZ ist zu hoch fuer dein Modul.");
   Serial.println("        Auf 500 stellen und nochmal.");
+  Serial.println("");
+  Serial.println("  Modul wird WARM oder riecht verschmort");
+  Serial.println("     -> SOFORT Strom weg. Hast du nackte LEDs ohne");
+  Serial.println("        Vorwiderstand angeschlossen? Das ist fast immer");
+  Serial.println("        die Ursache. Siehe Wartung 7.3.");
   Serial.println("");
   Serial.println("  TEST 1 nur schwaches Glimmen oder gar nichts");
   Serial.println("     -> Der Reihe nach pruefen:");

@@ -130,6 +130,36 @@ In dieser Reihenfolge probieren:
 4. Auf 850-nm-LEDs wechseln — der Vogel merkt es nicht, nur ein Mensch, der nachts direkt
    ins Einflugloch schaut, sieht ein schwaches rotes Glimmen
 
+### Das MOSFET-Modul wird heiß
+
+**Sofort stromlos machen.** Im Normalbetrieb bleibt das Modul handkalt: Vier IR-LEDs ziehen
+zusammen rund 80 mA, und ein durchgeschalteter AOD4184 setzt dabei weniger als ein
+Milliwatt um. Warm wird es nur aus vier Gründen, und alle vier sind Fehler.
+
+| Ursache | Erkennungszeichen | Lösung |
+|---|---|---|
+| **Nackte LEDs ohne Vorwiderstand** | LEDs leuchten auffallend hell, Modul wird schnell richtig heiß | Vier Vorwiderstände einbauen — Rechnung in [3.6](03-schaltplan.md#nackte-leds-statt-module-dann-brauchst-du-vier-vorwiderstände) |
+| **Kurzschluss auf der Lastseite** | Durchgangsprüfer piept zwischen `5V` und `GND` | Verdrahtung Ader für Ader nachgehen, besonders geklemmte Verteiler. Bei **Variante A** liegen `+` (= 5 V) und `−` (= GND) direkt nebeneinander |
+| **`IRF520` statt `D4184`** | steht so auf dem Chip | Modul tauschen — der schaltet bei 3,3 V nicht durch ([2.2 ②](02-stueckliste.md#22-die-teile-bei-denen-man-aufpassen-muss)) |
+| **Variante A an 5 V** | nur handwarm, und das Nachtbild ist eher zu dunkel | Auf **Variante B** wechseln ([3.6](03-schaltplan.md#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds)) |
+
+Der gemeinsame Nenner: Der MOSFET arbeitet dann nicht als **Schalter**, sondern als
+**Widerstand**, und verheizt die Differenz. Dass die LEDs dabei leuchten, beweist gar
+nichts — sie leuchten in allen vier Fällen.
+
+**Hat es schon gerochen, ist es mit Nachbessern nicht getan:**
+
+1. **Modul tauschen.** Geschmort ist geschmort, und in fünf Monaten kommst du nicht mehr
+   dran. Ob der Kanal durchlegiert ist, siehst du so: gelbes Kabel von `D0` abziehen,
+   Strom an. Leuchten die LEDs trotzdem, ist er hin — ein gestorbener MOSFET bleibt
+   meistens *leitend*, nicht sperrend.
+2. **LEDs prüfen.** Sie liefen über ihrer Spezifikation. Alle vier mit der
+   **Handy-Frontkamera** vergleichen — eine deutlich schwächere hat etwas abbekommen.
+   Trübe oder verfärbte Kuppen sind eindeutig. Bei Zweifel alle vier tauschen, sie kosten
+   Cent.
+3. **Den XIAO ansehen.** Der Strom lief über seinen `5V`-Pin, und der hängt direkt an
+   USB-VBUS. Riecht dort etwas oder war die Buchse warm, hat auch das Board gelitten.
+
 ### Der Ton stimmt nicht
 
 | Symptom | Ursache | Lösung |
