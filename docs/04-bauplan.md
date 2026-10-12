@@ -557,6 +557,11 @@ Deshalb der flache Akku, deshalb kein 10-000er, und deshalb die kleine MOSFET-Ba
   [4.5](#45-die-elektronikbox) unverändert: den u.FL-Stecker nicht knicken.
 - **Silikagel** in die freie Ecke. Bei fünf Monaten ohne Öffnen doppelt wichtig.
 
+> 💡 **Wenn die IR-LEDs in der Box bleiben**, liegt der Akku nicht an der Wand, sondern
+> **mittig** — nur so bleiben die Deckelecken für die LEDs frei. Der Stapel bleibt derselbe,
+> die Höhenrechnung auch. Die komplette Anordnung mit Maßen steht in
+> [4.10.9](#4109-die-eckenvariante--schwarze-platte-und-vier-ecken).
+
 ---
 
 ### 4.10.4 Die Durchführungen
@@ -677,7 +682,7 @@ Weil du fünf Monate nicht mehr an die Hardware kommst, sind diese drei Dinge in
 
 | | Änderung | Δ |
 |---|---|---|
-| **E4** FPC-Verlängerung | **entfällt** | −3 € |
+| **E4** FPC-Verlängerung | **entfällt** — *außer* in der Eckenvariante ([4.10.9](#4109-die-eckenvariante--schwarze-platte-und-vier-ecken)), dort ist sie Pflicht: 7,5–10 cm, 24-polig, 0,5 mm | −3 € / ±0 € |
 | **E13** IP65-Gehäuse 120 × 80 × 50 | → **Hammond 1555FL2GY + Klardeckel 1554FCL** | +14 € |
 | **E15** Acrylglas 3 mm | **entfällt** | −6 € |
 | **E17** USB A → C, 30 cm | → dasselbe, aber **mit 90°-Winkelstecker, 10–15 cm** | 0 € |
@@ -686,6 +691,7 @@ Weil du fünf Monate nicht mehr an die Hardware kommst, sind diese drei Dinge in
 | *neu* | Reedschalter (Glasröhrchen, Schließer) | +1 € |
 | *neu* | PVC-Platte 2 mm + 4 × M3-Distanzhülse 12 mm | +3 € |
 | *neu* | Moosgummi schwarz (Blendring), Brett 10 mm + Leisten (Zwischendecke) | Restholz |
+| *neu* | Moosgummi oder PVC schwarz, 108 × 78 × 2 mm — die Platte aus [4.10.9](#4109-die-eckenvariante--schwarze-platte-und-vier-ecken), nur bei LEDs in der Box | +2 € |
 | | **unterm Strich** | **≈ +12 €** |
 
 ---
@@ -726,6 +732,9 @@ dahinter wird schwarz. Man sitzt vor leuchtenden LEDs und einem schwarzen Bild.
 | **Schwarze Trennwand** zwischen LED-Zone und Linsenzone, bis an den Deckel | Licht, das durch die Box statt durch den Deckel läuft |
 | **Blendring** um das Objektiv ([4.10.2](#4102-der-klardeckel-ist-das-kamerafenster), Bedingung 2) und Deckelinnenseite rundherum **mattschwarz** | Innenreflexion des Fensters. Gehört ohnehin rein |
 
+Alle drei zusammen baut man am einfachsten als **eine Platte** — siehe
+[4.10.9](#4109-die-eckenvariante--schwarze-platte-und-vier-ecken).
+
 #### Und der Schalter in der Firmware
 
 ```cpp
@@ -743,6 +752,114 @@ Das kostet Kontrast, aber man sieht etwas, statt in Schwarz zu starren.
 > Nachtbild bekommst du nur mit den LEDs auf der anderen Seite des Fensters. Wenn du später
 > doch noch eine Durchführung setzen kannst — tu es, und stell den Schalter wieder auf
 > `false`.
+
+---
+
+### 4.10.9 Die Eckenvariante — schwarze Platte und vier Ecken
+
+Das ist der Aufbau, mit dem die drei Maßnahmen von oben in einem Bauteil zusammenfallen: eine
+schwarze Platte mit fünf Löchern, von innen auf den Klardeckel geklebt. Sie ist Kragen,
+Trennwand und Blendring in einem.
+
+```
+   Blick von unten durch den Klardeckel, Maße in mm
+   Nullpunkt = Ecke der Platte (108 x 78)
+
+        x=0      9                      99    104
+      z  ┌───────┬───────────────────────┬──────┐
+      0  │       ╔═══════════════════════╗      │
+      4  │   ○   ║                       ║  ○   │   ○ = IR-LED, Ø 5,2
+         │       ║   Akku 5000 mAh       ║      │
+         │       ║   90 x 55 — MITTIG    ║      │   dadurch 9 mm Rand
+         │       ║                       ║      │   links und rechts
+     53  │       ╚═══════════════════════╝      │
+         │                                      │
+    63,5 │                  ⊕                   │   ⊕ = Objektiv, Ø 10
+         │                                      │
+     74  │   ○                              ○   │
+     78  └──────────────────────────────────────┘
+                            54
+```
+
+Der Akku liegt über der Platte, nicht in ihr — er ist nur eingezeichnet, damit man sieht,
+warum die LEDs genau dort hinmüssen und nicht weiter innen.
+
+#### Die zwei Einsichten, auf denen das beruht
+
+**1. Das Flachkabel löst die Kamera vom Board.** Ohne FPC-Verlängerung kleben XIAO und
+Kameramodul zusammen und brauchen 21 × 17,5 mm **an einem Stück**. Mit einer Verlängerung von
+7,5–10 cm darf das Modul dorthin, wo es gebraucht wird, und der XIAO bleibt daneben liegen.
+Die Luftlinie beträgt dann nur rund 32 mm — reichlich Reserve für einen weiten Bogen.
+
+**2. Der Akku rückt in die Mitte.** Er ist 90 mm lang bei 112 mm Innenbreite. Liegt er an einer
+Wand, frisst er zwei Ecken des Deckels. Liegt er **mittig**, bleibt links und rechts je ein
+Rand:
+
+```
+   (112 − 90) ÷ 2  =  11 mm je Seite        LED-Durchmesser: 5 mm
+```
+
+Schmal, aber genau breit genug — auf der Platte bleiben davon 9 mm, weil sie 2 mm vom
+Gehäuserand abrückt. Damit sind **alle vier Ecken frei**, und die Kamera bekommt den
+27-mm-Streifen hinter dem Akku.
+
+#### Die Bohrschablone
+
+| Loch | Position x / z | Durchmesser |
+|---|---|---|
+| Objektiv | 54 / 63,5 | 10 mm |
+| IR-LED 1 | 4 / 4 | 5,2 mm |
+| IR-LED 2 | 104 / 4 | 5,2 mm |
+| IR-LED 3 | 4 / 74 | 5,2 mm |
+| IR-LED 4 | 104 / 74 | 5,2 mm |
+
+Platte 108 × 78 × 2 mm, mittig auf dem Deckel. Material: schwarzes Moosgummi (weich, dichtet
+von selbst) oder mattschwarzes PVC. Geklebt wird mit doppelseitigem Band **nur am Rand** — der
+Deckel muss im Herbst wieder aufgehen.
+
+#### Innenaufbau dazu
+
+| Teil | Position x / z | Höhe |
+|---|---|---|
+| Akku 5000 mAh, 90 × 55 | 11 / 0 | 0–11 mm |
+| Zwischenboden 2 mm, 92 × 57 | 10 / 0 | 11–13 mm |
+| Laderegler 65 × 56 | 20 / 0,5 | 13–35,9 mm |
+| Kameramodul am Flachkabel, 19 × 17 | 46,5 / 57 | 0–12 mm |
+| XIAO ESP32-S3, 21 × 17,5 | 14 / 59 | 0–8 mm |
+| MOSFET, 23 × 17 | 72 / 59 | 0–8 mm |
+| Spannungssensor **hochkant**, 22 × 6 | 103 / 18 | 0–13 mm |
+| Silikagel, 10 × 20 | 0 / 20 | 0–8 mm |
+
+Der Stapel aus Akku, Zwischenboden und Laderegler misst **35,9 von 37 mm**. Darunter passt
+nichts mehr — LEDs und Kamera leben von der Fläche *neben* ihm. Der Spannungssensor muss
+hochkant an die Wand, sonst passt er nicht in den 11-mm-Rand.
+
+#### Was die Ecken bringen — und was sie kosten
+
+| | Ecken | LEDs in einer Reihe |
+|---|---|---|
+| Abstand LED → Objektiv | **51–78 mm** | 31–80 mm |
+| Abstand LED → Nest | 4 × 209 mm | 202–204 mm |
+| Lichtverlust gegenüber mittig | 9 % je LED | 2–4 % |
+| Ausleuchtung | symmetrisch, kaum Schlagschatten | von einer Seite, Schatten hinterm Nistmaterial |
+| Objektiv aus der Boxmitte | 24,5 mm | 44,5 mm |
+
+> ⭐ **Die neun Prozent sind der ganze Preis.** Eine Eck-LED ist 209 mm vom Nest entfernt statt
+> 200 — das kostet neun Prozent Licht. Dafür sitzt sie 51 statt 31 mm vom Objektiv weg, und
+> **das** ist hier die Zahl, auf die es ankommt: Je weiter die LED von der Linse weg ist, desto
+> weniger von ihrem Licht findet den kurzen Weg über den Deckel zurück ins Objektiv.
+>
+> Neun Prozent Licht holst du mit einer Stufe `IR_HELLIGKEIT` zurück. Streulicht holt dir
+> niemand zurück.
+
+> ⚠️ **Das Flachkabel ist das einzige Teil, das man beim Basteln wirklich kaputt macht.**
+> Sanfte Bögen sind in Ordnung, eine scharfe Falte trennt die Leiterbahnen im Inneren — man
+> sieht es von außen nicht, und die Kamera geht nie wieder. Nie ein- oder ausstecken, solange
+> Strom drauf ist.
+>
+> 7,5 cm liegen gut unter der 15-cm-Grenze aus [Schaltplan 3.9](03-schaltplan.md#39-die-kamera--das-einzige-empfindliche-kabel).
+> Taucht nach dem Umbau trotzdem **Streifenrauschen** auf, das bei Tag genauso stark ist wie
+> bei Nacht, ist es das Kabel: dann `XCLK_MHZ` von 20 auf 10.
 
 ---
 
