@@ -11,8 +11,9 @@
 #include <WiFi.h>
 #include <SD.h>
 
-extern bool  istNacht;        // aus birdycam.ino
-extern float aktuelleFps;
+extern bool    istNacht;        // aus birdycam.ino
+extern float   aktuelleFps;
+extern uint8_t aktuelleHelligkeit;
 
 static WebServer server(80);
 static WiFiServer streamServer(81);
@@ -30,11 +31,24 @@ static WiFiClient streamClient;
 //  Der Preis dieser Einfachheit: Bild und Ton laufen etwa eine Sekunde
 //  auseinander, weil der Browser den Ton puffert. Lippensynchron bekommt
 //  man das nur mit WebRTC — und das passt nicht in einen ESP32.
+//
+//  ⚠️ Der Tonstrom läuft in einer EIGENEN Aufgabe auf Kern 0, nicht in der
+//  Hauptschleife. Zwei Gründe, beide hart:
+//
+//   1. Durchsatz. Ton braucht 32 KB/s, gleichmäßig. Die Hauptschleife kommt
+//      bei UXGA auf 8-12 Durchläufe je Sekunde und nachts mit NACHT_PAUSE_MS
+//      auf gut einen. Von dort aus ist der Ton nicht zu bedienen, egal wie
+//      groß man die Häppchen macht.
+//
+//   2. Blockieren. WiFiClient::write() wartet, wenn das WLAN gerade keine
+//      Luft hat — im schlechtesten Fall mehrere Sekunden. In der
+//      Hauptschleife würde währenddessen die Kamera stehen. In einer eigenen
+//      Aufgabe verzögert es nur den Ton.
 // ---------------------------------------------------------------------------
 static WiFiServer tonServer(82);
-static WiFiClient tonClient;
-static int16_t    tonAus[1024];       // 2 KB Zwischeneimer für den Tonstrom
-static void       tonBedienen();      // steht weiter unten
+static WiFiClient tonClient;         // gehört AUSSCHLIESSLICH der Ton-Aufgabe
+static int16_t    tonAus[1024];      // 2 KB Zwischeneimer, nur sie fasst ihn an
+static void       tonStromAufgabe(void* p);   // steht ganz unten
 
 // ---------------------------------------------------------------------------
 //  Die Website. Steht als Text direkt im Programm (PROGMEM = im Flash,
@@ -286,7 +300,8 @@ async function status(){
         : (s.strahlFrei?'Strahl frei':'Strahl unterbrochen')],
       ['Durchfl&uuml;ge gez&auml;hlt', s.lsAktiv ? s.durchfluege
         : 'Besuche aus der Bilderkennung gesch&auml;tzt'],
-      ['IR-Licht', s.nacht?'Nachtbetrieb':'aus (Tag)'],
+      ['IR-Licht', s.irAn ? ('an, Stufe '+s.irStufe+' von 255') : 'aus'],
+      ['Bildhelligkeit', s.helligkeit+(s.nacht?' (nachts anpeilen: 90-120)':'')],
       ['Mikrofon', s.tonLaeuft
         ?('l&auml;uft, '+s.tonRate+' Hz'+(s.tonImClip?', Clips mit Ton':'')) : 'aus'],
       ['Lautst&auml;rke jetzt', s.laut],
@@ -375,6 +390,10 @@ async function tage(){
 function tonUm(){
   const a=$('ton');
   if(!tonAn){
+    // Reisst der Strom ab (WLAN weg, Kamera neu gestartet), bleibt sonst
+    // einfach stumm — und man sucht den Fehler an der falschen Stelle.
+    a.onerror=()=>{$('toninfo').textContent=
+      'Der Tonstrom ist abgerissen. Nochmal auf „Ton an“ tippen.';};
     a.src='http://'+location.hostname+':82/';
     a.play().then(()=>{
       tonAn=true;
@@ -430,6 +449,9 @@ static void statusAusliefern() {
   j += ",\"akkuVolt\":"    + String(akkuVolt(), 2);
   j += ",\"akkuProzent\":" + String(akkuProzent());
   j += ",\"nacht\":"       + String(istNacht ? "true" : "false");
+  j += ",\"helligkeit\":"  + String(aktuelleHelligkeit);
+  j += ",\"irAn\":"        + String(irIstAn() ? "true" : "false");
+  j += ",\"irStufe\":"     + String(IR_HELLIGKEIT);
   j += ",\"fps\":"         + String(aktuelleFps, 1);
   j += ",\"laufzeit\":"    + String(millis() / 1000);
   j += ",\"laut\":"        + String(audioLautstaerke());
@@ -565,6 +587,10 @@ void webStart() {
   if (TON_IM_STREAM && audioLaeuft()) {
     tonServer.begin();
     tonServer.setNoDelay(true);
+    // Kern 0, gleiche Priorität wie das Mikrofon. 4 KB Stack reichen: Der
+    // Zwischeneimer liegt als tonAus außerhalb, nicht auf dem Stack.
+    xTaskCreatePinnedToCore(tonStromAufgabe, "tonstrom", 4096, nullptr, 1,
+                            nullptr, 0);
   }
 
   // netzwerkAdresse() liefert die richtige Adresse in BEIDEN Betriebsarten:
@@ -604,7 +630,8 @@ void webBedienen() {
     Serial.println("[Web] Zuschauer weg.");
   }
 
-  tonBedienen();
+  // Der Ton braucht hier nichts: Darum kümmert sich tonStromAufgabe auf
+  // Kern 0, unabhängig von der Bildrate dieser Schleife.
 }
 
 bool webHatZuschauer() { return streamClient && streamClient.connected(); }
@@ -616,33 +643,74 @@ bool webHatZuschauer() { return streamClient && streamClient.connected(); }
 //  danach einfach immer weiter Messwerte. Der Browser hört nicht auf zu
 //  spielen, weil die Datei aus seiner Sicht nie zu Ende ist.
 // ---------------------------------------------------------------------------
+
+// Zahlen im WAV-Kopf stehen "kleinstes Byte zuerst" (Little Endian). Wir
+// schreiben sie byteweise statt über einen uint32_t-Zeiger: Der Xtensa-Kern
+// des ESP32 mag keine krummen Adressen, und ob `k + 4` gerade eine erwischt,
+// hängt davon ab, wo der Übersetzer das Feld hinlegt. Byteweise ist es
+// unabhängig davon immer richtig.
+static void le32(uint8_t* z, uint32_t w) {
+  z[0] = w; z[1] = w >> 8; z[2] = w >> 16; z[3] = w >> 24;
+}
+static void le16(uint8_t* z, uint16_t w) {
+  z[0] = w; z[1] = w >> 8;
+}
+
 static void wavKopfSenden(WiFiClient& c, uint32_t rate) {
   uint8_t k[44];
   uint32_t riesig = 0x7FFFF000;          // "so lang wird die Datei" (~2 GB)
   memcpy(k + 0,  "RIFF", 4);
-  *(uint32_t*)(k + 4)  = riesig + 36;
+  le32  (k + 4,  riesig + 36);
   memcpy(k + 8,  "WAVE", 4);
   memcpy(k + 12, "fmt ", 4);
-  *(uint32_t*)(k + 16) = 16;
-  *(uint16_t*)(k + 20) = 1;              // PCM
-  *(uint16_t*)(k + 22) = 1;              // Mono
-  *(uint32_t*)(k + 24) = rate;
-  *(uint32_t*)(k + 28) = rate * 2;
-  *(uint16_t*)(k + 32) = 2;
-  *(uint16_t*)(k + 34) = 16;
+  le32  (k + 16, 16);
+  le16  (k + 20, 1);                     // PCM
+  le16  (k + 22, 1);                     // Mono
+  le32  (k + 24, rate);
+  le32  (k + 28, rate * 2);
+  le16  (k + 32, 2);
+  le16  (k + 34, 16);
   memcpy(k + 36, "data", 4);
-  *(uint32_t*)(k + 40) = riesig;
+  le32  (k + 40, riesig);
   c.write(k, 44);
 }
 
-static void tonBedienen() {
-  if (!TON_IM_STREAM || !audioLaeuft()) return;
+// ---------------------------------------------------------------------------
+//  Die Anfrage des Zuhörers wegräumen.
+//
+//  Wir antworten allen gleich — den Inhalt der Anfrage brauchen wir also
+//  nicht. Lesen müssen wir sie trotzdem: Bleibt sie im Empfangspuffer liegen,
+//  hält das die Verbindung unnötig auf, und manche Browser schicken vor dem
+//  Abspielen noch eine zweite Anfrage hinterher.
+// ---------------------------------------------------------------------------
+static void anfrageVerwerfen(WiFiClient& c) {
+  uint32_t start = millis();
+  int leer = 0;                           // zwei Leerzeilen = Anfrage zu Ende
+  while (millis() - start < 300 && c.connected()) {
+    if (!c.available()) { vTaskDelay(pdMS_TO_TICKS(5)); continue; }
+    char z = c.read();
+    if (z == '\n') { if (++leer == 2) return; }
+    else if (z != '\r') leer = 0;
+  }
+}
 
-  if (tonServer.hasClient()) {
-    if (tonClient && tonClient.connected()) {
-      tonServer.available().stop();          // einer reicht, wie beim Bild
-    } else {
+// ---------------------------------------------------------------------------
+//  Die Ton-Aufgabe: läuft für immer auf Kern 0, neben dem Mikrofon.
+// ---------------------------------------------------------------------------
+static void tonStromAufgabe(void* p) {
+  for (;;) {
+    // --- Kein Zuhörer: auf einen warten -----------------------------------
+    if (!tonClient || !tonClient.connected()) {
+      if (tonClient) {
+        tonClient.stop();
+        Serial.println("[Web] Zuhoerer weg.");
+      }
+      if (!tonServer.hasClient()) { vTaskDelay(pdMS_TO_TICKS(100)); continue; }
+
       tonClient = tonServer.available();
+      if (!tonClient) continue;
+
+      anfrageVerwerfen(tonClient);
       tonClient.print(
         "HTTP/1.1 200 OK\r\n"
         "Access-Control-Allow-Origin: *\r\n"
@@ -651,25 +719,38 @@ static void tonBedienen() {
         "Connection: close\r\n"
         "\r\n");
       wavKopfSenden(tonClient, audioAbtastrate());
-      tonAufsetzen(TON_ABNEHMER_STREAM);    // ab jetzt, nicht die alte Konserve
+      tonAufsetzen(TON_ABNEHMER_STREAM);   // ab jetzt, nicht die alte Konserve
       Serial.println("[Web] Zuhoerer verbunden.");
+      continue;
+    }
+
+    // Ein zweiter Zuhörer? Wir bedienen nur einen — aber der NEUE gewinnt.
+    //
+    // Andersherum wäre es ärgerlich: Schläft das Handy ein oder bricht das
+    // WLAN weg, merkt der ESP das erst, wenn TCP von selbst aufgibt. Das
+    // kann Minuten dauern, und so lange käme niemand an den Ton. Wer neu
+    // auf "Ton an" tippt, übernimmt deshalb sofort.
+    if (tonServer.hasClient()) {
+      tonClient.stop();
+      Serial.println("[Web] Neuer Zuhoerer uebernimmt.");
+      continue;                            // oben wird er ordentlich begrüßt
+    }
+
+    // --- Ton nachschieben --------------------------------------------------
+    //  Wir holen so viel, wie seit dem letzten Mal angefallen ist. Mehr gibt
+    //  es nicht, weniger wäre zu wenig: Über die Zeit ist das genau die
+    //  Abtastrate, also exakt das Tempo, in dem der Zuhörer es abspielt.
+    size_t n = tonAbholen(TON_ABNEHMER_STREAM, tonAus,
+                          sizeof(tonAus) / sizeof(tonAus[0]));
+    if (n == 0) { vTaskDelay(pdMS_TO_TICKS(10)); continue; }
+
+    size_t bytes = n * sizeof(int16_t);
+    if (tonClient.write((const uint8_t*)tonAus, bytes) != bytes) {
+      // Gegenstelle weg oder Leitung tot — beim nächsten Durchlauf
+      // räumt der Zweig oben auf.
+      tonClient.stop();
     }
   }
-
-  if (tonClient && !tonClient.connected()) {
-    tonClient.stop();
-    Serial.println("[Web] Zuhoerer weg.");
-    return;
-  }
-  if (!tonClient) return;
-
-  // Nur so viel schicken, wie in den Sendepuffer passt. Sonst würde write()
-  // warten, bis das WLAN wieder Luft hat — und die Kamera würde stehen.
-  int platz = tonClient.availableForWrite();
-  if (platz < 256) return;
-  size_t maxProben = min((size_t)(platz / 2), (size_t)(sizeof(tonAus) / 2));
-  size_t n = tonAbholen(TON_ABNEHMER_STREAM, tonAus, maxProben);
-  if (n) tonClient.write((const uint8_t*)tonAus, n * sizeof(int16_t));
 }
 
 // ---------------------------------------------------------------------------

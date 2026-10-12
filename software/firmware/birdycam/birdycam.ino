@@ -42,9 +42,13 @@
 #include <esp_bt.h>
 #endif
 
-// ---- Diese zwei Werte liest auch die Website (siehe web.cpp) ---------------
-bool  istNacht    = false;
-float aktuelleFps = 0.0f;
+// ---- Diese Werte liest auch die Website (siehe web.cpp) -------------------
+bool    istNacht          = false;
+float   aktuelleFps       = 0.0f;
+// Mittlere Bildhelligkeit 0-255, frisch aus der Bewegungserkennung. Steht auf
+// der Website unter "Technische Details" — mit dieser Zahl stellt man
+// IR_HELLIGKEIT ein, statt nach Gefühl zu raten (siehe config.h).
+uint8_t aktuelleHelligkeit = 0;
 
 // ---- Vorlauf-Gedächtnis: die letzten Bilder VOR der Bewegung --------------
 //  Größe und Anzahl stehen in config.h, weil sie zur Auflösung passen müssen.
@@ -76,12 +80,123 @@ static uint32_t clipBilder       = 0;
 static uint32_t fpsZaehler   = 0;
 static uint32_t fpsFenster   = 0;
 static uint32_t letzterAkkuCheck = 0;
+static uint32_t letzteLichtprobe = 0;
+
+// Zuletzt gemessene Akkuspannung. Gepuffert, weil akkuVolt() acht Messungen
+// macht — das will man nicht in jeder Runde der Hauptschleife.
+static float    akkuJetzt    = 0.0f;
+
+// ---------------------------------------------------------------------------
+//  Darf das IR-Licht gerade durchgehend brennen?
+//
+//  Dauerlicht gibt das deutlich bessere Nachtbild (siehe config.h), kostet
+//  aber rund 4 Wh am Tag. Damit das keine Regenwoche killt, fällt die Kamera
+//  unter IR_DAUERLICHT_AB_V von allein auf Blitzbetrieb zurück und spart
+//  damit ~90 % davon. Steigt der Akku wieder, kommt das Dauerlicht zurück.
+// ---------------------------------------------------------------------------
+static bool irDauerlichtJetzt() {
+  if (!IR_DAUERLICHT) return false;
+  if (!AKKU_MESSEN || akkuJetzt < 0.5f) return true;   // kein Messwert, kein Sparen
+
+  // Etwas Abstand zwischen Aus- und Einschaltpunkt ("Hysterese"), sonst
+  // flackert es rund um die Schwelle im 30-Sekunden-Takt hin und her.
+  static bool an = true;
+  if      ( an && akkuJetzt <  IR_DAUERLICHT_AB_V)          an = false;
+  else if (!an && akkuJetzt >  IR_DAUERLICHT_AB_V + 0.05f)  an = true;
+  return an;
+}
 
 // ============================================================================
 //  KAMERA STARTEN
 // ============================================================================
+// ---------------------------------------------------------------------------
+//  Tag- oder Nachtprofil in den Sensor schreiben.
+//
+//  IR-Licht ist etwas völlig anderes als Tageslicht, und der Sensor muss das
+//  wissen. Zwei Dinge sind dabei entscheidend:
+//
+//   1. GRAUSTUFEN. Unter reinem Infrarot gibt es keine echten Farben mehr.
+//      Der Weißabgleich versucht trotzdem, welche herzustellen — daher der
+//      Grünstich und das grüne Farbrauschen. Mit Graustufen und abgeschaltetem
+//      Weißabgleich ist beides schlagartig weg.
+//
+//   2. VERSTÄRKUNG DECKELN. Verstärkung ist das Rauschen. Sie macht aus wenig
+//      Licht ein helles, aber griesiges Bild. Die Obergrenze gehört deshalb
+//      nachts nach UNTEN, nicht nach oben — und das fehlende Licht kommt
+//      besser aus IR_HELLIGKEIT.
+// ---------------------------------------------------------------------------
+static void kameraProfil(bool nacht, bool melden) {
+  sensor_t* s = esp_camera_sensor_get();
+  if (!s) return;
+
+  if (!nacht) {
+    s->set_special_effect(s, 0);              // Farbe
+    s->set_whitebal   (s, 1);                 // Weißabgleich an
+    s->set_awb_gain   (s, 1);
+    s->set_gainceiling(s, GAINCEILING_16X);
+    s->set_exposure_ctrl(s, 1);               // Belichtungsautomatik an
+    s->set_gain_ctrl  (s, 1);                 // Verstärkungsautomatik an
+    s->set_ae_level   (s, 0);
+    s->set_brightness (s, 1);                 // im Kasten ist es dunkel
+    s->set_contrast   (s, 0);
+    if (melden) Serial.println("[Kamera] Tagprofil: Farbe, Automatik an.");
+    return;
+  }
+
+  s->set_special_effect(s, NACHT_GRAUSTUFEN ? 2 : 0);   // 2 = Graustufen
+  s->set_whitebal   (s, NACHT_GRAUSTUFEN ? 0 : 1);
+  s->set_awb_gain   (s, NACHT_GRAUSTUFEN ? 0 : 1);
+  s->set_gainceiling(s, NACHT_GAINCEILING);
+  s->set_brightness (s, 1);
+  s->set_contrast   (s, 1);                   // der IR-Kontrast ist flau
+
+  if (IR_HINTER_DEM_FENSTER) {
+    // Die LEDs leuchten durch dasselbe Fenster wie die Linse. Der Schleier
+    // vom Deckel ist heller als das, was vom Nest zurückkommt — die Automatik
+    // würde dagegen abblenden und den Nistraum schwarz machen. Also feste
+    // Werte: Der Schleier bleibt, verdunkelt aber nichts mehr. Siehe config.h.
+    s->set_exposure_ctrl(s, 0);
+    s->set_aec_value  (s, NACHT_BELICHTUNG);
+    s->set_gain_ctrl  (s, 0);
+    s->set_agc_gain   (s, NACHT_VERSTAERKUNG);
+    if (melden)
+      Serial.printf("[Kamera] Nachtprofil: %s, FESTE Belichtung %d / "
+                    "Verstaerkung %d (LEDs hinter dem Fenster).\n",
+                    NACHT_GRAUSTUFEN ? "Graustufen" : "Farbe",
+                    (int)NACHT_BELICHTUNG, (int)NACHT_VERSTAERKUNG);
+  } else {
+    s->set_exposure_ctrl(s, 1);
+    s->set_gain_ctrl  (s, 1);
+    s->set_ae_level   (s, 1);                 // eine Stufe heller belichten
+    if (melden)
+      Serial.printf("[Kamera] Nachtprofil: %s, Automatik an.\n",
+                    NACHT_GRAUSTUFEN ? "Graustufen" : "Farbe");
+  }
+}
+
+// ---------------------------------------------------------------------------
+//  Bilder wegwerfen, bis die Kamera das neue Licht wirklich gesehen hat.
+//
+//  Die Kamera nimmt durchgehend auf und legt fertige Bilder in zwei Puffer.
+//  Ein frisch abgeholtes Bild ist deshalb ein paar Hundertstel ALT — es
+//  entstand, bevor die IR-LEDs angingen. Ohne dieses Leerlaufen beleuchtet
+//  der Blitz nur Bilder, die nie jemand zu sehen bekommt, und man wundert
+//  sich über ein schwarzes Nachtbild bei leuchtenden LEDs.
+// ---------------------------------------------------------------------------
+static void kameraLeerlaufen(uint8_t bilder) {
+  for (uint8_t i = 0; i < bilder; i++) {
+    camera_fb_t* weg = esp_camera_fb_get();
+    if (!weg) return;
+    esp_camera_fb_return(weg);
+  }
+}
+
 static bool kameraStarten() {
-  camera_config_t c;
+  // ⚠️ Erst nullen, dann füllen. In camera_config_t stecken Felder, die wir
+  //    unten nicht anfassen (sccb_i2c_port, conv_mode) — uninitialisiert
+  //    stünde dort Stack-Müll, und der Treiber würde ihn glauben.
+  camera_config_t c = {};
+  c.sccb_i2c_port = -1;              // -1 = der Treiber macht seinen eigenen
   c.ledc_channel = LEDC_CHANNEL_1;   // Kanal 0 gehört den IR-LEDs
   c.ledc_timer   = LEDC_TIMER_1;
   c.pin_d0 = Y2_GPIO_NUM;  c.pin_d1 = Y3_GPIO_NUM;
@@ -111,9 +226,11 @@ static bool kameraStarten() {
   if (s) {
     if (BILD_SPIEGELN) s->set_hmirror(s, 1);
     if (BILD_DREHEN)   s->set_vflip(s, 1);
-    s->set_brightness(s, 1);        // eine Stufe heller — im Kasten ist es dunkel
-    s->set_gainceiling(s, GAINCEILING_16X);   // mehr Verstärkung erlaubt
   }
+  // Alles Weitere steht im Tag-/Nachtprofil — es wird bei jedem Umschalten
+  // neu geschrieben, nicht nur einmal beim Start.
+  kameraProfil(false, true);
+
   Serial.println("[Kamera] Laeuft.");
   return true;
 }
@@ -327,6 +444,7 @@ void setup() {
 
   stromStart();
   irLicht(0);
+  akkuJetzt = akkuVolt();         // damit irDauerlichtJetzt() sofort Bescheid weiß
 
   if (!kameraStarten()) {
     Serial.println("[System] Ohne Kamera geht nichts. Neustart in 10 s.");
@@ -372,7 +490,8 @@ void loop() {
   if (millis() - letzterAkkuCheck > 30000) {
     letzterAkkuCheck = millis();
     akkuTrendPflegen();           // steigt der Akku oder fällt er?
-    akkuHeuteMerken(akkuVolt());  // Minimum/Maximum für die Tagesstatistik
+    akkuJetzt = akkuVolt();       // gepuffert für irDauerlichtJetzt()
+    akkuHeuteMerken(akkuJetzt);   // Minimum/Maximum für die Tagesstatistik
     akkuSchutzPruefen();          // legt sich ggf. schlafen und kommt nicht zurück
   }
 
@@ -387,16 +506,51 @@ void loop() {
   statistikPflegen();
 
   // --- Nachts langsamer arbeiten (Strom sparen) ---------------------------
-  bool dauerlicht = istNacht && (nehmeAuf || webHatZuschauer());
-  if (istNacht && !dauerlicht) {
+  //  Wird gerade aufgenommen oder schaut jemand zu, wird nicht gebummelt.
+  bool betrieb = nehmeAuf || webHatZuschauer();
+  if (istNacht && !betrieb) {
     delay(NACHT_PAUSE_MS);
     webBedienen();                // zwischendurch trotzdem erreichbar bleiben
   }
 
+  // --- Lichtprobe: Ist es draußen inzwischen hell geworden? ---------------
+  //  Die Tag/Nacht-Entscheidung darf NIE an einem Bild hängen, das vom
+  //  eigenen IR-Licht beleuchtet ist — sonst beißt sich die Katze in den
+  //  Schwanz: Licht an, Bild hell, "ist ja Tag", Licht aus, Bild schwarz,
+  //  "ist ja Nacht", Licht an ... und das im Sekundentakt.
+  //
+  //  Deshalb geht das Licht einmal je NACHT_PROBE_SEKUNDEN kurz aus, und nur
+  //  dieses eine Bild zählt für die Entscheidung.
+  //
+  //  Während einer Aufnahme nicht: Das dunkle Bild wäre sonst mitten im Clip.
+  //  Ein Clip dauert höchstens CLIP_MAX_SEKUNDEN, die Probe kommt also
+  //  spätestens 20 Sekunden später.
+  bool lichtprobe = istNacht && !nehmeAuf &&
+                    (millis() - letzteLichtprobe > NACHT_PROBE_SEKUNDEN * 1000UL);
+  if (lichtprobe) {
+    letzteLichtprobe = millis();
+    if (irIstAn()) irBlitzAus();
+
+    // Mit FESTER Belichtung (IR_HINTER_DEM_FENSTER) wäre die Probe aussagelos:
+    // Werte, die auf IR-Licht eingestellt sind, sagen nichts darüber, wie hell
+    // es ohne IR ist — die Kamera fände nie in den Tagbetrieb zurück. Für
+    // dieses eine Bild deshalb das Tagprofil mit Automatik aufsetzen (leise,
+    // sonst steht der Serielle Monitor jede Minute voll).
+    if (IR_HINTER_DEM_FENSTER) kameraProfil(false, false);
+
+    // Die Automatik braucht ein paar Bilder, bis sie sich eingestellt hat.
+    kameraLeerlaufen(IR_SETTLE_BILDER + 2);
+  }
+
   // --- IR-Licht vorbereiten ----------------------------------------------
-  if (istNacht) {
-    if (!irIstAn()) irBlitzAn();  // leuchtet kurz vor und bleibt für dieses Bild an
-  } else if (irIstAn()) {
+  //  Dauerlicht: Die LEDs bleiben an, damit sich die Belichtungsautomatik
+  //  einpendeln kann. Blitz: Sie gehen nur für dieses Bild an — und danach
+  //  müssen die veralteten Bilder aus den Kamerapuffern raus, sonst
+  //  beleuchtet der Blitz nur Bilder, die niemand zu sehen bekommt.
+  bool lichtBleibtAn = irDauerlichtJetzt() || betrieb;
+  if (istNacht && !lichtprobe) {
+    if (!irIstAn()) { irBlitzAn(); kameraLeerlaufen(IR_SETTLE_BILDER); }
+  } else if (!istNacht && irIstAn()) {
     irBlitzAus();
   }
 
@@ -409,20 +563,44 @@ void loop() {
   }
 
   // --- Livestream bedienen ------------------------------------------------
-  webFrameSenden(bild);
+  //  Die Lichtprobe nicht mitschicken — der Zuschauer bekommt sonst jede
+  //  Minute ein schwarzes Bild zu sehen. Er merkt nur, dass ein Bild fehlt.
+  if (!lichtprobe) webFrameSenden(bild);
 
   // --- Bewegung prüfen ----------------------------------------------------
   BewegungErgebnis b = bewegungPruefen(bild);
 
+  // Diese Zahl steht auf der Website und ist die Einstellhilfe für
+  // IR_HELLIGKEIT (siehe config.h). Gezeigt wird das normale Bild, nicht die
+  // absichtlich dunkle Lichtprobe — sonst stellte man nach dem falschen Wert.
+  if (!lichtprobe) aktuelleHelligkeit = b.helligkeit;
+
   // Tag/Nacht umschalten. Etwas Abstand zwischen den Schwellen ("Hysterese"),
   // damit es in der Dämmerung nicht dauernd hin und her springt.
-  bool warNacht = istNacht;
-  if (!istNacht && b.helligkeit < NACHT_SCHWELLE)          istNacht = true;
-  else if (istNacht && b.helligkeit > NACHT_SCHWELLE + 25) istNacht = false;
-  if (warNacht != istNacht) {
-    Serial.printf("[Licht] Umschalten auf %s (Helligkeit %u)\n",
-                  istNacht ? "NACHT" : "TAG", b.helligkeit);
-    bewegungZuruecksetzen();      // sonst löst der Lichtwechsel Fehlalarm aus
+  //
+  // Es zählt nur ein Bild OHNE eigenes IR-Licht: tagsüber jedes, nachts die
+  // Lichtprobe von oben.
+  if (!istNacht || lichtprobe) {
+    bool warNacht = istNacht;
+    if (!istNacht && b.helligkeit < NACHT_SCHWELLE)          istNacht = true;
+    else if (istNacht && b.helligkeit > NACHT_SCHWELLE + 25) istNacht = false;
+    if (warNacht != istNacht) {
+      Serial.printf("[Licht] Umschalten auf %s (Helligkeit %u)\n",
+                    istNacht ? "NACHT" : "TAG", b.helligkeit);
+      kameraProfil(istNacht, true);   // Graustufen, Verstärkung, Belichtung
+      bewegungZuruecksetzen();        // sonst löst der Lichtwechsel Fehlalarm aus
+    }
+  }
+
+  // Die Lichtprobe ist absichtlich dunkel — als Bewegung zählt sie nicht,
+  // und das nächste Bild darf nicht mit ihr verglichen werden.
+  if (lichtprobe) {
+    // Das für die Probe aufgesetzte Tagprofil wieder wegräumen. Hat die Probe
+    // gerade auf TAG umgeschaltet, steht es ohnehin schon richtig.
+    if (IR_HINTER_DEM_FENSTER && istNacht) kameraProfil(true, false);
+    b.gueltig = false;
+    b.bewegung = false;
+    bewegungZuruecksetzen();
   }
 
   // --- Stream ODER Aufnahme, nicht beides --------------------------------
@@ -466,15 +644,17 @@ void loop() {
       bool ruheVorbei = (millis() - letzteBewegung > NACHLAUF_SEKUNDEN * 1000UL);
       bool zuLang     = (millis() - aufnahmeStart  > CLIP_MAX_SEKUNDEN * 1000UL);
       if (ruheVorbei || zuLang) aufnahmeBeenden();
-    } else {
+    } else if (!lichtprobe) {
       vorlaufMerken(bild);        // ins Gedächtnis für den nächsten Anflug
+      // Die Lichtprobe gehört da nicht hinein — sie wäre ein schwarzes Bild
+      // mitten im Vorlauf des nächsten Clips.
     }
   }
 
   esp_camera_fb_return(bild);     // Bildpuffer wieder freigeben — sonst Absturz!
 
   // --- IR-Licht wieder aus, wenn es nur ein "Blitz" war -------------------
-  if (istNacht && !dauerlicht) irBlitzAus();
+  if (istNacht && !lichtBleibtAn) irBlitzAus();
 
   // --- Bildrate berechnen (nur für die Anzeige) --------------------------
   fpsZaehler++;

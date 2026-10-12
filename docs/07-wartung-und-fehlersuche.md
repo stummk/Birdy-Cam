@@ -116,18 +116,48 @@ Die IR-LEDs leuchten direkt ins Objektiv. Das ist ein **Bauproblem**, kein Softw
 - kleine Pappblende um das Objektiv kleben
 - `IR_HELLIGKEIT` reduzieren
 
+### Nachtbild rauscht grün
+
+Das ist der Normalzustand einer Farbkamera unter Infrarot — und beides hat dieselbe Ursache:
+
+- **Der Grünstich** kommt vom Weißabgleich. Unter reinem IR gibt es keine echten Farben
+  mehr; die Automatik versucht trotzdem, welche herzustellen.
+- **Das Rauschen** kommt aus der Sensorverstärkung. Je dunkler es ist, desto stärker
+  verstärkt die Kamera — und desto griesiger wird das Bild.
+
+Beides erledigt das Nachtprofil der Firmware: `NACHT_GRAUSTUFEN true` schaltet auf
+Graustufen und den Weißabgleich ab, `NACHT_GAINCEILING` deckelt die Verstärkung.
+
+**Bleibt es verrauscht, ist die Verstärkung noch zu hoch** — und die senkt man nicht direkt,
+sondern indem man ihr mehr Licht gibt: `IR_HELLIGKEIT` erhöhen, bis die **Bildhelligkeit**
+auf der Website bei 90–120 liegt. Hilft auch das nicht, `NACHT_GAINCEILING` eine Stufe
+kleiner stellen (`GAINCEILING_4X`) und dafür noch etwas mehr IR-Licht geben.
+
+> **Rauscht es auch bei Tageslicht genauso stark?** Dann ist es nicht die Verstärkung,
+> sondern eine Störung auf dem Flachbandkabel: `XCLK_MHZ` von 20 auf 10 stellen und das
+> Kabel kürzen. Der Unterschied ist leicht zu sehen — Verstärkungsrauschen wird mit dem
+> Licht besser, eine Kabelstörung bleibt gleich.
+
 ### Nachtbild ist zu dunkel
 
 In dieser Reihenfolge probieren:
 
-1. `IR_HELLIGKEIT` erhöhen — bis 255 ist Luft, das ist mehr als das Dreifache
-2. Bleibt es auch bei 255 dunkel, ist es nicht die Helligkeit, sondern der **MOSFET**:
+1. **Leuchten die LEDs überhaupt?** Handykamera draufhalten: 940 nm zeigt das Display als
+   schwaches Violett. Siehst du nichts, ist es kein Softwareproblem — weiter bei Punkt 2
+2. `IR_HELLIGKEIT` erhöhen und dabei die **Bildhelligkeit** auf der Website beobachten
+   (unter „Technische Details"). Ziel sind 90–120. Höher einzustellen bringt nichts: Die
+   Automatik blendet den überstrahlten Fleck dann ohnehin wieder weg
+3. Bleibt es dunkel, obwohl die Bildhelligkeit stimmt, sitzen vermutlich die **LEDs hinter
+   demselben Fenster wie die Linse** — dann `IR_HINTER_DEM_FENSTER true` setzen
+   ([Bauplan 4.10.8](04-bauplan.md#4108-wenn-die-ir-leds-in-der-box-bleiben-müssen))
+4. Bleibt es auch dann dunkel, ist es nicht die Helligkeit, sondern der **MOSFET**:
    Das kleine Modul „HW-532“ bekommt an unseren 5 V nur die halbe Gate-Spannung ab und
    schaltet dann nicht voll durch. [Sketch 4](05-software.md#52-die-sieben-lern-sketches)
    zeigt es in zwei Minuten, [Schaltplan 3.6](03-schaltplan.md#36-das-unsichtbare-nachtlicht--mosfet-und-ir-leds)
    erklärt den Ausweg
-3. Zwei LEDs mehr einbauen (6 statt 4) — für MOSFET und 5-V-Zweig kein Problem
-4. Auf 850-nm-LEDs wechseln — der Vogel merkt es nicht, nur ein Mensch, der nachts direkt
+5. Zwei LEDs mehr einbauen (6 statt 4) — für MOSFET und 5-V-Zweig kein Problem. Bei kurzem
+   Abstand bringt das mehr als vier hellere: gleichmäßiges Licht statt eines hellen Flecks
+6. Auf 850-nm-LEDs wechseln — der Vogel merkt es nicht, nur ein Mensch, der nachts direkt
    ins Einflugloch schaut, sieht ein schwaches rotes Glimmen
 
 ### Das MOSFET-Modul wird heiß
@@ -168,9 +198,11 @@ nichts — sie leuchten in allen vier Fällen.
 | „Zu wenig PSRAM fuer den Tonring“ | PSRAM steht auf „Disabled“ | Werkzeuge → PSRAM → **OPI PSRAM** |
 | Clip hat keine Tonspur | `TON_IN_CLIPS false`, oder Mikro nicht gestartet | Startmeldung `[Audio] Mikrofon laeuft` prüfen |
 | Ton im Clip **kürzer** als das Bild | Karte zu langsam | `BILD_QUALITAET` erhöhen |
-| Alles sehr leise | Kein Schallloch zur Box ([4.5b](04-bauplan.md#45b-das-mikrofon-hören-lassen)) | Loch bohren, dann `TON_VERSTAERKUNG` auf 3–4 |
-| Es knackt und verzerrt | `TON_VERSTAERKUNG` zu hoch | zurück auf 1–2 |
+| Alles sehr leise | Kein Schallloch zur Box ([4.5b](04-bauplan.md#45b-das-mikrofon-hören-lassen)) | Loch bohren, dann `TON_VERSTAERKUNG` erhöhen (Werkswert 16) |
+| Es knackt und verzerrt | `TON_VERSTAERKUNG` zu hoch | zurück auf 8 |
 | Knopf „Ton an“ fehlt | `TON_IM_STREAM false` oder Mikro aus | `config.h` prüfen |
+| Knopf sagt „Ton aus“, man hört **nichts** — und VLC meldet an Tür 82 einen Fehler | Firmware älter als Oktober 2026. Der Tonstrom schickte nur den Dateikopf und danach nie Messwerte | Firmware neu hochladen. Die Clips hatten in diesem Fall trotzdem Ton — daran erkennt man es |
+| Ton setzt beim Zuschauen kurz aus | WLAN hatte keine Luft | Normal. Unter „Technische Details“ zählt *Ton verworfen (Clip/Stream)* mit, wie oft |
 
 ### Akku wird nicht voll
 

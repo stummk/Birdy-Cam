@@ -485,6 +485,9 @@ Was das einbringt:
 1. **Die IR-LEDs bleiben draußen.** Sie kommen wie gehabt in die Decke, **≥ 3 cm** vom
    Objektiv. Hinter demselben Fenster wie die Linse geben sie nur weißen Nebel — derselbe
    Effekt wie Blitzlicht auf einer Fensterscheibe.
+   *Geht das bei dir aus Platz- oder Wettergründen nicht?* Dann lies
+   [4.10.8](#4108-wenn-die-ir-leds-in-der-box-bleiben-müssen) — es gibt eine
+   Schadensbegrenzung, aber du solltest wissen, was sie kostet.
 2. **Blendring ums Objektiv.** Ein Ring aus schwarzem Moosgummi (außen ~15 mm, innen ~8 mm),
    der beim Zuschrauben leicht gegen die Deckelinnenseite drückt. Der killt die
    Innenreflexion des Fensters. Die Deckelinnenseite rundherum **mattschwarz**, nur das
@@ -684,6 +687,62 @@ Weil du fünf Monate nicht mehr an die Hardware kommst, sind diese drei Dinge in
 | *neu* | PVC-Platte 2 mm + 4 × M3-Distanzhülse 12 mm | +3 € |
 | *neu* | Moosgummi schwarz (Blendring), Brett 10 mm + Leisten (Zwischendecke) | Restholz |
 | | **unterm Strich** | **≈ +12 €** |
+
+---
+
+### 4.10.8 Wenn die IR-LEDs in der Box bleiben müssen
+
+[4.10.2](#4102-der-klardeckel-ist-das-kamerafenster) sagt: LEDs raus aus der Box. Manchmal
+geht das nicht — kein Platz in der Zwischendecke, oder man will keine zweite Durchführung
+nach draußen, durch die Wasser kommen kann. Das sind legitime Gründe. Nur kostet es
+Bildqualität, und zwar mehr, als man erwartet.
+
+#### Warum das das Nachtbild zerstört
+
+Rechne die beiden Lichtwege gegeneinander:
+
+```
+   NUTZLICHT                             STÖRLICHT
+   LED → 20 cm → Nest                    LED → 2 mm → Deckel
+        dunkles Holz wirft                    die Kunststofffläche
+        vielleicht 10 % zurück                wirft ein paar % zurück
+   Nest → 20 cm → Linse                  Deckel → direkt → Linse
+   ───────────────────────────           ──────────────────────────
+   ein winziger Bruchteil                deutlich mehr
+```
+
+Die „paar Prozent" aus 2 mm Entfernung sind **heller** als das Nutzlicht aus 40 cm
+Gesamtweg. Dazu kommt, dass ein klarer Deckel Licht seitlich im Material weiterleitet wie
+ein Lichtleiter — bis direkt vor die Linse.
+
+Die Belichtungsautomatik sieht also vor allem den Schleier und blendet ab. Der Nistraum
+dahinter wird schwarz. Man sitzt vor leuchtenden LEDs und einem schwarzen Bild.
+
+#### Was dagegen hilft — alles drei zusammen
+
+| Maßnahme | Wogegen |
+|---|---|
+| **Moosgummi-Kragen** um jede LED, bündig auf den Deckel gedrückt | Das Licht tritt senkrecht ins Material ein statt schräg. Damit hört die Lichtleiterei weitgehend auf — das ist die wirksamste der drei |
+| **Schwarze Trennwand** zwischen LED-Zone und Linsenzone, bis an den Deckel | Licht, das durch die Box statt durch den Deckel läuft |
+| **Blendring** um das Objektiv ([4.10.2](#4102-der-klardeckel-ist-das-kamerafenster), Bedingung 2) und Deckelinnenseite rundherum **mattschwarz** | Innenreflexion des Fensters. Gehört ohnehin rein |
+
+#### Und der Schalter in der Firmware
+
+```cpp
+#define IR_HINTER_DEM_FENSTER true
+```
+
+Damit schaltet die Kamera nachts die **Belichtungsautomatik ab** und arbeitet mit festen
+Werten (`NACHT_BELICHTUNG`, `NACHT_VERSTAERKUNG`). Der Gedanke dahinter: Der Schleier ist
+konstant. Wenn niemand mehr dagegen regelt, kann er das Bild auch nicht mehr abdunkeln — er
+liegt dann nur noch als gleichmäßiger Grauschleier darüber.
+
+Das kostet Kontrast, aber man sieht etwas, statt in Schwarz zu starren.
+
+> ⚠️ **Ehrlich bleiben:** Das ist Schadensbegrenzung, keine Reparatur. Ein richtig gutes
+> Nachtbild bekommst du nur mit den LEDs auf der anderen Seite des Fensters. Wenn du später
+> doch noch eine Durchführung setzen kannst — tu es, und stell den Schalter wieder auf
+> `false`.
 
 ---
 

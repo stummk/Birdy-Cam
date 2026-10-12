@@ -243,23 +243,184 @@
 // Ab welcher Helligkeit gilt es als Nacht? (0 = stockdunkel, 255 = gleißend)
 #define NACHT_SCHWELLE        45
 
-// IR-LED-Helligkeit 0-255. 75 entspricht etwa 30 %.
-// Höher = helleres Nachtbild, aber mehr Stromverbrauch und mehr Wärme.
+// Wie oft im Nachtbetrieb kurz nachgesehen wird, ob es draußen hell geworden
+// ist ("Lichtprobe"). Dafür geht das IR-Licht für ein Bild aus.
 //
-// Nachtbild zu dunkel? Hier ist die erste Stellschraube — bis 255 ist Luft,
-// also mehr als das Dreifache. 940-nm-LEDs sieht der Kamerasensor nur etwa
-// halb so gut wie 850-nm-LEDs; dafür sind sie für Menschen unsichtbar.
-// Für den VOGEL sind beide unsichtbar. Details in Überblick 1.5.
+// Das muss sein: Eine Tag/Nacht-Entscheidung anhand eines Bildes, das vom
+// EIGENEN IR-Licht beleuchtet ist, dreht sich im Kreis — Licht an, Bild hell,
+// "ist ja Tag", Licht aus, Bild schwarz, "ist ja Nacht", Licht an ...
 //
-// Reicht 255 nicht: mehr LEDs, oder auf 850 nm wechseln.
-#define IR_HELLIGKEIT         75
+// 60 Sekunden heißt: Die Dämmerung wird höchstens eine Minute zu spät
+// bemerkt, und die Probe kostet praktisch nichts.
+#define NACHT_PROBE_SEKUNDEN  60
+
+// IR-LED-Helligkeit 0-255. 110 entspricht etwa 43 %.
+//
+// ⚠️ Mehr ist hier NICHT besser, und das ist der am häufigsten falsch
+//    verstandene Wert dieser Datei. Diese LED-Module sind dafür gemacht, eine
+//    Einfahrt auszuleuchten — mehrere Meter. Du leuchtest vom Deckel auf das
+//    Nest, also rund 20 cm. Licht nimmt im Quadrat des Abstands ab: Auf 20 cm
+//    statt 2 m kommt das HUNDERTFACHE an.
+//
+//    Zu viel Licht macht das Bild schlechter, nicht besser: Die Automatik
+//    sieht den überstrahlten Fleck in der Mitte und blendet das ganze Bild
+//    ab — die Ecken, in denen der Vogel sitzt, werden dunkler statt heller.
+//
+// So stellst du es richtig ein — mit einer Zahl statt nach Gefühl:
+//
+//    Die Website zeigt unter "Technische Details" die BILDHELLIGKEIT (0-255).
+//    Diesen Wert hier so lange erhöhen, bis sie nachts bei etwa 90-120 liegt.
+//    Dann aufhören. Ab da kostet jede Stufe nur noch Akku.
+//
+// Das eigentliche Ziel ist nämlich nicht "hell", sondern "Verstärkung
+// runter": Das Rauschen im Nachtbild kommt aus der Sensorverstärkung. Genug
+// IR-Licht heißt, dass die Automatik sie zurücknehmen kann — und ab diesem
+// Punkt bringt mehr Licht gar nichts mehr.
+//
+// 940-nm-LEDs sieht der Kamerasensor nur etwa halb so gut wie 850-nm-LEDs;
+// dafür sind sie für Menschen unsichtbar. Für den VOGEL sind beide
+// unsichtbar. Details in Überblick 1.5.
+#define IR_HELLIGKEIT         110
 
 // Nachts wird nur alle X Millisekunden ein Bild gemacht (spart viel Strom).
 #define NACHT_PAUSE_MS        900
 
-// Die IR-LEDs leuchten nur kurz um die Aufnahme herum ("Blitz").
-// Das spart ~90 % der LED-Energie. Zeit in Millisekunden zum Vorglühen.
+// --- Dauerlicht oder Blitz? ------------------------------------------------
+//
+// Ab Werk leuchten die IR-LEDs nachts DURCHGEHEND. Das klingt verschwenderisch
+// und ist trotzdem richtig — der Grund ist die Belichtungsautomatik:
+//
+//   Beim Blitzen ist es zwischen zwei Bildern stockdunkel. Die Automatik fährt
+//   die Verstärkung ans Maximum, weil sie Schwarz sieht. Dann gehen die LEDs
+//   für 120 ms an, und das Bild entsteht MIT dieser Maximalverstärkung — also
+//   mit maximalem Rauschen. Die Automatik kommt nie zur Ruhe.
+//
+//   Bei Dauerlicht pendelt sie sich auf das tatsächliche IR-Licht ein. Das ist
+//   der Unterschied zwischen brauchbar und unbrauchbar, nicht ein bisschen
+//   heller.
+//
+// ⚡ STROM: Im Nistkasten ist es auch tagsüber dunkel — die Kamera ist also
+//    praktisch immer im Nachtbetrieb, die LEDs liefen 24 h. Vier Module an
+//    5 V ziehen voll aufgedreht 82 mA (0,41 W):
+//
+//      IR_HELLIGKEIT  75  ->  0,12 W  ->  3,0 Wh/Tag
+//      IR_HELLIGKEIT 110  ->  0,18 W  ->  4,3 Wh/Tag   <- Standard
+//      IR_HELLIGKEIT 255  ->  0,41 W  ->  9,8 Wh/Tag
+//
+//    Zum Vergleich: Der Grundverbrauch liegt bei 16 Wh/Tag (Router-Betrieb,
+//    mit Ton). Die Rechnung mit Panel und Akku steht in Überblick 1.6.
+#define IR_DAUERLICHT         true
+
+// Damit das Dauerlicht keine Regenwoche killt, schaltet die Kamera darunter
+// von allein auf Blitzbetrieb zurück — der spart ~90 % der LED-Energie.
+// Steigt der Akku wieder, kommt das Dauerlicht zurück. Du musst nichts tun.
+//
+// 3,80 V ist gut die Hälfte. Der Notaus bei AKKU_NOTAUS_VOLT bleibt davon
+// unberührt, das ist die letzte Sicherung. Ohne Spannungssensor
+// (AKKU_MESSEN false) bleibt das Dauerlicht immer an.
+#define IR_DAUERLICHT_AB_V    3.80f
+
+// Zeit in Millisekunden zum Vorglühen, bevor im Blitzbetrieb ausgelöst wird.
 #define IR_BLITZ_VORLAUF_MS   120
+
+// So viele Bilder werden nach dem Einschalten des IR-Lichts WEGGEWORFEN.
+//
+// Das ist kein Schnickschnack, sondern eine Notwendigkeit: Die Kamera nimmt
+// durchgehend auf und legt die fertigen Bilder in zwei Puffer. Ein frisch
+// abgeholtes Bild ist deshalb ein paar Hundertstel ALT — belichtet, bevor die
+// LEDs angingen. Ohne dieses Leerlaufen beleuchtet der Blitz nur Bilder, die
+// nie jemand zu sehen bekommt.
+#define IR_SETTLE_BILDER      2
+
+// ----------------------------------------------------------------------------
+//  4a. Nachtbild — was der Sensor nachts anders machen soll
+// ----------------------------------------------------------------------------
+//  Bis hierher ging es um das Licht. Jetzt geht es um die Kamera selbst: Sie
+//  bekommt nachts ein eigenes Profil, weil IR-Licht etwas völlig anderes ist
+//  als Tageslicht.
+
+// Graustufen bei Nacht.
+//
+// Unter reinem Infrarot gibt es keine echten Farben mehr — der Weißabgleich
+// versucht trotzdem, welche herzustellen, und produziert dabei zuverlässig
+// einen Farbstich und grünes Farbrauschen. Graustufen schalten das komplett
+// ab: kein Grünstich, kein Farbrauschen, und die JPEGs werden nebenbei
+// kleiner. So sieht jede Nachtsichtkamera aus, und zwar aus genau diesem Grund.
+//
+// Auf false nur, wenn du sehen willst, was der Sensor ohne das macht.
+#define NACHT_GRAUSTUFEN      true
+
+// Obergrenze der Sensorverstärkung bei Nacht.
+//
+// ⚠️ Gegen die Intuition: KLEINER ist hier oft besser. Verstärkung IST das
+//    Rauschen — sie macht aus wenig Licht ein helles, aber griesiges Bild.
+//    Lieber eine Stufe mehr IR-Licht (IR_HELLIGKEIT) und eine Stufe weniger
+//    Verstärkung.
+//
+// Erlaubt: GAINCEILING_2X, _4X, _8X, _16X, _32X, _64X, _128X
+#define NACHT_GAINCEILING     GAINCEILING_8X
+
+// ----------------------------------------------------------------------------
+//  4b. Sitzen die IR-LEDs hinter DEMSELBEN Fenster wie die Linse?
+// ----------------------------------------------------------------------------
+//  Bauplan 4.10 sagt für Variante B: Die LEDs gehören in den Nistraum, nicht
+//  mit in die Box. Wer sie aus Platz- oder Wettergründen trotzdem drin lässt,
+//  hat ein Problem — und dieser Schalter ist die Gegenmaßnahme.
+//
+//  Was passiert: Das Nutzlicht läuft 20 cm zum Nest, wird von dunklem Holz
+//  schwach zurückgeworfen und läuft 20 cm zurück. Das Störlicht läuft 2 mm
+//  zum Deckel, von dem ein paar Prozent direkt zurückkommen. Die paar Prozent
+//  aus 2 mm sind heller als das Nutzlicht aus 40 cm. Die Automatik sieht also
+//  vor allem den Schleier, blendet ab — und der Nistraum wird schwarz.
+//
+//  Was dieser Schalter tut: Er schaltet die Belichtungsautomatik nachts AB und
+//  stellt feste Werte ein. Der Schleier ist konstant; wenn niemand mehr dagegen
+//  regelt, kann er das Bild auch nicht mehr abdunkeln. Er liegt dann als
+//  gleichmäßiger Grauschleier darüber. Das kostet Kontrast — aber man sieht
+//  etwas, statt in Schwarz zu starren.
+//
+//  Das ist Schadensbegrenzung, keine Reparatur. Was wirklich hilft, steht in
+//  Bauplan 4.10.8: Moosgummi-Kragen um jede LED, schwarze Trennwand, Blendring.
+//
+//  ℹ️ Steht hier auf true, weil in diesem Kasten die LEDs aus Platz- und
+//     Wettergründen in der Box geblieben sind. Hast du sie nach Bauplan
+//     4.10.2 draußen im Nistraum: auf false stellen, dann arbeitet die
+//     Kamera nachts wieder mit Belichtungsautomatik.
+#define IR_HINTER_DEM_FENSTER true
+
+// Die festen Werte dafür. Gelten NUR, wenn IR_HINTER_DEM_FENSTER true ist.
+//
+// ⚠️ Eine Sache vorweg, die beim Einstellen viel Zeit spart: IR_HELLIGKEIT,
+//    NACHT_BELICHTUNG und NACHT_VERSTAERKUNG multiplizieren sich. Für die
+//    Bildhelligkeit ist es egal, an welchem der drei du drehst — nur der
+//    PREIS ist unterschiedlich:
+//
+//      IR_HELLIGKEIT        kostet Akku
+//      NACHT_BELICHTUNG     kostet Bewegungsunschärfe (Vogel im Anflug)
+//      NACHT_VERSTAERKUNG   kostet Rauschen
+//
+//    Daraus folgt die Reihenfolge:
+//
+//      Bild zu DUNKEL?   1. NACHT_BELICHTUNG hoch (kostet nichts, solange
+//                           niemand fliegt)  2. IR_HELLIGKEIT hoch
+//                        3. ganz zuletzt NACHT_VERSTAERKUNG
+//
+//      Bild zu HELL / milchig-weiß?  Zuerst IR_HELLIGKEIT RUNTER. Das ist
+//                        die einzige Stellschraube, die dabei auch noch Akku
+//                        spart — und der Schleier vom Deckel wird kleiner.
+//
+//    Und der Grund, warum mehr IR-Licht den Schleier NICHT überstrahlt:
+//    Schleier und Nutzlicht kommen beide von denselben LEDs. Drehst du auf,
+//    wächst beides im selben Verhältnis. Was du siehst, entscheidet allein
+//    die Geometrie — also Kragen, Trennwand und Blendring, nicht die
+//    Helligkeit. Siehe Bauplan 4.10.8.
+
+// Belichtungszeit 0-1200 (in Bildzeilen). Größer = länger belichtet = helleres
+// Bild, aber mehr Bewegungsunschärfe beim anfliegenden Vogel.
+#define NACHT_BELICHTUNG      600
+
+// Verstärkung 0-30. So klein wie möglich — siehe NACHT_GAINCEILING.
+#define NACHT_VERSTAERKUNG    8
 
 // Wie oft pro Sekunde das Dimmsignal ein- und ausschaltet (Hertz).
 //

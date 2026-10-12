@@ -19,12 +19,23 @@
 //     beim Überlauf alles um ein paar Plätze verrutschen — ein Fehler, den
 //     man erst nach 74 Stunden Laufzeit hört.
 //
-//  2. Geschrieben wird nur vom Ton-Kern, gelesen nur von der Hauptschleife.
-//     32-Bit-Zahlen liest und schreibt der ESP32 in einem Stück, deshalb
-//     brauchen wir keine Sperre ("Mutex"): Der Leser sieht immer entweder
-//     den alten oder den neuen Zählerstand, nie etwas dazwischen. Wichtig
-//     ist nur die Reihenfolge — erst die Proben in den Ring, DANN den
-//     Zähler weiterdrehen.
+//  2. Geschrieben wird nur vom Ton-Kern. Gelesen wird aus ZWEI Aufgaben:
+//     die Hauptschleife holt den Ton für den Clip, die Ton-Aufgabe in
+//     web.cpp den für den Livestream. Trotzdem braucht es keine Sperre
+//     ("Mutex"), und zwar aus zwei Gründen:
+//
+//       - Jeder Abnehmer hat seinen EIGENEN Lesezeiger in lesePos[]. Die
+//         beiden kommen sich also gar nicht in die Quere.
+//       - 32-Bit-Zahlen liest und schreibt der ESP32 in einem Stück. Der
+//         Leser sieht immer entweder den alten oder den neuen Zählerstand,
+//         nie etwas dazwischen.
+//
+//     Wichtig ist nur die Reihenfolge — erst die Proben in den Ring, DANN
+//     den Zähler weiterdrehen.
+//
+//     ⚠️ Daraus folgt eine Regel: Ein Abnehmer gehört genau EINER Aufgabe.
+//     Würden zwei Aufgaben denselben Abnehmer benutzen, wäre lesePos[]
+//     plötzlich doch umkämpft.
 // ---------------------------------------------------------------------------
 
 #define RING_PROBEN     65536u                 // Zweierpotenz! ~4,1 s
@@ -257,6 +268,16 @@ uint32_t tonVerloren(uint8_t abnehmer) {
 bool audioFertig()   { return zustand == FERTIG; }
 bool audioNimmtAuf() { return zustand == AUFNEHMEN; }
 
+// Zahlen im WAV-Kopf stehen "kleinstes Byte zuerst" (Little Endian) und
+// werden byteweise geschrieben — über einen uint32_t-Zeiger wäre es von der
+// Adresse abhängig, und der Xtensa-Kern mag keine krummen Adressen.
+static void le32(uint8_t* z, uint32_t w) {
+  z[0] = w; z[1] = w >> 8; z[2] = w >> 16; z[3] = w >> 24;
+}
+static void le16(uint8_t* z, uint16_t w) {
+  z[0] = w; z[1] = w >> 8;
+}
+
 bool audioSpeichern(const String& pfad) {
   if (zustand != FERTIG) return false;
 
@@ -265,18 +286,18 @@ bool audioSpeichern(const String& pfad) {
   uint32_t byteRate = TON_ABTASTRATE * 2;   // 1 Kanal * 2 Bytes
 
   memcpy(kopf + 0,  "RIFF", 4);
-  *(uint32_t*)(kopf + 4)  = 36 + datenBytes;
+  le32  (kopf + 4,  36 + datenBytes);
   memcpy(kopf + 8,  "WAVE", 4);
   memcpy(kopf + 12, "fmt ", 4);
-  *(uint32_t*)(kopf + 16) = 16;         // Länge des fmt-Blocks
-  *(uint16_t*)(kopf + 20) = 1;          // 1 = PCM, also unkomprimiert
-  *(uint16_t*)(kopf + 22) = 1;          // Mono
-  *(uint32_t*)(kopf + 24) = TON_ABTASTRATE;
-  *(uint32_t*)(kopf + 28) = byteRate;
-  *(uint16_t*)(kopf + 32) = 2;          // Bytes pro Messwert
-  *(uint16_t*)(kopf + 34) = 16;         // Bits pro Messwert
+  le32  (kopf + 16, 16);                // Länge des fmt-Blocks
+  le16  (kopf + 20, 1);                 // 1 = PCM, also unkomprimiert
+  le16  (kopf + 22, 1);                 // Mono
+  le32  (kopf + 24, TON_ABTASTRATE);
+  le32  (kopf + 28, byteRate);
+  le16  (kopf + 32, 2);                 // Bytes pro Messwert
+  le16  (kopf + 34, 16);                // Bits pro Messwert
   memcpy(kopf + 36, "data", 4);
-  *(uint32_t*)(kopf + 40) = datenBytes;
+  le32  (kopf + 40, datenBytes);
 
   File f = SD.open(pfad.c_str(), "w");
   if (!f) {

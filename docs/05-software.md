@@ -320,6 +320,31 @@ Schritt 7 justiert ist. Ein offener Eingang zählt sonst Phantom-Besuche.
 | `STREAM_HAT_VORRANG` | `true` | Beim Zuschauen wird nicht aufgenommen |
 | `RING_CLIPS` | `200` | So viele Clips werden im Kreis überschrieben (~1 GB) |
 
+### Nachtsicht — die Regler, mit denen das Nachtbild steht und fällt
+
+| Einstellung | Standard | Wirkung |
+|---|---|---|
+| `IR_HELLIGKEIT` | `110` | **Nicht nach Gefühl einstellen** — siehe Kasten unten |
+| `IR_DAUERLICHT` | `true` | LEDs bleiben nachts an. Besseres Bild, ~4 Wh/Tag |
+| `IR_DAUERLICHT_AB_V` | `3.80` | Darunter automatisch zurück auf Blitz — spart ~90 % davon |
+| `NACHT_GRAUSTUFEN` | `true` | Gegen Grünstich und Farbrauschen unter IR-Licht |
+| `NACHT_GAINCEILING` | `GAINCEILING_8X` | Obergrenze der Verstärkung. **Kleiner = weniger Rauschen** |
+| `IR_HINTER_DEM_FENSTER` | `false` | `true`, wenn die LEDs mit der Linse hinter demselben Deckel sitzen |
+| `NACHT_PROBE_SEKUNDEN` | `60` | So oft geht das Licht kurz aus, um nach dem Tag zu sehen |
+
+> 🔧 **So stellst du `IR_HELLIGKEIT` richtig ein**
+>
+> Mehr ist hier nicht besser. Diese LED-Module leuchten eine Einfahrt aus — du leuchtest
+> 20 cm auf ein Nest. Zu viel Licht überstrahlt die Mitte, die Automatik blendet das ganze
+> Bild ab, und die Ecken werden **dunkler** statt heller.
+>
+> Die Website zeigt unter **Technische Details** die **Bildhelligkeit** (0–255). Erhöhe
+> `IR_HELLIGKEIT`, bis sie nachts bei **90–120** liegt — dann aufhören. Jede weitere Stufe
+> kostet nur noch Akku.
+>
+> Das Ziel ist nämlich nicht „hell", sondern „Verstärkung runter": Das Rauschen im Nachtbild
+> kommt aus der Sensorverstärkung, nicht aus fehlendem Licht an sich.
+
 ### Ton
 
 | Einstellung | Standard | Wirkung |
@@ -327,7 +352,7 @@ Schritt 7 justiert ist. Ein offener Eingang zählt sonst Phantom-Besuche.
 | `AUDIO_AN` | `true` | Hauptschalter fürs Mikrofon |
 | `TON_IN_CLIPS` | `true` | Clips bekommen eine Tonspur (+4 % Platz) |
 | `TON_IM_STREAM` | `true` | Ton im Livestream, Knopf „🔊 Ton an“ auf der Website |
-| `TON_VERSTAERKUNG` | `2` | Im Kasten ist es leise. Zu hoch = es knackt |
+| `TON_VERSTAERKUNG` | `16` | Im Kasten ist es leise. Zu hoch = es knackt, dann `8` |
 
 ### Hochladen und der erste Start
 
